@@ -47,11 +47,9 @@ class LaunchApplication(tank.platform.Application):
         # get the setting
         system = sys.platform
         try:
-            path_key = r"%s_path"
-            args_key = r"%s_args"
             system_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[system]
-            app_path = self.get_setting(path_key % system_name, "")
-            app_args = self.get_setting(args_key % system_name, "")
+            app_path = self.get_setting("%s_path" % system_name, "")
+            app_args = self.get_setting("%s_args" % system_name, "")
             if not app_path: raise KeyError()
         except KeyError:
             raise Exception("Platform '%s' is not supported." % system)
@@ -67,6 +65,8 @@ class LaunchApplication(tank.platform.Application):
             _tk_nuke()
         elif engine_name == 'tk-maya':
             _tk_maya(system, app_path)
+        elif engine_name == 'tk-motionbuilder':
+            app_args = _tk_motionbuilder(app_args)
 
         # Launch the application
         self.log_debug("Launching executable '%s' with args '%s'" % (app_path, app_args))
@@ -147,6 +147,14 @@ def _tk_maya(system, app_path):
         if version_dir:
             ssl_path = os.path.abspath(os.path.join(app_specific_path, "ssl_patch", version_dir))
             tank.util.prepend_path_to_env_var('PYTHONPATH', ssl_path)
+
+
+def _tk_motionbuilder(app_args):
+    """Maya specific pre-launch environment setup."""
+
+    if app_args:
+        app_args += ' '
+    return app_args + os.path.join(_get_app_specific_path('motionbuilder'), "startup", "init_tank.py")
 
 
 def _get_app_specific_path(app_dir):
