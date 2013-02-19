@@ -1,0 +1,96 @@
+#
+# Copyright (c) 2012 Shotgun Software, Inc
+# ----------------------------------------------------
+#
+# Metadata defining the behaviour and requirements for this app
+
+
+# expected fields in the configuration file for this app
+configuration:
+
+    menu_name:
+        type: str
+        default_value: "Launch App"
+        description: Name to appear on the Tank menu.
+
+    entity_types:
+        type: list
+        values: {type: shotgun_entity_type}
+        default_value: [Task]
+        description: "List of Shotgun entity types where this
+                     tank action should be visible on the Actions menu."
+
+    deny_permissions:
+        type: list
+        values: {type: shotgun_permission_group}
+        allows_empty: True
+        description: "An optional parameter which lets you limit the visibility of this app.
+                     If you for example put in ['Artist'] as the value for this parameter,
+                     any user belonging to the shotgun permissions group Artist will not be
+                     able to see or execute the App."
+
+    deny_platforms:
+        type: list
+        values: {type: str}
+        allows_empty: True
+        description: "An optional parameter which lets you turn off this app on certain platforms.
+                     If you don't want it to appear on the Tank action menu for a platform, just
+                     include it in the the deny_platforms list. Valid values are
+                     Windows, Mac and Linux."
+
+
+    # note - since the paths to the nuke versions are typically on the form
+    # C:\\Program Files\\Nuke6.3v6\\Nuke6.3.exe, it is tricky to supply
+    # a default value for the path settings below.
+
+    windows_path:
+        type: str
+        description: The path to the Nuke executable on Windows.
+    windows_args:
+        type: str
+        description: The arguments to be passed to Nuke on Windows.
+        default_value: ""
+    linux_path:
+        type: str
+        description: The path to the Nuke executable on Linux.
+    linux_args:
+        type: str
+        description: The arguments to be passed to Nuke on Linux.
+        default_value: ""
+    mac_path:
+        type: str
+        description: The path to the Nuke executable on Mac OS X.
+    mac_args:
+        type: str
+        description: The arguments to be passed to Nuke on Mac OS X.
+        default_value: ""
+    engine:
+        type: str
+        # default_value: "tk-nuke"
+        description: "The name of the Nuke engine to start. When this app runs, it will first
+                     try to find an environment. This is based on the current context, e.g. the
+                     Shot or Task in Shotgun from which the action was initiated. Once the
+                     environment has been established (one of the files in the env folder in
+                     the Tank configuration), an engine will be started. This parameter
+                     specifies which engine to start. Typically this should be set to tk-nuke
+                     for the standard Nuke engine."
+
+    hook_app_launch:
+        type: hook
+        default_value: app_launch
+        description: Called to launch the application.
+
+# the Shotgun fields that this app needs in order to operate correctly
+requires_shotgun_fields:
+
+# More verbose description of this item 
+display_name: "Launch Application"
+description: "Launch Application from Shotgun."
+
+# Required minimum versions for this item to run
+requires_shotgun_version:
+requires_core_version: "v0.12.5"
+requires_engine_version: "v0.1.0"
+
+# the engines that this app can operate in:
+supported_engines: [tk-shotgun]
