@@ -10,7 +10,6 @@ configuration:
 
     menu_name:
         type: str
-        default_value: "Launch App"
         description: Name to appear on the Tank menu.
 
     entity_types:
@@ -66,7 +65,6 @@ configuration:
         default_value: ""
     engine:
         type: str
-        # default_value: "tk-nuke"
         description: "The name of the Nuke engine to start. When this app runs, it will first
                      try to find an environment. This is based on the current context, e.g. the
                      Shot or Task in Shotgun from which the action was initiated. Once the

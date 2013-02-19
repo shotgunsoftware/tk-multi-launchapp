@@ -10,18 +10,18 @@ import re
 import sys
 import tank
 
+
 class LaunchApplication(tank.platform.Application):
+    """Mutli App to launch applications."""
+
     def init_app(self):
-        entity_types = self.get_setting("entity_types")
-        deny_permissions = self.get_setting("deny_permissions")
-        deny_platforms = self.get_setting("deny_platforms")
         menu_name = self.get_setting("menu_name")
 
         p = {
             "title": menu_name,
-            "entity_types": entity_types,
-            "deny_permissions": deny_permissions,
-            "deny_platforms": deny_platforms,
+            "entity_types": self.get_setting("entity_types"),
+            "deny_permissions": self.get_setting("deny_permissions"),
+            "deny_platforms": self.get_setting("deny_platforms"),
             "supports_multiple_selection": False
         }
 
@@ -36,10 +36,12 @@ class LaunchApplication(tank.platform.Application):
             raise Exception("LaunchApp only accepts a single item in entity_ids.")
 
         entity_id = entity_ids[0]
+        engine_name = self.get_setting("engine")
+        self._ctx = self.tank.context_from_entity(entity_type, entity_id)
 
         # Try to create path for the context.
         try:
-            self.tank.create_filesystem_structure(entity_type, entity_id, engine=self.get_setting("engine"))
+            self.tank.create_filesystem_structure(entity_type, entity_id, engine=engine_name)
         except tank.TankError, e:
             raise Exception("Could not create folders on disk. Error reported: %s" % e)            
 
@@ -55,32 +57,35 @@ class LaunchApplication(tank.platform.Application):
         except KeyError:
             raise Exception("Platform '%s' is not supported." % system)
 
-        # Get the command to execute
-        kwargs = {
-            'system': system,
-            'app_path': app_path,
-            'app_args': app_args,
-            'project_path': self.tank.project_path,
-            'entity_type': entity_type,
-            'entity_id': entity_id,
-            'engine': self.get_setting("engine"),
-        }
-        cmd = self.execute_hook("hook_app_launch", **kwargs)
+        # Set environment variables used by apps to prep Tank engine
+        os.environ["TANK_ENGINE"] = engine_name
+        os.environ["TANK_PROJECT_ROOT"] = self.tank.project_path
+        os.environ["TANK_ENTITY_TYPE"] = entity_type
+        os.environ["TANK_ENTITY_ID"] = str(entity_id)
 
-        # run the command to launch the app
+        # Prep any application specific things
+        if engine_name == 'tk-nuke':
+            _tk_nuke()
+        elif engine_name == 'tk-maya':
+            _tk_maya(system, app_path)
+
+        # Launch the application
+        self.execute_hook("hook_app_launch", app_path=app_path, app_args=app_args)
+
+    def run_command(self, cmd):
         self.log_debug("Executing launch command '%s'" % cmd)
         exit_code = os.system(cmd)
         if exit_code != 0:
-            self.log_error("Failed to launch application! This is most likely because the path "
-                          "to the executable is not set to a correct value. The "
-                          "current value is '%s' - please double check that this path "
-                          "is valid and update as needed in this app's configuration. "
-                          "If you have any questions, don't hesitate to contact support "
-                          "on tanksupport@shotgunsoftware.com." % app_path)
-        
-        # write an event log entry
-        ctx = self.tank.context_from_entity(entity_type, entity_id)
-        self._register_event_log(ctx, cmd, {})
+            self.log_error(
+                "Failed to launch application! This is most likely because the path "
+                "to the executable is not set to a correct value. The command used "
+                "is '%s' - please double check that this command is valid and update "
+                "as needed in this app's configuration or hook. If you have any "
+                "questions, don't hesitate to contact support on tanksupport@shotgunsoftware.com." % cmd
+            )
+
+        # Write an event log entry
+        self._register_event_log(self._ctx, cmd, {})
 
     def _register_event_log(self, ctx, command_executed, additional_meta):
         """
@@ -90,6 +95,7 @@ class LaunchApplication(tank.platform.Application):
         meta = {}
         meta["engine"] = "%s %s" % (self.engine.name, self.engine.version) 
         meta["app"] = "%s %s" % (self.name, self.version) 
+        meta["launched_engine"] = self.get_setting("engine")
         meta["command"] = command_executed
         meta["platform"] = sys.platform
         if ctx.task:
@@ -97,3 +103,52 @@ class LaunchApplication(tank.platform.Application):
         meta.update(additional_meta)
         desc =  "%s %s: Launched Application" % (self.name, self.version)
         tank.util.create_event_log_entry(self.tank, ctx, "Tank_App_Startup", desc, meta)
+
+
+def _tk_nuke():
+    """Nuke specific pre-launch environment setup."""
+
+    # Make sure Nuke can find the Tank menu
+    startup_path = os.path.abspath(os.path.join(_get_app_specific_path('nuke'), "startup"))
+    tank.util.append_path_to_env_var("NUKE_PATH", startup_path)
+
+
+def _tk_maya(system, app_path):
+    """Maya specific pre-launch environment setup."""
+
+    # Make sure Maya can find the Tank menu
+    app_specific_path = _get_app_specific_path('maya')
+    startup_path = os.path.abspath(os.path.join(app_specific_path, "startup"))
+    tank.util.append_path_to_env_var("PYTHONPATH", startup_path)
+
+    # Push our patched _ssl compiled module to the front of the PYTHONPATH for Windows
+    # SSL Connection time fix.
+    if system == "win32":
+        # maps the maya version to the ssl maya version;  (maya 2011 can use the maya 2012 _ssl.pyd)
+        # the ssl directory name is the version of maya it was compiled for.
+        maya_version_to_ssl_maya_version = {
+            "2011": "2012",
+            "2012": "2012",
+            "2013": "2013",
+        }
+
+        version_dir = None
+        # From most recent to past version
+        for year in sorted(maya_version_to_ssl_maya_version, reverse=True):
+            # Test for the year in the path.
+            # maya -v returns an empty line with maya 2013.
+            if year in app_path:
+                version_dir = maya_version_to_ssl_maya_version[year]
+                break
+
+        # if there is an ssl lib for that current version of maya being used then
+        # add it to the python path.
+        if version_dir:
+            ssl_path = os.path.abspath(os.path.join(app_specific_path, "ssl_patch", version_dir))
+            tank.util.prepend_path_to_env_var('PYTHONPATH', ssl_path)
+
+
+def _get_app_specific_path(app_dir):
+    """Get the path for application specific files for a given application."""
+
+    return os.path.join(os.path.dirname(__file__), "app_specific", app_dir)

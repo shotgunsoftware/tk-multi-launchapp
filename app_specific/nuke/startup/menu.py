@@ -30,18 +30,18 @@ def bootstrap_tank():
         nuke.warning("Could not import Tank! Disabling Tank for now.")
         return
     
-    if not "TANK_NUKE_ENGINE" in os.environ:
+    if not "TANK_ENGINE" in os.environ:
         # key environment missing. This is usually when someone has done a file->new
         # and this menu.py is triggered but the env vars have been removed
         # because the boot strap is handled by the engine's callback system
         # rather than this startup script.
         return
     
-    engine_name = os.environ.get("TANK_NUKE_ENGINE")
-    file_to_open = os.environ.get("TANK_NUKE_FILE_TO_OPEN") 
-    project_root = os.environ.get("TANK_NUKE_PROJECT_ROOT")
-    entity_id = int(os.environ.get("TANK_NUKE_ENTITY_ID", "0"))
-    entity_type = os.environ.get("TANK_NUKE_ENTITY_TYPE")
+    engine_name = os.environ.get("TANK_ENGINE")
+    file_to_open = os.environ.get("TANK_FILE_TO_OPEN") 
+    project_root = os.environ.get("TANK_PROJECT_ROOT")
+    entity_id = int(os.environ.get("TANK_ENTITY_ID", "0"))
+    entity_type = os.environ.get("TANK_ENTITY_TYPE")
 
     try:
         tk = tank.Tank(project_root)
@@ -65,20 +65,20 @@ def bootstrap_tank():
     
     # remove from env so that they wont affect the nuke that is initalized on a
     # file->new. or file->open
-    if "TANK_NUKE_ENGINE" in os.environ:
-        del os.environ["TANK_NUKE_ENGINE"]
+    if "TANK_ENGINE" in os.environ:
+        del os.environ["TANK_ENGINE"]
     
-    if "TANK_NUKE_PROJECT_ROOT" in os.environ:
-        del os.environ["TANK_NUKE_PROJECT_ROOT"]
+    if "TANK_PROJECT_ROOT" in os.environ:
+        del os.environ["TANK_PROJECT_ROOT"]
     
-    if "TANK_NUKE_ENTITY_ID" in os.environ:
-        del os.environ["TANK_NUKE_ENTITY_ID"]
+    if "TANK_ENTITY_ID" in os.environ:
+        del os.environ["TANK_ENTITY_ID"]
     
-    if "TANK_NUKE_ENTITY_TYPE" in os.environ:
-        del os.environ["TANK_NUKE_ENTITY_TYPE"]
+    if "TANK_ENTITY_TYPE" in os.environ:
+        del os.environ["TANK_ENTITY_TYPE"]
 
-    if "TANK_NUKE_FILE_TO_OPEN" in os.environ:
-        del os.environ["TANK_NUKE_FILE_TO_OPEN"]
+    if "TANK_FILE_TO_OPEN" in os.environ:
+        del os.environ["TANK_FILE_TO_OPEN"]
             
 
 
