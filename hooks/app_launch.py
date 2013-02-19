@@ -34,4 +34,9 @@ class AppLaunch(tank.Hook):
             cmd = 'start /B "App" "%s" %s' % (app_path, app_args)
 
         # run the command to launch the app
-        self.parent.run_command(cmd)
+        exit_code = os.system(cmd)
+
+        return {
+            'command': cmd,
+            'launch_error': bool(exit_code)
+        }
