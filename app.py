@@ -176,6 +176,13 @@ def _tk_3dsmax(app_args):
     return new_args + app_args
 
 
+def _tk_hiero():
+    """Hiero specific pre-launch environment setup."""
+
+    startup_path = os.path.abspath(os.path.join(_get_app_specific_path("hiero"), "startup"))
+    tank.util.append_path_to_env_var("HIERO_PLUGIN_PATH", startup_path)
+
+
 def _get_app_specific_path(app_dir):
     """Get the path for application specific files for a given application."""
 
