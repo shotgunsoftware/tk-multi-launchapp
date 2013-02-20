@@ -67,6 +67,8 @@ class LaunchApplication(tank.platform.Application):
             _tk_maya(system, app_path)
         elif engine_name == 'tk-motionbuilder':
             app_args = _tk_motionbuilder(app_args)
+        elif engine_name == 'tk-3dsmax':
+            app_args = _tk_3dsmax(app_args)
 
         # Launch the application
         self.log_debug("Launching executable '%s' with args '%s'" % (app_path, app_args))
@@ -155,6 +157,23 @@ def _tk_motionbuilder(app_args):
     if app_args:
         app_args += ' '
     return app_args + '"%s"' % os.path.join(_get_app_specific_path('motionbuilder'), "startup", "init_tank.py")
+
+
+def _tk_3dsmax(app_args):
+    """
+    3DSMax specific pre-launch environment setup.
+
+    Make sure launch args include a maxscript to load the python engine:
+    3dsmax.exe somefile.max -U MAXScript somescript.ms        
+    """
+
+    startup_dir = os.path.abspath(os.path.join(_get_app_specific_path('3dsmax'), "startup"))
+    os.environ["TANK_BOOTSTRAP_SCRIPT"] = os.path.join(startup_dir, "tank_startup.py")
+    new_args = '-U MAXScript "%s"' % os.path.join(startup_dir, "init_tank.ms")
+
+    if app_args:
+        app_args = ' ' + app_args
+    return new_args + app_args
 
 
 def _get_app_specific_path(app_dir):
