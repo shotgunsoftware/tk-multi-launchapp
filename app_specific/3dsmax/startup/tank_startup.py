@@ -49,8 +49,7 @@ def bootstrap_tank():
     except tank.TankEngineInitError, e:
         mxs.messageBox("The Tank Engine could not start! Tank will be disabled. Details: %s" % e)
 
-    # remove from env so that they wont affect the nuke that is initalized on a
-    # file->new. or file->open
+    # remove our tmp stuff from the env
     for var in ["TANK_ENGINE", "TANK_PROJECT_ROOT", "TANK_ENTITY_ID", "TANK_ENTITY_TYPE", "TANK_FILE_TO_OPEN"]:
         if var in os.environ:
             del os.environ[var]
