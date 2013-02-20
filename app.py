@@ -69,6 +69,8 @@ class LaunchApplication(tank.platform.Application):
             app_args = _tk_motionbuilder(app_args)
         elif engine_name == 'tk-3dsmax':
             app_args = _tk_3dsmax(app_args)
+        elif engine_name == 'tk-hiero':
+            _tk_hiero()
 
         # Launch the application
         self.log_debug("Launching executable '%s' with args '%s'" % (app_path, app_args))
