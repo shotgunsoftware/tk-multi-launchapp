@@ -29,7 +29,7 @@ class AppLaunch(tank.Hook):
         elif system == "darwin":
             cmd = 'open -n "%s"' % (app_path)
             if app_args:
-                cmd += ' --args "%s"' % (app_args)
+                cmd += ' --args "%s"' % app_args.replace('"', '\\"')
         elif system == "win32":
             cmd = 'start /B "App" "%s" %s' % (app_path, app_args)
 
