@@ -154,7 +154,7 @@ def _tk_motionbuilder(app_args):
 
     if app_args:
         app_args += ' '
-    return app_args + os.path.join(_get_app_specific_path('motionbuilder'), "startup", "init_tank.py")
+    return app_args + '"%s"' % os.path.join(_get_app_specific_path('motionbuilder'), "startup", "init_tank.py")
 
 
 def _get_app_specific_path(app_dir):
