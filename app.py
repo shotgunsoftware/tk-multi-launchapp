@@ -36,7 +36,9 @@ class LaunchApplication(tank.platform.Application):
             raise Exception("LaunchApp only accepts a single item in entity_ids.")
 
         entity_id = entity_ids[0]
+        context = self.tank.context_from_entity(entity_type, entity_id)
         engine_name = self.get_setting("engine")
+        engine_path = tank.platform.get_engine_path(engine_name, self.tank, context)
 
         # Try to create path for the context.
         try:
@@ -61,6 +63,7 @@ class LaunchApplication(tank.platform.Application):
         os.environ["TANK_ENTITY_ID"] = str(entity_id)
 
         # Prep any application specific things
+        extra_configs = self.get_setting("extra", {})
         if engine_name == 'tk-nuke':
             _tk_nuke()
         elif engine_name == 'tk-maya':
@@ -71,6 +74,8 @@ class LaunchApplication(tank.platform.Application):
             app_args = _tk_3dsmax(app_args)
         elif engine_name == 'tk-hiero':
             _tk_hiero()
+        elif engine_name == 'tk-photoshop':
+            _tk_photoshop(extra_configs, engine_path)
 
         # Launch the application
         self.log_debug("Launching executable '%s' with args '%s'" % (app_path, app_args))
@@ -86,11 +91,11 @@ class LaunchApplication(tank.platform.Application):
                     "to the executable is not set to a correct value. The command used "
                     "is '%s' - please double check that this command is valid and update "
                     "as needed in this app's configuration or hook. If you have any "
-                    "questions, don't hesitate to contact support on tanksupport@shotgunsoftware.com." % result['command']
+                    "questions, don't hesitate to contact support on tanksupport@shotgunsoftware.com." % cmd
                 )
 
         # Write an event log entry
-        self._register_event_log(self.tank.context_from_entity(entity_type, entity_id), cmd, {})
+        self._register_event_log(context, cmd, {})
 
     def _register_event_log(self, ctx, command_executed, additional_meta):
         """
@@ -183,6 +188,53 @@ def _tk_hiero():
 
     startup_path = os.path.abspath(os.path.join(_get_app_specific_path("hiero"), "startup"))
     tank.util.append_path_to_env_var("HIERO_PLUGIN_PATH", startup_path)
+
+
+def _tk_photoshop(extra_config, engine_path):
+    """Photoshop specific pre-launch environment setup."""
+
+    if engine_path is None:
+        raise ValueError("Path to photoshop engine (tk-photoshop) could not be found.")
+
+    # Get the path to the python executable
+    system = sys.platform
+    try:
+        python_setting = {"darwin": "mac_python_path", "win32": "windows_python_path"}[system]
+    except KeyError:
+        raise Exception("Platform '%s' is not supported." % system)
+    python_path = extra_config.get(python_setting)
+    if not python_path:
+        raise Exception("Missing extra setting %s" % python_setting)
+
+    # get the path to extension manager
+    try:
+        manager_setting = {
+            "darwin": "mac_extension_manager_path",
+            "win32": "windows_extension_manager_path"
+        }[system]
+    except KeyError:
+        raise Exception("Platform '%s' is not supported." % system)
+    manager_path = extra_config.get(manager_setting)
+    if not manager_path:
+        raise Exception("Missing extra setting %s" % manager_setting)
+    os.environ["TANK_PHOTOSHOP_EXTENSION_MANAGER"] = manager_path
+
+    # make sure the extension is up to date
+    sys.path.append(os.path.join(engine_path, "bootstrap"))
+    import photoshop_extension_manager
+    photoshop_extension_manager.update()
+
+    # Store data needed for bootstrapping Tank in env vars. Used in startup/menu.py
+    os.environ["TANK_PHOTOSHOP_PYTHON"] = python_path
+    os.environ["TANK_PHOTOSHOP_BOOTSTRAP"] = os.path.join(engine_path, "bootstrap", "engine_bootstrap.py")
+    os.environ["TANK_PHOTOSHOP_ENGINE"] = os.environ["TANK_ENGINE"]
+    os.environ["TANK_PHOTOSHOP_PROJECT_ROOT"] = os.environ["TANK_PROJECT_ROOT"]
+    os.environ["TANK_PHOTOSHOP_ENTITY_TYPE"] = os.environ["TANK_ENTITY_TYPE"]
+    os.environ["TANK_PHOTOSHOP_ENTITY_ID"] = os.environ["TANK_ENTITY_ID"]
+
+    # add our startup path to the photoshop init path
+    startup_path = os.path.abspath(os.path.join(_get_app_specific_path('photoshop'), "startup"))
+    tank.util.append_path_to_env_var("PYTHONPATH", startup_path)
 
 
 def _get_app_specific_path(app_dir):

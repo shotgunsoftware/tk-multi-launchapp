@@ -72,6 +72,9 @@ configuration:
                      the Tank configuration), an engine will be started. This parameter
                      specifies which engine to start. Typically this should be set to tk-nuke
                      for the standard Nuke engine."
+    extra:
+        type: dict
+        description: "Platform specific extra values"
 
     hook_app_launch:
         type: hook
