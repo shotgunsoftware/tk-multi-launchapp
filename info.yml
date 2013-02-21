@@ -38,9 +38,7 @@ configuration:
                      Windows, Mac and Linux."
 
 
-    # note - since the paths to the nuke versions are typically on the form
-    # C:\\Program Files\\Nuke6.3v6\\Nuke6.3.exe, it is tricky to supply
-    # a default value for the path settings below.
+    # Path information for multiple platforms
 
     windows_path:
         type: str
@@ -74,7 +72,7 @@ configuration:
                      for the standard Nuke engine."
     extra:
         type: dict
-        description: "Platform specific extra values"
+        description: "Tank engine specific extra values. These are defined per Tank engine."
 
     hook_app_launch:
         type: hook

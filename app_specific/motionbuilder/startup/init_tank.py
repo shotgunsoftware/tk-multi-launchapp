@@ -60,7 +60,7 @@ def bootstrap_tank():
         FBApplication.FileOpen(file_to_open)
         
     # clean up any environment variables we have set.
-    for var in ["TANK_ENGINE", "TANK_PROJECT_ROOT", "TANK_ENTITY_ID", "TANK_ENTITY_TYPE", "TANK_FILE_TO_OPEN"]
+    for var in ["TANK_ENGINE", "TANK_PROJECT_ROOT", "TANK_ENTITY_ID", "TANK_ENTITY_TYPE", "TANK_FILE_TO_OPEN"]:
         if var in os.environ:
             del os.environ[var]
 
