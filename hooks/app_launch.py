@@ -25,18 +25,18 @@ class AppLaunch(tank.Hook):
         """
         system = sys.platform
         if system == "linux2":
-            cmd = '%s %s &' % (app_path, app_args)
+            cmd = "%s %s &" % (app_path, app_args)
         elif system == "darwin":
-            cmd = 'open -n "%s"' % (app_path)
+            cmd = "open -n \"%s\"" % (app_path)
             if app_args:
-                cmd += ' --args "%s"' % app_args.replace('"', '\\"')
+                cmd += " --args \"%s\"" % app_args.replace("\"", "\\\"")
         elif system == "win32":
-            cmd = 'start /B "App" "%s" %s' % (app_path, app_args)
+            cmd = "start /B \"App\" \"%s\" %s" % (app_path, app_args)
 
         # run the command to launch the app
         exit_code = os.system(cmd)
 
         return {
-            'command': cmd,
-            'launch_error': bool(exit_code)
+            "command": cmd,
+            "launch_error": bool(exit_code)
         }

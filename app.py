@@ -64,24 +64,24 @@ class LaunchApplication(tank.platform.Application):
 
         # Prep any application specific things
         extra_configs = self.get_setting("extra", {})
-        if engine_name == 'tk-nuke':
+        if engine_name == "tk-nuke":
             _tk_nuke()
-        elif engine_name == 'tk-maya':
+        elif engine_name == "tk-maya":
             _tk_maya(system, app_path)
-        elif engine_name == 'tk-motionbuilder':
+        elif engine_name == "tk-motionbuilder":
             app_args = _tk_motionbuilder(app_args)
-        elif engine_name == 'tk-3dsmax':
+        elif engine_name == "tk-3dsmax":
             app_args = _tk_3dsmax(app_args)
-        elif engine_name == 'tk-hiero':
+        elif engine_name == "tk-hiero":
             _tk_hiero()
-        elif engine_name == 'tk-photoshop':
+        elif engine_name == "tk-photoshop":
             _tk_photoshop(extra_configs, engine_path)
 
         # Launch the application
         self.log_debug("Launching executable '%s' with args '%s'" % (app_path, app_args))
         result = self.execute_hook("hook_app_launch", app_path=app_path, app_args=app_args)
-        cmd = result.get('command')
-        launch_error = result.get('launch_error')
+        cmd = result.get("command")
+        launch_error = result.get("launch_error")
 
         if cmd:
             self.log_debug("Hook tried to launch '%s'" % cmd)
@@ -106,7 +106,7 @@ class LaunchApplication(tank.platform.Application):
         meta["engine"] = "%s %s" % (self.engine.name, self.engine.version) 
         meta["app"] = "%s %s" % (self.name, self.version) 
         meta["launched_engine"] = self.get_setting("engine")
-        meta["command"] = command_executed or 'Unknown'
+        meta["command"] = command_executed or "Unknown"
         meta["platform"] = sys.platform
         if ctx.task:
             meta["task"] = ctx.task["id"]
@@ -119,7 +119,7 @@ def _tk_nuke():
     """Nuke specific pre-launch environment setup."""
 
     # Make sure Nuke can find the Tank menu
-    startup_path = os.path.abspath(os.path.join(_get_app_specific_path('nuke'), "startup"))
+    startup_path = os.path.abspath(os.path.join(_get_app_specific_path("nuke"), "startup"))
     tank.util.append_path_to_env_var("NUKE_PATH", startup_path)
 
 
@@ -127,7 +127,7 @@ def _tk_maya(system, app_path):
     """Maya specific pre-launch environment setup."""
 
     # Make sure Maya can find the Tank menu
-    app_specific_path = _get_app_specific_path('maya')
+    app_specific_path = _get_app_specific_path("maya")
     startup_path = os.path.abspath(os.path.join(app_specific_path, "startup"))
     tank.util.append_path_to_env_var("PYTHONPATH", startup_path)
 
@@ -155,15 +155,15 @@ def _tk_maya(system, app_path):
         # add it to the python path.
         if version_dir:
             ssl_path = os.path.abspath(os.path.join(app_specific_path, "ssl_patch", version_dir))
-            tank.util.prepend_path_to_env_var('PYTHONPATH', ssl_path)
+            tank.util.prepend_path_to_env_var("PYTHONPATH", ssl_path)
 
 
 def _tk_motionbuilder(app_args):
     """Maya specific pre-launch environment setup."""
 
     if app_args:
-        app_args += ' '
-    return app_args + '"%s"' % os.path.join(_get_app_specific_path('motionbuilder'), "startup", "init_tank.py")
+        app_args += " "
+    return app_args + "\"%s\"" % os.path.join(_get_app_specific_path("motionbuilder"), "startup", "init_tank.py")
 
 
 def _tk_3dsmax(app_args):
@@ -174,12 +174,12 @@ def _tk_3dsmax(app_args):
     3dsmax.exe somefile.max -U MAXScript somescript.ms        
     """
 
-    startup_dir = os.path.abspath(os.path.join(_get_app_specific_path('3dsmax'), "startup"))
+    startup_dir = os.path.abspath(os.path.join(_get_app_specific_path("3dsmax"), "startup"))
     os.environ["TANK_BOOTSTRAP_SCRIPT"] = os.path.join(startup_dir, "tank_startup.py")
-    new_args = '-U MAXScript "%s"' % os.path.join(startup_dir, "init_tank.ms")
+    new_args = "-U MAXScript \"%s\"" % os.path.join(startup_dir, "init_tank.ms")
 
     if app_args:
-        app_args = ' ' + app_args
+        app_args = " " + app_args
     return new_args + app_args
 
 
@@ -233,7 +233,7 @@ def _tk_photoshop(extra_config, engine_path):
     os.environ["TANK_PHOTOSHOP_ENTITY_ID"] = os.environ["TANK_ENTITY_ID"]
 
     # add our startup path to the photoshop init path
-    startup_path = os.path.abspath(os.path.join(_get_app_specific_path('photoshop'), "startup"))
+    startup_path = os.path.abspath(os.path.join(_get_app_specific_path("photoshop"), "startup"))
     tank.util.append_path_to_env_var("PYTHONPATH", startup_path)
 
 

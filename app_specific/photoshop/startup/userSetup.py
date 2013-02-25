@@ -14,7 +14,7 @@ def msgbox(msg):
     if sys.platform == "win32":
         import ctypes
         MessageBox = ctypes.windll.user32.MessageBoxA
-        MessageBox(None, msg, 'Tank', 0)
+        MessageBox(None, msg, "Tank", 0)
     elif sys.platform == "darwin":
         os.system("""osascript -e 'tell app "Finder" to display dialog "%s"'""" % msg)
 
@@ -63,7 +63,7 @@ def bootstrap_tank():
 
     if file_to_open:
         import photoshop
-        f = photoshop.RemoteObject('flash.filesystem::File', file_to_open)
+        f = photoshop.RemoteObject("flash.filesystem::File", file_to_open)
         photoshop.app.load(f)
 
 bootstrap_tank()
