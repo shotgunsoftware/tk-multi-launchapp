@@ -42,28 +42,28 @@ configuration:
 
     windows_path:
         type: str
-        description: The path to the Nuke executable on Windows.
+        description: The path to the application executable on Windows.
     windows_args:
         type: str
-        description: The arguments to be passed to Nuke on Windows.
+        description: The arguments to be passed to application on Windows.
         default_value: ""
     linux_path:
         type: str
-        description: The path to the Nuke executable on Linux.
+        description: The path to the application executable on Linux.
     linux_args:
         type: str
-        description: The arguments to be passed to Nuke on Linux.
+        description: The arguments to be passed to application on Linux.
         default_value: ""
     mac_path:
         type: str
-        description: The path to the Nuke executable on Mac OS X.
+        description: The path to the application executable on Mac OS X.
     mac_args:
         type: str
-        description: The arguments to be passed to Nuke on Mac OS X.
+        description: The arguments to be passed to application on Mac OS X.
         default_value: ""
     engine:
         type: str
-        description: "The name of the Nuke engine to start. When this app runs, it will first
+        description: "The name of the Tank engine to start. When this app runs, it will first
                      try to find an environment. This is based on the current context, e.g. the
                      Shot or Task in Shotgun from which the action was initiated. Once the
                      environment has been established (one of the files in the env folder in
