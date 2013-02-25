@@ -1,3 +1,11 @@
+"""
+Copyright (c) 2012 Shotgun Software, Inc
+----------------------------------------------------
+
+Set up the tank context and prepares the Tank Hiero engine.
+
+"""
+
 import os
 import hiero.core
 
