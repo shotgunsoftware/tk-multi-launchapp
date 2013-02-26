@@ -248,4 +248,4 @@ class LaunchApplication(tank.platform.Application):
     def _get_app_specific_path(self, app_dir):
         """Get the path for application specific files for a given application."""
 
-        return os.path.join(os.path.dirname(__file__), "app_specific", app_dir)
+        return os.path.join(self.disk_location, "app_specific", app_dir)
