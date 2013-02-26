@@ -68,11 +68,11 @@ configuration:
                      Shot or Task in Shotgun from which the action was initiated. Once the
                      environment has been established (one of the files in the env folder in
                      the Tank configuration), an engine will be started. This parameter
-                     specifies which engine to start. Typically this should be set to tk-nuke
-                     for the standard Nuke engine."
+                     specifies which engine to start."
     extra:
         type: dict
-        description: "Tank engine specific extra values. These are defined per Tank engine."
+        description: "Tank engine specific extra values. These are defined per Tank engine.
+                     Please look in the app documentation for more details."
 
     hook_app_launch:
         type: hook

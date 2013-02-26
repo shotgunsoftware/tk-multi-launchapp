@@ -20,8 +20,11 @@ class AppLaunch(tank.Hook):
     def execute(self, app_path, app_args, **kwargs):
         """
         The execute functon of the hook will be called to start the required application
-        - app_path is the path of the application executable
-        - app_args is any arguments the application may require
+        
+        :param app_path: (str) The path of the application executable
+        :param app_args: (str) Any arguments the application may require
+
+        :returns: (dict) The two valid keys are 'command' (str) and 'return_code' (int).
         """
         system = sys.platform
         if system == "linux2":
