@@ -113,7 +113,7 @@ class LaunchApplication(tank.platform.Application):
         meta["app"] = "%s %s" % (self.name, self.version) 
         meta["launched_engine"] = self.get_setting("engine")
         meta["command"] = command_executed or "Unknown"
-        meta["platform"] = sys.platform
+        meta["platform"] = self._system
         if ctx.task:
             meta["task"] = ctx.task["id"]
         desc =  "%s %s: Launched Application" % (self.name, self.version)
@@ -204,11 +204,10 @@ class LaunchApplication(tank.platform.Application):
             raise ValueError("Path to photoshop engine (tk-photoshop) could not be found.")
 
         # Get the path to the python executable
-        system = sys.platform
         try:
-            python_setting = {"darwin": "mac_python_path", "win32": "windows_python_path"}[system]
+            python_setting = {"darwin": "mac_python_path", "win32": "windows_python_path"}[self._system]
         except KeyError:
-            raise Exception("Platform '%s' is not supported." % system)
+            raise Exception("Platform '%s' is not supported." % self._system)
         python_path = self._extra_configs.get(python_setting)
         if not python_path:
             raise Exception("Missing extra setting %s" % python_setting)
@@ -218,9 +217,9 @@ class LaunchApplication(tank.platform.Application):
             manager_setting = {
                 "darwin": "mac_extension_manager_path",
                 "win32": "windows_extension_manager_path"
-            }[system]
+            }[self._system]
         except KeyError:
-            raise Exception("Platform '%s' is not supported." % system)
+            raise Exception("Platform '%s' is not supported." % self._system)
         manager_path = self._extra_configs.get(manager_setting)
         if not manager_path:
             raise Exception("Missing extra setting %s" % manager_setting)
