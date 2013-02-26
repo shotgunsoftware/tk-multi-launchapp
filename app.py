@@ -93,11 +93,12 @@ class LaunchApplication(tank.platform.Application):
             self.log_debug("Hook tried to launch '%s'" % cmd)
             if return_code != 0:
                 self.log_error(
-                    "Failed to launch application! This is most likely because the path "
+                    "Failed to launch application (return code: %d)! This is most likely because the path "
                     "to the executable is not set to a correct value. The command used "
                     "is '%s' - please double check that this command is valid and update "
                     "as needed in this app's configuration or hook. If you have any "
-                    "questions, don't hesitate to contact support on tanksupport@shotgunsoftware.com." % cmd
+                    "questions, don't hesitate to contact support on tanksupport@shotgunsoftware.com." %
+                    (return_code, cmd)
                 )
 
         # Write an event log entry
