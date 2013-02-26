@@ -87,11 +87,11 @@ class LaunchApplication(tank.platform.Application):
         self.log_debug("Launching executable '%s' with args '%s'" % (self._app_path, self._app_args))
         result = self.execute_hook("hook_app_launch", app_path=self._app_path, app_args=self._app_args)
         cmd = result.get("command")
-        launch_error = result.get("launch_error")
+        return_code = result.get("launch_error")
 
         if cmd:
             self.log_debug("Hook tried to launch '%s'" % cmd)
-            if launch_error:
+            if return_code != 0:
                 self.log_error(
                     "Failed to launch application! This is most likely because the path "
                     "to the executable is not set to a correct value. The command used "

@@ -38,5 +38,5 @@ class AppLaunch(tank.Hook):
 
         return {
             "command": cmd,
-            "launch_error": bool(exit_code)
+            "return_code": exit_code
         }
