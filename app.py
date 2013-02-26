@@ -24,7 +24,7 @@ class LaunchApplication(tank.platform.Application):
     def init_app(self):
         menu_name = self.get_setting("menu_name")
 
-        p = {
+        properties = {
             "title": menu_name,
             "entity_types": self.get_setting("entity_types"),
             "deny_permissions": self.get_setting("deny_permissions"),
@@ -36,9 +36,11 @@ class LaunchApplication(tank.platform.Application):
         # passing it in...
         sanitized_menu_name = re.sub(r"\W+", "", menu_name)
 
-        self.engine.register_command(sanitized_menu_name, self.launch_app, p)
+        self.engine.register_command(sanitized_menu_name, self.launch_app, properties)
 
     def launch_app(self, entity_type, entity_ids):
+        """Entry point called by Shotgun menu."""
+
         if len(entity_ids) != 1:
             raise Exception("LaunchApp only accepts a single item in entity_ids.")
 
@@ -50,15 +52,16 @@ class LaunchApplication(tank.platform.Application):
         # Try to create path for the context.
         try:
             self.tank.create_filesystem_structure(entity_type, entity_id, engine=engine_name)
-        except tank.TankError, e:
-            raise Exception("Could not create folders on disk. Error reported: %s" % e)            
+        except tank.TankError, err:
+            raise Exception("Could not create folders on disk. Error reported: %s" % err)            
 
         # get the setting
         try:
             system_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[self._system]
             self._app_path = self.get_setting("%s_path" % system_name, "")
             self._app_args = self.get_setting("%s_args" % system_name, "")
-            if not self._app_path: raise KeyError()
+            if not self._app_path:
+                raise KeyError()
         except KeyError:
             raise Exception("Platform '%s' is not supported." % self._system)
 
