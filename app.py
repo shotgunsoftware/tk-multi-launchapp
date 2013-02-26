@@ -101,9 +101,9 @@ class LaunchApplication(tank.platform.Application):
                 )
 
         # Write an event log entry
-        self._register_event_log(context, cmd, {})
+        self._register_event_log(context, cmd)
 
-    def _register_event_log(self, ctx, command_executed, additional_meta):
+    def _register_event_log(self, ctx, command_executed):
         """
         Writes an event log entry to the shotgun event log, informing
         about the app launch
@@ -116,7 +116,6 @@ class LaunchApplication(tank.platform.Application):
         meta["platform"] = sys.platform
         if ctx.task:
             meta["task"] = ctx.task["id"]
-        meta.update(additional_meta)
         desc =  "%s %s: Launched Application" % (self.name, self.version)
         tank.util.create_event_log_entry(self.tank, ctx, "Tank_App_Startup", desc, meta)
 
