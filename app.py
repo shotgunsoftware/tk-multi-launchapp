@@ -12,7 +12,10 @@ import tank
 
 
 class LaunchApplication(tank.platform.Application):
-    """Mutli App to launch applications."""
+    """
+    Multi App to launch applications.
+    """
+    
     def __init__(self, *args, **kwargs):
         super(LaunchApplication, self).__init__(*args, **kwargs)
         self._app_path = None           # Path to the application executable
@@ -36,24 +39,55 @@ class LaunchApplication(tank.platform.Application):
         # passing it in...
         sanitized_menu_name = re.sub(r"\W+", "", menu_name)
 
-        self.engine.register_command(sanitized_menu_name, self.launch_app, properties)
+        self.engine.register_command(sanitized_menu_name, self.launch_from_entity, properties)
 
-    def launch_app(self, entity_type, entity_ids):
-        """Entry point called by Shotgun menu."""
+    def launch_from_path(self, path):
+        """
+        Entry point if you want to launch an app given a particular path.
+        Note that there are no checks that the path passed is actually compatible
+        with the app that is being launched. This should be handled in logic 
+        which is external to this app. 
+        """
+        # Store data needed for bootstrapping Tank in env vars. Used in startup/menu.py
+        os.environ["TANK_FILE_TO_OPEN"] = path
+        os.environ["TANK_ENTITY_ID"] = "0"
+        os.environ["TANK_ENTITY_TYPE"] = "Undefined"
+        
+        context = self.tank.context_from_path(path)
 
+        self._launch_app(context)
+
+    def launch_from_entity(self, entity_type, entity_ids):
+        """
+        Entry point called by Shotgun menu.
+        """
+    
         if len(entity_ids) != 1:
             raise Exception("LaunchApp only accepts a single item in entity_ids.")
 
         entity_id = entity_ids[0]
-        context = self.tank.context_from_entity(entity_type, entity_id)
-        engine_name = self.get_setting("engine")
-        self._engine_path = tank.platform.get_engine_path(engine_name, self.tank, context)
-
+        
         # Try to create path for the context.
+        engine_name = self.get_setting("engine")
         try:
             self.tank.create_filesystem_structure(entity_type, entity_id, engine=engine_name)
         except tank.TankError, err:
             raise Exception("Could not create folders on disk. Error reported: %s" % err)            
+
+        os.environ["TANK_ENTITY_ID"] = str(entity_id)
+        os.environ["TANK_ENTITY_TYPE"] = entity_type
+        os.environ["TANK_FILE_TO_OPEN"] = ""
+
+        context = self.tank.context_from_entity(entity_type, entity_id)
+
+        self._launch_app(context)
+        
+
+    def _launch_app(self, context):
+        """Entry point called by Shotgun menu."""
+
+        engine_name = self.get_setting("engine")
+        self._engine_path = tank.platform.get_engine_path(engine_name, self.tank, context)
 
         # get the setting
         try:
@@ -68,9 +102,7 @@ class LaunchApplication(tank.platform.Application):
         # Set environment variables used by apps to prep Tank engine
         os.environ["TANK_ENGINE"] = engine_name
         os.environ["TANK_PROJECT_ROOT"] = self.tank.project_path
-        os.environ["TANK_ENTITY_TYPE"] = entity_type
-        os.environ["TANK_ENTITY_ID"] = str(entity_id)
-
+        
         # Prep any application specific things
         self._extra_configs = self.get_setting("extra", {})
         if engine_name == "tk-nuke":
@@ -88,21 +120,22 @@ class LaunchApplication(tank.platform.Application):
 
         # Launch the application
         self.log_debug("Launching executable '%s' with args '%s'" % (self._app_path, self._app_args))
+        
         result = self.execute_hook("hook_app_launch", app_path=self._app_path, app_args=self._app_args)
+        
         cmd = result.get("command")
-        return_code = result.get("launch_error")
+        return_code = result.get("return_code")
 
-        if cmd:
-            self.log_debug("Hook tried to launch '%s'" % cmd)
-            if return_code != 0:
-                self.log_error(
-                    "Failed to launch application (return code: %d)! This is most likely because the path "
-                    "to the executable is not set to a correct value. The command used "
-                    "is '%s' - please double check that this command is valid and update "
-                    "as needed in this app's configuration or hook. If you have any "
-                    "questions, don't hesitate to contact support on tanksupport@shotgunsoftware.com." %
-                    (return_code, cmd)
-                )
+        self.log_debug("Hook tried to launch '%s'" % cmd)
+        if return_code != 0:
+            self.log_error(
+                "Failed to launch application (return code: %s)! This is most likely because the path "
+                "to the executable is not set to a correct value. The command used "
+                "is '%s' - please double check that this command is valid and update "
+                "as needed in this app's configuration or hook. If you have any "
+                "questions, don't hesitate to contact support on tanksupport@shotgunsoftware.com." %
+                (return_code, cmd)
+            )
 
         # Write an event log entry
         self._register_event_log(context, cmd)
@@ -116,11 +149,11 @@ class LaunchApplication(tank.platform.Application):
         meta["engine"] = "%s %s" % (self.engine.name, self.engine.version) 
         meta["app"] = "%s %s" % (self.name, self.version) 
         meta["launched_engine"] = self.get_setting("engine")
-        meta["command"] = command_executed or "Unknown"
+        meta["command"] = command_executed
         meta["platform"] = self._system
         if ctx.task:
             meta["task"] = ctx.task["id"]
-        desc =  "%s %s: Launched Application" % (self.name, self.version)
+        desc =  "%s %s: Launched %s" % (self.name, self.version, self.get_setting("engine"))
         tank.util.create_event_log_entry(self.tank, ctx, "Tank_App_Startup", desc, meta)
 
 
