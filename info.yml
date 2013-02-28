@@ -28,16 +28,6 @@ configuration:
                      any user belonging to the shotgun permissions group Artist will not be
                      able to see or execute the App."
 
-    deny_platforms:
-        type: list
-        values: {type: str}
-        allows_empty: True
-        description: "An optional parameter which lets you turn off this app on certain platforms.
-                     If you don't want it to appear on the Tank action menu for a platform, just
-                     include it in the the deny_platforms list. Valid values are
-                     Windows, Mac and Linux."
-
-
     # Path information for multiple platforms
 
     windows_path:

@@ -27,11 +27,23 @@ class LaunchApplication(tank.platform.Application):
     def init_app(self):
         menu_name = self.get_setting("menu_name")
 
+        # based on the app decide which platform to show up on
+        engine_name = self.get_setting("engine")
+        if engine_name == "tk-motionbuilder":
+            deny_platforms = ["Mac", "Linux"]
+        elif engine_name == "tk-3dsmax":
+            deny_platforms = ["Mac", "Linux"]
+        elif engine_name == "tk-photoshop":
+            deny_platforms = ["Linux"]
+        else:
+            # all platforms!
+            deny_platforms = []
+
         properties = {
             "title": menu_name,
             "entity_types": self.get_setting("entity_types"),
             "deny_permissions": self.get_setting("deny_permissions"),
-            "deny_platforms": self.get_setting("deny_platforms"),
+            "deny_platforms": deny_platforms,
             "supports_multiple_selection": False
         }
 
@@ -220,11 +232,13 @@ class LaunchApplication(tank.platform.Application):
 
         startup_dir = os.path.abspath(os.path.join(self._get_app_specific_path("3dsmax"), "startup"))
         os.environ["TANK_BOOTSTRAP_SCRIPT"] = os.path.join(startup_dir, "tank_startup.py")
+        
         new_args = "-U MAXScript \"%s\"" % os.path.join(startup_dir, "init_tank.ms")
 
         if self._app_args:
-            self._app_args = " " + self._app_args
-        return new_args + self._app_args
+            self._app_args = "%s %s" % (new_args, self._app_args)
+        else:
+            self._app_args = new_args
 
 
     def prepare_hiero_launch(self):
