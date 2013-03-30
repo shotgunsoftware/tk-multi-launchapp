@@ -129,6 +129,8 @@ class LaunchApplication(tank.platform.Application):
             self.prepare_hiero_launch()
         elif engine_name == "tk-photoshop":
             self.prepare_photoshop_launch()
+        else:
+            raise Exception("The %s engine is not supported!" % engine_name)
 
         # Launch the application
         self.log_debug("Launching executable '%s' with args '%s'" % (self._app_path, self._app_args))
@@ -148,9 +150,10 @@ class LaunchApplication(tank.platform.Application):
                 "questions, don't hesitate to contact support on tanksupport@shotgunsoftware.com." %
                 (return_code, cmd)
             )
-
-        # Write an event log entry
-        self._register_event_log(context, cmd)
+            
+        else:
+            # Write an event log entry
+            self._register_event_log(context, cmd)
 
     def _register_event_log(self, ctx, command_executed):
         """
