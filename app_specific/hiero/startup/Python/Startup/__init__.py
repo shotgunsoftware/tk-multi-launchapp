@@ -12,7 +12,8 @@ import hiero.core
 
 def bootstrap_tank():
     
-    hiero.core.setLogLevel(0)
+    # function deprecated in hiero 1.7v1
+    # hiero.core.setLogLevel(0)
 
     try:
         import tank
