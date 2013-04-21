@@ -9,49 +9,40 @@ import os
 import re
 import sys
 import tank
-
+from tank import TankError
 
 class LaunchApplication(tank.platform.Application):
     """
     Multi App to launch applications.
     """
     
-    def __init__(self, *args, **kwargs):
-        super(LaunchApplication, self).__init__(*args, **kwargs)
-        self._app_path = None           # Path to the application executable
-        self._app_args = None           # Executable arguments (str)
-        self._engine_path = None        # Path to the engine to use
-        self._extra_configs = {}        # Extra per engine
-        self._system = sys.platform     # Platform this app is running on (should be in tank.platform.Application?)
-
     def init_app(self):
         menu_name = self.get_setting("menu_name")
 
         # based on the app decide which platform to show up on
         engine_name = self.get_setting("engine")
-        if engine_name == "tk-motionbuilder":
-            deny_platforms = ["Mac", "Linux"]
-        elif engine_name == "tk-3dsmax":
-            deny_platforms = ["Mac", "Linux"]
-        elif engine_name == "tk-photoshop":
-            deny_platforms = ["Linux"]
-        else:
-            # all platforms!
-            deny_platforms = []
+        
+        if engine_name == "tk-motionbuilder" or engine_name == "tk-3dsmax":
+            if sys.platform in ["darwin", "linux2"]:
+                return
+            
+        if engine_name == "tk-photoshop":
+            if sys.platform == "linux2":
+                return
 
-        properties = {
-            "title": menu_name,
-            "entity_types": self.get_setting("entity_types"),
-            "deny_permissions": self.get_setting("deny_permissions"),
-            "deny_platforms": deny_platforms,
-            "supports_multiple_selection": False
-        }
+        # the command name mustn't contain spaces and funny chars, so sanitize it.
+        # Also, should be nice for the shell engine.
+        
+        # "Launch NukeX..." -> launch_nukex
+        command_name = menu_name.lower().replace(" ", "_")
+        if command_name.endswith("..."):
+            command_name = command_name[:-3]
 
-        # the command name mustn't contain spaces and funny chars, so sanitize it before
-        # passing it in...
-        sanitized_menu_name = re.sub(r"\W+", "", menu_name)
-
-        self.engine.register_command(sanitized_menu_name, self.launch_from_entity, properties)
+        properties = { "title": menu_name,
+                       "short_name": command_name,
+                       "description": "Launches and initializes the %s environment." % engine_name }
+            
+        self.engine.register_command(command_name, self.launch_from_entity, properties)
 
     def launch_from_path(self, path):
         """
@@ -69,47 +60,54 @@ class LaunchApplication(tank.platform.Application):
 
         self._launch_app(context)
 
-    def launch_from_entity(self, entity_type, entity_ids):
+    def launch_from_entity(self):
         """
         Entry point called by Shotgun menu.
         """
-    
-        if len(entity_ids) != 1:
-            raise Exception("LaunchApp only accepts a single item in entity_ids.")
-
-        entity_id = entity_ids[0]
+        # extract a entity_type and id from the context.
+        if self.context.project is None:
+            raise TankError("Your context does not have a project defined. Cannot continue.")
+        
+        # first do project
+        entity_type = self.context.project["type"]
+        entity_id = self.context.project["id"]
+        # if there is an entity then that takes precedence
+        if self.context.entity:
+            entity_type = self.context.entity["type"]
+            entity_id = self.context.entity["id"]
+        # and if there is a task that is even better
+        if self.context.task:
+            entity_type = self.context.task["type"]
+            entity_id = self.context.task["id"]
         
         # Try to create path for the context.
         engine_name = self.get_setting("engine")
         try:
             self.tank.create_filesystem_structure(entity_type, entity_id, engine=engine_name)
         except tank.TankError, err:
-            raise Exception("Could not create folders on disk. Error reported: %s" % err)            
+            raise TankError("Could not create folders on disk. Error reported: %s" % err)            
 
         os.environ["TANK_ENTITY_ID"] = str(entity_id)
         os.environ["TANK_ENTITY_TYPE"] = entity_type
         os.environ["TANK_FILE_TO_OPEN"] = ""
 
-        context = self.tank.context_from_entity(entity_type, entity_id)
-
-        self._launch_app(context)
+        self._launch_app(self.context)
         
 
     def _launch_app(self, context):
         """Entry point called by Shotgun menu."""
 
         engine_name = self.get_setting("engine")
-        self._engine_path = tank.platform.get_engine_path(engine_name, self.tank, context)
 
         # get the setting
         try:
-            system_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[self._system]
+            system_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
             self._app_path = self.get_setting("%s_path" % system_name, "")
             self._app_args = self.get_setting("%s_args" % system_name, "")
             if not self._app_path:
                 raise KeyError()
         except KeyError:
-            raise Exception("Platform '%s' is not supported." % self._system)
+            raise TankError("Platform '%s' is not supported." % sys.platform)
 
         # Set environment variables used by apps to prep Tank engine
         os.environ["TANK_ENGINE"] = engine_name
@@ -128,9 +126,9 @@ class LaunchApplication(tank.platform.Application):
         elif engine_name == "tk-hiero":
             self.prepare_hiero_launch()
         elif engine_name == "tk-photoshop":
-            self.prepare_photoshop_launch()
+            self.prepare_photoshop_launch(context)
         else:
-            raise Exception("The %s engine is not supported!" % engine_name)
+            raise TankError("The %s engine is not supported!" % engine_name)
 
         # Launch the application
         self.log_debug("Launching executable '%s' with args '%s'" % (self._app_path, self._app_args))
@@ -165,7 +163,7 @@ class LaunchApplication(tank.platform.Application):
         meta["app"] = "%s %s" % (self.name, self.version) 
         meta["launched_engine"] = self.get_setting("engine")
         meta["command"] = command_executed
-        meta["platform"] = self._system
+        meta["platform"] = sys.platform
         if ctx.task:
             meta["task"] = ctx.task["id"]
         desc =  "%s %s: Launched %s" % (self.name, self.version, self.get_setting("engine"))
@@ -190,7 +188,7 @@ class LaunchApplication(tank.platform.Application):
 
         # Push our patched _ssl compiled module to the front of the PYTHONPATH for Windows
         # SSL Connection time fix.
-        if self._system == "win32":
+        if sys.platform == "win32":
             # maps the maya version to the ssl maya version;  (maya 2011 can use the maya 2012 _ssl.pyd)
             # the ssl directory name is the version of maya it was compiled for.
             maya_version_to_ssl_maya_version = {
@@ -251,42 +249,39 @@ class LaunchApplication(tank.platform.Application):
         tank.util.append_path_to_env_var("HIERO_PLUGIN_PATH", startup_path)
 
 
-    def prepare_photoshop_launch(self):
+    def prepare_photoshop_launch(self, context):
         """Photoshop specific pre-launch environment setup."""
 
-        if self._engine_path is None:
-            raise ValueError("Path to photoshop engine (tk-photoshop) could not be found.")
+        engine_path = tank.platform.get_engine_path("tk-photoshop", self.tank, context)        
+        if engine_path is None:
+            raise TankError("Path to photoshop engine (tk-photoshop) could not be found.")
 
         # Get the path to the python executable
-        try:
-            python_setting = {"darwin": "mac_python_path", "win32": "windows_python_path"}[self._system]
-        except KeyError:
-            raise Exception("Platform '%s' is not supported." % self._system)
+        python_setting = {"darwin": "mac_python_path", "win32": "windows_python_path"}[sys.platform]
         python_path = self._extra_configs.get(python_setting)
         if not python_path:
-            raise Exception("Missing extra setting %s" % python_setting)
+            raise TankError("Your photoshop app launch config is missing the extra setting %s" % python_setting)
 
         # get the path to extension manager
-        try:
-            manager_setting = {
-                "darwin": "mac_extension_manager_path",
-                "win32": "windows_extension_manager_path"
-            }[self._system]
-        except KeyError:
-            raise Exception("Platform '%s' is not supported." % self._system)
+        manager_setting = { "darwin": "mac_extension_manager_path",
+                            "win32": "windows_extension_manager_path" }[sys.platform]
         manager_path = self._extra_configs.get(manager_setting)
         if not manager_path:
-            raise Exception("Missing extra setting %s" % manager_setting)
+            raise TankError("Your photoshop app launch config is missing the extra setting %s!" % manager_setting)
         os.environ["TANK_PHOTOSHOP_EXTENSION_MANAGER"] = manager_path
 
         # make sure the extension is up to date
-        sys.path.append(os.path.join(self._engine_path, "bootstrap"))
-        import photoshop_extension_manager
-        photoshop_extension_manager.update()
+        sys.path.append(os.path.join(engine_path, "bootstrap"))
+        try:
+            import photoshop_extension_manager
+            photoshop_extension_manager.update()
+        except Exception, e:
+            raise TankError("Could not run the Adobe Extension Manager. Please double check your "
+                            "Tank Photoshop Settings. Error Reported: %s" % e)
 
         # Store data needed for bootstrapping Tank in env vars. Used in startup/menu.py
         os.environ["TANK_PHOTOSHOP_PYTHON"] = python_path
-        os.environ["TANK_PHOTOSHOP_BOOTSTRAP"] = os.path.join(self._engine_path, "bootstrap", "engine_bootstrap.py")
+        os.environ["TANK_PHOTOSHOP_BOOTSTRAP"] = os.path.join(engine_path, "bootstrap", "engine_bootstrap.py")
         os.environ["TANK_PHOTOSHOP_ENGINE"] = os.environ["TANK_ENGINE"]
         os.environ["TANK_PHOTOSHOP_PROJECT_ROOT"] = os.environ["TANK_PROJECT_ROOT"]
         os.environ["TANK_PHOTOSHOP_ENTITY_TYPE"] = os.environ["TANK_ENTITY_TYPE"]

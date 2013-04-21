@@ -12,24 +12,7 @@ configuration:
         type: str
         description: Name to appear on the Tank menu.
 
-    entity_types:
-        type: list
-        values: {type: shotgun_entity_type}
-        default_value: [Task]
-        description: "List of Shotgun entity types where this
-                     tank action should be visible on the Actions menu."
-
-    deny_permissions:
-        type: list
-        values: {type: shotgun_permission_group}
-        allows_empty: True
-        description: "An optional parameter which lets you limit the visibility of this app.
-                     If you for example put in ['Artist'] as the value for this parameter,
-                     any user belonging to the shotgun permissions group Artist will not be
-                     able to see or execute the App."
-
     # Path information for multiple platforms
-
     windows_path:
         type: str
         description: The path to the application executable on Windows.
@@ -74,12 +57,12 @@ requires_shotgun_fields:
 
 # More verbose description of this item 
 display_name: "Launch Application"
-description: "Launch Application from Shotgun."
+description: "Launch Applications and initialize Tank."
 
 # Required minimum versions for this item to run
 requires_shotgun_version:
-requires_core_version: "v0.12.14"
+requires_core_version: "v0.13.0"
 requires_engine_version: "v0.1.0"
 
 # the engines that this app can operate in:
-supported_engines: [tk-shotgun]
+supported_engines: 
