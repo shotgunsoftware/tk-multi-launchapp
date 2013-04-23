@@ -178,6 +178,16 @@ class LaunchApplication(tank.platform.Application):
         # Make sure Nuke can find the Tank menu
         startup_path = os.path.abspath(os.path.join(self._get_app_specific_path("nuke"), "startup"))
         tank.util.append_path_to_env_var("NUKE_PATH", startup_path)
+        
+        # it's not possible to open a nuke script from within the initialization
+        # scripts so if we have a path then we need to pass it through the start
+        # up args:
+        path_to_open = os.environ.get("TANK_FILE_TO_OPEN")
+        if path_to_open:
+            if self._app_args:
+                self._app_args = "%s %s" % (path_to_open, self._app_args)
+            else:
+                self._app_args = path_to_open
 
 
     def prepare_maya_launch(self):
