@@ -38,11 +38,21 @@ class LaunchApplication(tank.platform.Application):
         if command_name.endswith("..."):
             command_name = command_name[:-3]
 
-        properties = { "title": menu_name,
-                       "short_name": command_name,
-                       "description": "Launches and initializes the %s environment." % engine_name }
-            
-        self.engine.register_command(command_name, self.launch_from_entity, properties)
+        # special case! todo: fix this. 
+        # this is to allow this app to be loaded for sg entities of type publish
+        # but not show up on the menu.
+        # this is because typically, for published files, you want the app loaded
+        # but you want to access it via the launch_from_path() method, normally
+        # hooked up via a hook.
+        if self.engine.environment.get("name") != "shotgun_tankpublishedfile":
+
+            properties = { "title": menu_name,
+                           "short_name": command_name,
+                           "description": "Launches and initializes the %s environment." % engine_name }
+                
+            self.engine.register_command(command_name, self.launch_from_entity, properties)
+        
+        
 
     def launch_from_path(self, path):
         """
