@@ -62,17 +62,12 @@ class LaunchApplication(tank.platform.Application):
         which is external to this app. 
         """
         # Store data needed for bootstrapping Tank in env vars. Used in startup/menu.py
-        os.environ["TANK_FILE_TO_OPEN"] = path
-        os.environ["TANK_ENTITY_ID"] = "0"
-        os.environ["TANK_ENTITY_TYPE"] = "Undefined"
-        
         context = self.tank.context_from_path(path)
-
-        self._launch_app(context)
+        self._launch_app(context, path)
 
     def launch_from_entity(self):
         """
-        Entry point called by Shotgun menu.
+        Default app command. Launches an app based on the current context and settings.
         """
         # extract a entity_type and id from the context.
         if self.context.project is None:
@@ -93,23 +88,30 @@ class LaunchApplication(tank.platform.Application):
         # Try to create path for the context.
         engine_name = self.get_setting("engine")
         try:
+            self.log_debug("Creating folders for %s %s, %s" % (entity_type, entity_id, engine_name))
             self.tank.create_filesystem_structure(entity_type, entity_id, engine=engine_name)
         except tank.TankError, err:
             raise TankError("Could not create folders on disk. Error reported: %s" % err)            
 
-        os.environ["TANK_ENTITY_ID"] = str(entity_id)
-        os.environ["TANK_ENTITY_TYPE"] = entity_type
-        os.environ["TANK_FILE_TO_OPEN"] = ""
-
         self._launch_app(self.context)
         
 
-    def _launch_app(self, context):
-        """Entry point called by Shotgun menu."""
+    def _launch_app(self, context, file_to_open=None):
+        """
+        Launches an app
+        """
+        # pass down the file to open into the startup script via env var.
+        if file_to_open:
+            os.environ["TANK_FILE_TO_OPEN"] = path
 
+        # serialize the context into an env var
+        os.environ["TANK_CONTEXT"] = tank.context.serialize(context)
+
+        # Set environment variables used by apps to prep Tank engine
         engine_name = self.get_setting("engine")
+        os.environ["TANK_ENGINE"] = engine_name
 
-        # get the setting
+        # get get path and args for the app
         try:
             system_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
             self._app_path = self.get_setting("%s_path" % system_name, "")
@@ -118,15 +120,10 @@ class LaunchApplication(tank.platform.Application):
                 raise KeyError()
         except KeyError:
             raise TankError("Platform '%s' is not supported." % sys.platform)
-
-        # Set environment variables used by apps to prep Tank engine
-        os.environ["TANK_ENGINE"] = engine_name
-        os.environ["TANK_PROJECT_ROOT"] = self.tank.project_path
         
         # Prep any application specific things
-        self._extra_configs = self.get_setting("extra", {})
         if engine_name == "tk-nuke":
-            self.prepare_nuke_launch()
+            self.prepare_nuke_launch(file_to_open)
         elif engine_name == "tk-maya":
             self.prepare_maya_launch()
         elif engine_name == "tk-motionbuilder":
@@ -180,9 +177,10 @@ class LaunchApplication(tank.platform.Application):
         tank.util.create_event_log_entry(self.tank, ctx, "Tank_App_Startup", desc, meta)
 
 
-    def prepare_nuke_launch(self):
-        """Nuke specific pre-launch environment setup."""
-
+    def prepare_nuke_launch(self, file_to_open):
+        """
+        Nuke specific pre-launch environment setup.
+        """
         # Make sure Nuke can find the Tank menu
         startup_path = os.path.abspath(os.path.join(self._get_app_specific_path("nuke"), "startup"))
         tank.util.append_path_to_env_var("NUKE_PATH", startup_path)
@@ -190,17 +188,17 @@ class LaunchApplication(tank.platform.Application):
         # it's not possible to open a nuke script from within the initialization
         # scripts so if we have a path then we need to pass it through the start
         # up args:
-        path_to_open = os.environ.get("TANK_FILE_TO_OPEN")
-        if path_to_open:
+        if file_to_open:
             if self._app_args:
-                self._app_args = "%s %s" % (path_to_open, self._app_args)
+                self._app_args = "%s %s" % (file_to_open, self._app_args)
             else:
-                self._app_args = path_to_open
+                self._app_args = file_to_open
 
 
     def prepare_maya_launch(self):
-        """Maya specific pre-launch environment setup."""
-
+        """
+        Maya specific pre-launch environment setup.
+        """
         # Make sure Maya can find the Tank menu
         app_specific_path = self._get_app_specific_path("maya")
         startup_path = os.path.abspath(os.path.join(app_specific_path, "startup"))
@@ -234,8 +232,9 @@ class LaunchApplication(tank.platform.Application):
 
 
     def prepare_motionbuilder_launch(self):
-        """Maya specific pre-launch environment setup."""
-
+        """
+        Maya specific pre-launch environment setup.
+        """
         new_args = "\"%s\"" % os.path.join(self._get_app_specific_path("motionbuilder"), "startup", "init_tank.py")
 
         if self._app_args:
@@ -250,7 +249,6 @@ class LaunchApplication(tank.platform.Application):
         Make sure launch args include a maxscript to load the python engine:
         3dsmax.exe somefile.max -U MAXScript somescript.ms        
         """
-
         startup_dir = os.path.abspath(os.path.join(self._get_app_specific_path("3dsmax"), "startup"))
         os.environ["TANK_BOOTSTRAP_SCRIPT"] = os.path.join(startup_dir, "tank_startup.py")
         
@@ -263,14 +261,18 @@ class LaunchApplication(tank.platform.Application):
 
 
     def prepare_hiero_launch(self):
-        """Hiero specific pre-launch environment setup."""
-
+        """
+        Hiero specific pre-launch environment setup.
+        """
         startup_path = os.path.abspath(os.path.join(self._get_app_specific_path("hiero"), "startup"))
         tank.util.append_path_to_env_var("HIERO_PLUGIN_PATH", startup_path)
 
 
     def prepare_photoshop_launch(self, context):
-        """Photoshop specific pre-launch environment setup."""
+        """
+        Photoshop specific pre-launch environment setup.
+        """
+        extra_configs = self.get_setting("extra", {})
 
         engine_path = tank.platform.get_engine_path("tk-photoshop", self.tank, context)        
         if engine_path is None:
@@ -278,14 +280,14 @@ class LaunchApplication(tank.platform.Application):
 
         # Get the path to the python executable
         python_setting = {"darwin": "mac_python_path", "win32": "windows_python_path"}[sys.platform]
-        python_path = self._extra_configs.get(python_setting)
+        python_path = extra_configs.get(python_setting)
         if not python_path:
             raise TankError("Your photoshop app launch config is missing the extra setting %s" % python_setting)
 
         # get the path to extension manager
         manager_setting = { "darwin": "mac_extension_manager_path",
                             "win32": "windows_extension_manager_path" }[sys.platform]
-        manager_path = self._extra_configs.get(manager_setting)
+        manager_path = extra_configs.get(manager_setting)
         if not manager_path:
             raise TankError("Your photoshop app launch config is missing the extra setting %s!" % manager_setting)
         os.environ["TANK_PHOTOSHOP_EXTENSION_MANAGER"] = manager_path
@@ -302,10 +304,10 @@ class LaunchApplication(tank.platform.Application):
         # Store data needed for bootstrapping Tank in env vars. Used in startup/menu.py
         os.environ["TANK_PHOTOSHOP_PYTHON"] = python_path
         os.environ["TANK_PHOTOSHOP_BOOTSTRAP"] = os.path.join(engine_path, "bootstrap", "engine_bootstrap.py")
-        os.environ["TANK_PHOTOSHOP_ENGINE"] = os.environ["TANK_ENGINE"]
-        os.environ["TANK_PHOTOSHOP_PROJECT_ROOT"] = os.environ["TANK_PROJECT_ROOT"]
-        os.environ["TANK_PHOTOSHOP_ENTITY_TYPE"] = os.environ["TANK_ENTITY_TYPE"]
-        os.environ["TANK_PHOTOSHOP_ENTITY_ID"] = os.environ["TANK_ENTITY_ID"]
+        
+        # unused values, but the photoshop engine code still looks for these...
+        os.environ["TANK_PHOTOSHOP_ENGINE"] = "dummy_value"
+        os.environ["TANK_PHOTOSHOP_PROJECT_ROOT"] = "dummy_value"
 
         # add our startup path to the photoshop init path
         startup_path = os.path.abspath(os.path.join(self._get_app_specific_path("photoshop"), "startup"))
@@ -313,6 +315,8 @@ class LaunchApplication(tank.platform.Application):
 
 
     def _get_app_specific_path(self, app_dir):
-        """Get the path for application specific files for a given application."""
+        """
+        Get the path for application specific files for a given application.
+        """
 
         return os.path.join(self.disk_location, "app_specific", app_dir)

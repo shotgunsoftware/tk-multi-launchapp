@@ -15,59 +15,37 @@ def bootstrap_tank():
     
     try:
         import tank
-    except:
-        OpenMaya.MGlobal.displayError("Could not import Tank! Disabling Tank for now.")
+    except Exception, e:
+        OpenMaya.MGlobal.displayError("Tank: Could not import Tank! Disabling for now: %s" % e)
         return
     
     if not "TANK_ENGINE" in os.environ:
-        OpenMaya.MGlobal.displayError("Missing required environment variable TANK_ENGINE")
+        OpenMaya.MGlobal.displayError("Tank: Missing required environment variable TANK_ENGINE.")
         return
     
-    engine_name = os.environ.get("TANK_ENGINE")
-    file_to_open = os.environ.get("TANK_FILE_TO_OPEN") 
-    project_root = os.environ.get("TANK_PROJECT_ROOT")
-    entity_id = int(os.environ.get("TANK_ENTITY_ID", "0"))
-    entity_type = os.environ.get("TANK_ENTITY_TYPE")
-    
+    engine_name = os.environ.get("TANK_ENGINE") 
     try:
-        tk = tank.Tank(project_root)
+        context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception, e:
-        OpenMaya.MGlobal.displayWarning("The Tank API could not be initialized! Tank will be disabled. Details: %s" % e)
+        OpenMaya.MGlobal.displayError("Tank: Could not create context! Tank will be disabled. Details: %s" % e)
         return
-    
-    try:
-        if file_to_open:
-            ctx = tk.context_from_path(file_to_open)
-        else:
-            ctx = tk.context_from_entity(entity_type, entity_id)
-    except Exception, e:
-        OpenMaya.MGlobal.displayWarning("Could not determine the Tank Context! Disabling Tank for now. Details: %s" % e)
-        return
-    
+        
     try:    
-        engine = tank.platform.start_engine(engine_name, tk, ctx)
-    except tank.TankEngineInitError, e:
-        OpenMaya.MGlobal.displayWarning("The Tank Engine could not start! Tank will be disabled. Details: %s" % e)
+        engine = tank.platform.start_engine(engine_name, context.tank, context)
+    except Exception, e:
+        OpenMaya.MGlobal.displayError("Tank: Could not start engine: %s" % e)
+        return
     
-    # clean up temp env vars
-    if "TANK_ENGINE" in os.environ:
-        del os.environ["TANK_ENGINE"]
-    
-    if "TANK_PROJECT_ROOT" in os.environ:
-        del os.environ["TANK_PROJECT_ROOT"]
-    
-    if "TANK_ENTITY_ID" in os.environ:
-        del os.environ["TANK_ENTITY_ID"]
-    
-    if "TANK_ENTITY_TYPE" in os.environ:
-        del os.environ["TANK_ENTITY_TYPE"]
-
-    if "TANK_FILE_TO_OPEN" in os.environ:
-        del os.environ["TANK_FILE_TO_OPEN"]
-            
+    file_to_open = os.environ.get("TANK_FILE_TO_OPEN")
     if file_to_open:
         # finally open the file
         cmds.file(file_to_open, force=True, open=True)
+
+    # clean up temp env vars
+    for var in ["TANK_ENGINE", "TANK_CONTEXT", "TANK_FILE_TO_OPEN"]:
+        if var in os.environ:
+            del os.environ[var]
+
 
 cmds.evalDeferred("bootstrap_tank()")
 
