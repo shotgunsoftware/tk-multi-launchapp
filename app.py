@@ -53,6 +53,21 @@ class LaunchApplication(tank.platform.Application):
             self.engine.register_command(command_name, self.launch_from_entity, properties)
         
         
+    def launch_from_path_and_context(self, path, context):
+        """
+        Extended version of launch_from_path. This method takes an additional 
+        context parameter which is useful if you want to seed the launch context
+        with more context data than is available in the path itself. Typically
+        paths may not contain a task, so this may need to be pushed through
+        separately via the context.
+        
+        Entry point if you want to launch an app given a particular path.
+        Note that there are no checks that the path passed is actually compatible
+        with the app that is being launched. This should be handled in logic 
+        which is external to this app. 
+        """
+        self._launch_app(context, path)
+
 
     def launch_from_path(self, path):
         """
@@ -61,7 +76,6 @@ class LaunchApplication(tank.platform.Application):
         with the app that is being launched. This should be handled in logic 
         which is external to this app. 
         """
-        # Store data needed for bootstrapping Tank in env vars. Used in startup/menu.py
         context = self.tank.context_from_path(path)
         self._launch_app(context, path)
 
