@@ -66,7 +66,12 @@ class LaunchApplication(tank.platform.Application):
         with the app that is being launched. This should be handled in logic 
         which is external to this app. 
         """
-        self._launch_app(context, path)
+        if context is None:
+            # this context looks sour. So fall back on to path-only launch.
+            self.launch_from_path(path)
+        else:
+            # use given context to launch engine!
+            self._launch_app(context, path)
 
 
     def launch_from_path(self, path):
