@@ -137,9 +137,12 @@ class LaunchApplication(tank.platform.Application):
         else:
             raise TankError("The %s engine is not supported!" % engine_name)
 
+        # run before launch hook
+        self.log_debug("Running before launch hook...")
+        self.execute_hook("hook_before_app_launch")
+
         # Launch the application
         self.log_debug("Launching executable '%s' with args '%s'" % (self._app_path, self._app_args))
-        
         result = self.execute_hook("hook_app_launch", app_path=self._app_path, app_args=self._app_args)
         
         cmd = result.get("command")

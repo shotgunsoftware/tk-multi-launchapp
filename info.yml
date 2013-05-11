@@ -18,30 +18,26 @@ configuration:
         description: The path to the application executable on Windows.
     windows_args:
         type: str
-        description: The arguments to be passed to application on Windows.
+        description: The arguments to be passed to application on Windows, as a string.
         default_value: ""
     linux_path:
         type: str
         description: The path to the application executable on Linux.
     linux_args:
         type: str
-        description: The arguments to be passed to application on Linux.
+        description: The arguments to be passed to application on Linux, as a string.
         default_value: ""
     mac_path:
         type: str
         description: The path to the application executable on Mac OS X.
     mac_args:
         type: str
-        description: The arguments to be passed to application on Mac OS X.
+        description: The arguments to be passed to application on Mac OS X, as a string.
         default_value: ""
     engine:
         type: str
-        description: "The name of the Tank engine to start. When this app runs, it will first
-                     try to find an environment. This is based on the current context, e.g. the
-                     Shot or Task in Shotgun from which the action was initiated. Once the
-                     environment has been established (one of the files in the env folder in
-                     the Tank configuration), an engine will be started. This parameter
-                     specifies which engine to start."
+        description: "The name of the Tank engine to start. This is typically the application
+                      name prefixed with tk, e.g. tk-maya, tk-nuke, tk-photoshop etc."
     extra:
         type: dict
         description: "Tank engine specific extra values. These are defined per Tank engine.
@@ -50,7 +46,20 @@ configuration:
     hook_app_launch:
         type: hook
         default_value: app_launch
-        description: Called to launch the application.
+        description: "Called to launch the application. This hook contains the code that does
+                     the actual execution of the launch command and parameters. If you have 
+                     a custom launcher system in your studio, it can be handy to override 
+                     Tank's default launch behaviour."
+
+    hook_before_app_launch:
+        type: hook
+        default_value: before_app_launch
+        description: "This hook is called just before the hook_app_launch is used and can be
+                     useful if you don't want to modify the way applications are being launched
+                     (which is advanced usage and can be done by overriding the app_launch hook),
+                     but merely want to modify the environment before app launch. You may want
+                     to add additional pipeline paths, APIs or other things to the setup, or 
+                     specify additional scripts etc to run."
 
 # the Shotgun fields that this app needs in order to operate correctly
 requires_shotgun_fields:

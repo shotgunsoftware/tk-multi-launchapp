@@ -3,7 +3,7 @@
 # ----------------------------------------------------
 #
 """
-Before App Launch Hook
+App Launch Hook
 
 This hook is executed to launch the applications.
 """
