@@ -121,7 +121,7 @@ class LaunchApplication(tank.platform.Application):
         """
         # pass down the file to open into the startup script via env var.
         if file_to_open:
-            os.environ["TANK_FILE_TO_OPEN"] = path
+            os.environ["TANK_FILE_TO_OPEN"] = file_to_open
 
         # serialize the context into an env var
         os.environ["TANK_CONTEXT"] = tank.context.serialize(context)
