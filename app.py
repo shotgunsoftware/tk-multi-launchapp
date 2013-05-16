@@ -88,9 +88,16 @@ class LaunchApplication(tank.platform.Application):
         """
         Default app command. Launches an app based on the current context and settings.
         """
+
         # extract a entity_type and id from the context.
         if self.context.project is None:
             raise TankError("Your context does not have a project defined. Cannot continue.")
+        
+        # make sure that we don't launch from tasks with no step - while this is not technically
+        # incorrect, it can be confusing with any config that requires a step. 
+        if self.engine.name == "tk-shotgun" and self.context.task and self.context.step is None:
+            raise TankError("Looks like you are trying to launch from a Task that "
+                            "does not have a Pipeline Step associated! ")  
         
         # first do project
         entity_type = self.context.project["type"]
@@ -122,9 +129,11 @@ class LaunchApplication(tank.platform.Application):
         # pass down the file to open into the startup script via env var.
         if file_to_open:
             os.environ["TANK_FILE_TO_OPEN"] = file_to_open
-
+            self.log_debug("Setting TANK_FILE_TO_OPEN to '%s'" % file_to_open)
+            
         # serialize the context into an env var
         os.environ["TANK_CONTEXT"] = tank.context.serialize(context)
+        self.log_debug("Setting TANK_CONTEXT to '%r'" % context)
 
         # Set environment variables used by apps to prep Tank engine
         engine_name = self.get_setting("engine")
