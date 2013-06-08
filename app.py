@@ -44,7 +44,7 @@ class LaunchApplication(tank.platform.Application):
         # this is because typically, for published files, you want the app loaded
         # but you want to access it via the launch_from_path() method, normally
         # hooked up via a hook.
-        if self.engine.environment.get("name") != "shotgun_tankpublishedfile":
+        if self.engine.environment.get("name") not in ["shotgun_tankpublishedfile", "shotgun_publishedfile"]:
 
             properties = { "title": menu_name,
                            "short_name": command_name,
