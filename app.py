@@ -154,6 +154,8 @@ class LaunchApplication(tank.platform.Application):
             self.prepare_nuke_launch(file_to_open)
         elif engine_name == "tk-maya":
             self.prepare_maya_launch()
+        elif engine_name == "tk-softimage":
+            self.prepare_softimage_launch()
         elif engine_name == "tk-motionbuilder":
             self.prepare_motionbuilder_launch()
         elif engine_name == "tk-3dsmax":
@@ -260,6 +262,12 @@ class LaunchApplication(tank.platform.Application):
             if version_dir:
                 ssl_path = os.path.abspath(os.path.join(app_specific_path, "ssl_patch", version_dir))
                 tank.util.prepend_path_to_env_var("PYTHONPATH", ssl_path)
+
+
+    def prepare_softimage_launch(self):
+        """Softimage specific pre-launch environment setup."""
+        xsi_plugins = os.path.abspath(os.path.join(self._get_app_specific_path("softimage"), "startup", "Application", "Plugins"))
+        tank.util.append_path_to_env_var("XSI_PLUGINS", xsi_plugins)
 
 
     def prepare_motionbuilder_launch(self):
