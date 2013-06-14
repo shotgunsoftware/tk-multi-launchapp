@@ -14,7 +14,7 @@ def bootstrap_tank():
     try:
         import tank
     except Exception, e:
-        hiero.core.error("Tank: Could not import Tank! Disabling for now: %s" % e)
+        hiero.core.log.error("Tank: Could not import Tank! Disabling for now: %s" % e)
         return
     
     if not "TANK_ENGINE" in os.environ:
@@ -25,13 +25,13 @@ def bootstrap_tank():
     try:
         context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception, e:
-         hiero.core.error("Tank: Could not create context! Tank will be disabled. Details: %s" % e)
+         hiero.core.log.error("Tank: Could not create context! Tank will be disabled. Details: %s" % e)
          return
         
     try:    
         engine = tank.platform.start_engine(engine_name, context.tank, context)
     except Exception, e:
-        hiero.core.error("Tank: Could not start engine: %s" % e)
+        hiero.core.log.error("Tank: Could not start engine: %s" % e)
         return
     
     # clean up temp env vars
