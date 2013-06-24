@@ -10,11 +10,11 @@ if( python != undefined ) then
     )
     else
     ( 
-        print "Tank: Environment variable TANK_BOOTSTRAP_SCRIPT not set." 
+        print "Shotgun: Environment variable TANK_BOOTSTRAP_SCRIPT not set." 
     )
 )
 else 
 ( 
-    print "Tank: Could not find Blur Python interpreter in 3dsmax System." 
+    print "Shotgun: Could not find Blur Python interpreter in 3dsmax System." 
 )
 

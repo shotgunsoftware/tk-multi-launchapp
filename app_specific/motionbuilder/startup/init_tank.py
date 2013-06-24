@@ -12,13 +12,13 @@ def bootstrap_tank():
     try:
         import tank
     except Exception, e:
-        FBMessageBox("Tank Error", 
-                     "Could not import Tank! Disabling for now: %s" % e, 
+        FBMessageBox("Shotgun: Error", 
+                     "Could not import sgtk! Disabling for now: %s" % e, 
                      "Ok")
         return
 
     if not "TANK_ENGINE" in os.environ:
-        FBMessageBox("Tank Error", 
+        FBMessageBox("Shotgun: Error", 
                      "Missing required environment variable TANK_ENGINE.", 
                      "Ok")
         return
@@ -27,8 +27,8 @@ def bootstrap_tank():
     try:
         context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception, e:
-        FBMessageBox("Tank Error",
-                     "Could not create context! Tank will be disabled. Details: %s" % e,
+        FBMessageBox("Shotgun: Error",
+                     "Could not create context! Shotgun pipeline toolkit will be disabled. Details: %s" % e,
                      "Ok")
         return
 
@@ -36,7 +36,7 @@ def bootstrap_tank():
         engine = tank.platform.start_engine(engine_name, context.tank, context)
     except Exception, e:
         FBMessageBox(
-            "Tank Error",
+            "Shotgun: Error",
             "Could not start engine: %s" % e,
             "Ok"
         )

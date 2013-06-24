@@ -16,12 +16,12 @@ true = 1
 
 
 def XSILoadPlugin(in_reg):
-    in_reg.Author = "Tank"
-    in_reg.Name = "TankInit"
+    in_reg.Author = "Shotgun"
+    in_reg.Name = "SgtkInit"
     in_reg.Major = 1
     in_reg.Minor = 0
 
-    in_reg.RegisterEvent("Tank_OnStartup", constants.siOnStartup)
+    in_reg.RegisterEvent("Sgtk_OnStartup", constants.siOnStartup)
     #RegistrationInsertionPoint - do not remove this line
 
     return true
@@ -32,28 +32,28 @@ def XSIUnloadPlugin(in_reg):
     return true
 
 
-def Tank_OnStartup_OnEvent(in_ctxt):
+def Sgtk_OnStartup_OnEvent(in_ctxt):
     try:
         import tank
     except Exception, e:
-        Application.LogMessage("Tank: Could not import Tank! Disabling for now: %s" % e, constants.siError)
+        Application.LogMessage("Shotgun: Could not import sgtk! Disabling for now: %s" % e, constants.siError)
         return
 
     if not "TANK_ENGINE" in os.environ:
-        Application.LogMessage("Tank: Missing required environment variable TANK_ENGINE.", constants.siError)
+        Application.LogMessage("Shotgun: Missing required environment variable TANK_ENGINE.", constants.siError)
         return
 
     engine_name = os.environ.get("TANK_ENGINE")
     try:
         context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception, e:
-        Application.LogMessage("Tank: Could not create context! Tank will be disabled. Details: %s" % e, constants.siError)
+        Application.LogMessage("Shotgun: Could not create context! Shotgun pipeline toolkit will be disabled. Details: %s" % e, constants.siError)
         return
 
     try:
         engine = tank.platform.start_engine(engine_name, context.tank, context)
     except Exception, e:
-        Application.LogMessage("Tank: Could not start engine: %s" % e, constants.siError)
+        Application.LogMessage("Shotgun: Could not start engine: %s" % e, constants.siError)
         return
 
     file_to_open = os.environ.get("TANK_FILE_TO_OPEN")

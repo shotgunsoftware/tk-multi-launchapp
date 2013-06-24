@@ -13,24 +13,24 @@ def bootstrap_tank():
     try:
         import tank
     except Exception, e:
-        mxs.messageBox("Tank: Could not import Tank! Disabling for now: %s" % e)
+        mxs.messageBox("Shotgun: Could not import sgtk! Disabling for now: %s" % e)
         return
 
     if not "TANK_ENGINE" in os.environ:
-        mxs.messageBox("Tank: Missing required environment variable TANK_ENGINE.")
+        mxs.messageBox("Shotgun: Missing required environment variable TANK_ENGINE.")
         return
 
     engine_name = os.environ.get("TANK_ENGINE")
     try:
         context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception, e:
-        mxs.messageBox("Tank: Could not create context! Tank will be disabled. Details: %s" % e)
+        mxs.messageBox("Shotgun: Could not create context! Shotgun pipeline toolkit will be disabled. Details: %s" % e)
         return
 
     try:
         engine = tank.platform.start_engine(engine_name, context.tank, context)
     except Exception, e:
-        mxs.messageBox("Tank: Could not start engine: %s" % e)
+        mxs.messageBox("Shotgun: Could not start engine: %s" % e)
         return
 
     # clean up temp env vars

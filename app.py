@@ -338,7 +338,7 @@ class LaunchApplication(tank.platform.Application):
             photoshop_extension_manager.update()
         except Exception, e:
             raise TankError("Could not run the Adobe Extension Manager. Please double check your "
-                            "Tank Photoshop Settings. Error Reported: %s" % e)
+                            "Shotgun pipeline toolkit Photoshop Settings. Error Reported: %s" % e)
 
         # Store data needed for bootstrapping Tank in env vars. Used in startup/menu.py
         os.environ["TANK_PHOTOSHOP_PYTHON"] = python_path

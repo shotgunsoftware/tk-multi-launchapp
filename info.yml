@@ -10,7 +10,7 @@ configuration:
 
     menu_name:
         type: str
-        description: Name to appear on the Tank menu.
+        description: Name to appear on the Shotgun menu.
 
     # Path information for multiple platforms
     windows_path:
@@ -36,11 +36,11 @@ configuration:
         default_value: ""
     engine:
         type: str
-        description: "The name of the Tank engine to start. This is typically the application
+        description: "The name of the Shotgun engine to start. This is typically the application
                       name prefixed with tk, e.g. tk-maya, tk-nuke, tk-photoshop etc."
     extra:
         type: dict
-        description: "Tank engine specific extra values. These are defined per Tank engine.
+        description: "Shotgun engine specific extra values. These are defined per Shotgun engine.
                      Please look in the app documentation for more details."
 
     hook_app_launch:
