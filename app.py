@@ -185,7 +185,7 @@ class LaunchApplication(tank.platform.Application):
                 "to the executable is not set to a correct value. The command used "
                 "is '%s' - please double check that this command is valid and update "
                 "as needed in this app's configuration or hook. If you have any "
-                "questions, don't hesitate to contact support on tanksupport@shotgunsoftware.com." %
+                "questions, don't hesitate to contact support on sgtksupport@shotgunsoftware.com." %
                 (return_code, cmd)
             )
             
