@@ -41,7 +41,7 @@ def bootstrap_tank():
     try:
         context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception, e:
-        nuke.warning("Shotgun: Could not create context! Shotgun pipeline toolkit will be disabled. Details: %s" % e)
+        nuke.warning("Shotgun: Could not create context! Shotgun Pipeline Toolkit will be disabled. Details: %s" % e)
         return
 
     try:    

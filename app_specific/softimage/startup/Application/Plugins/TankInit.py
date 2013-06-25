@@ -47,7 +47,7 @@ def Sgtk_OnStartup_OnEvent(in_ctxt):
     try:
         context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception, e:
-        Application.LogMessage("Shotgun: Could not create context! Shotgun pipeline toolkit will be disabled. Details: %s" % e, constants.siError)
+        Application.LogMessage("Shotgun: Could not create context! Shotgun Pipeline Toolkit will be disabled. Details: %s" % e, constants.siError)
         return
 
     try:
