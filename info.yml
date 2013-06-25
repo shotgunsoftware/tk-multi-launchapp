@@ -66,7 +66,7 @@ requires_shotgun_fields:
 
 # More verbose description of this item 
 display_name: "Launch Application"
-description: "Launch Applications and initialize Tank."
+description: "Launch Applications and initialize the Shotgun Pipeline Toolkit."
 
 # Required minimum versions for this item to run
 requires_shotgun_version:

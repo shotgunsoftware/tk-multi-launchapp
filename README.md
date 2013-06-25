@@ -1,4 +1,4 @@
 tk-multi-launchapp
 ==================
 
-Tank Multi Application Launcher
+Shotgun Pipeline Toolkit Multi Application Launcher
