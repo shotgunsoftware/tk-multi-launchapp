@@ -164,6 +164,8 @@ class LaunchApplication(tank.platform.Application):
             self.prepare_hiero_launch()
         elif engine_name == "tk-photoshop":
             self.prepare_photoshop_launch(context)
+        elif engine_name == "tk-houdini":
+            self.prepare_houdini_launch(context)
         else:
             raise TankError("The %s engine is not supported!" % engine_name)
 
@@ -305,6 +307,25 @@ class LaunchApplication(tank.platform.Application):
         """
         startup_path = os.path.abspath(os.path.join(self._get_app_specific_path("hiero"), "startup"))
         tank.util.append_path_to_env_var("HIERO_PLUGIN_PATH", startup_path)
+
+    def prepare_houdini_launch(self, context):
+        """
+        Houdini specific pre-launch environment setup.
+        """
+        engine_path = tank.platform.get_engine_path("tk-houdini", self.tank, context)
+        if engine_path is None:
+            raise TankError("Path to houdini engine (tk-houdini) could not be found.")
+
+        # let the houdini engine take care of initializing itself
+        sys.path.append(os.path.join(engine_path, "python"))
+        try:
+            import tk_houdini
+            tk_houdini.bootstrap.bootstrap(self.tank, context)
+        except Exception, e:
+            import traceback
+            print traceback.format_exc()
+            raise TankError("Could not run the Houdini bootstrap.  Please double check your "
+                            "Tank Houdini Settings.  Error Reported: %s" % e)
 
 
     def prepare_photoshop_launch(self, context):
