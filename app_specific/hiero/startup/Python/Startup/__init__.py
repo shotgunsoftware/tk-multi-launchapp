@@ -33,12 +33,16 @@ def bootstrap_tank():
     except Exception, e:
         hiero.core.log.error("Shotgun: Could not start engine: %s" % e)
         return
+        
+    # check if we should open a file
+    file_to_open = os.environ.get("TANK_FILE_TO_OPEN")
+    if file_to_open:
+        hiero.core.openProject(file_to_open.replace(os.path.sep, "/"))
     
     # clean up temp env vars
     for var in ["TANK_ENGINE", "TANK_CONTEXT", "TANK_FILE_TO_OPEN"]:
         if var in os.environ:
             del os.environ[var]
-    
-    # todo: add support for opening a file!
+
 
 bootstrap_tank()
