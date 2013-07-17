@@ -30,6 +30,10 @@ class LaunchApplication(tank.platform.Application):
             if sys.platform == "linux2":
                 return
 
+        if engine_name == "tk-houdini":
+            if sys.platform == "darwin":
+                return
+
         # the command name mustn't contain spaces and funny chars, so sanitize it.
         # Also, should be nice for the shell engine.
         
