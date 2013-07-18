@@ -22,7 +22,7 @@ class LaunchApplication(tank.platform.Application):
         # based on the app decide which platform to show up on
         engine_name = self.get_setting("engine")
         
-        if engine_name == "tk-motionbuilder" or engine_name == "tk-3dsmax":
+        if engine_name in ["tk-motionbuilder", "tk-3dsmax", "tk-softimage"]:
             if sys.platform in ["darwin", "linux2"]:
                 return
             
