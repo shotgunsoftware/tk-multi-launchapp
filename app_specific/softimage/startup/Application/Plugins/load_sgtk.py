@@ -42,7 +42,7 @@ def XSIUnloadPlugin(in_reg):
     Application.LogMessage(str(in_reg.Name) + str(" has been unloaded."),constants.siVerbose)
     return true
 
-def LoadShotgunPiplineToolkit_OnEvent(in_ctxt):
+def LoadShotgunPipelineToolkit_OnEvent(in_ctxt):
     """
     Initialize event - this attempts to bootstrap the
     engine and load an initial file if specified
