@@ -31,7 +31,7 @@ def XSILoadPlugin(in_reg):
     in_reg.Minor = 1
 
     # register our custom startup event to bootstrap sgtk
-    in_reg.RegisterEvent("Load Shotgun Pipline Toolkit", constants.siOnStartup)
+    in_reg.RegisterEvent("Load Shotgun Pipeline Toolkit", constants.siOnStartup)
 
     return true
 
