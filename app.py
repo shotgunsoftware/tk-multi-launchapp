@@ -57,7 +57,7 @@ class LaunchApplication(tank.platform.Application):
         # hooked up via a hook.
         if self.engine.environment.get("name") not in ["shotgun_tankpublishedfile", 
                                                        "shotgun_publishedfile",
-                                                       "version"]:
+                                                       "shotgun_version"]:
 
             properties = { "title": menu_name,
                            "short_name": command_name,
