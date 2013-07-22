@@ -52,10 +52,12 @@ class LaunchApplication(tank.platform.Application):
         # special case! todo: fix this. 
         # this is to allow this app to be loaded for sg entities of type publish
         # but not show up on the menu.
-        # this is because typically, for published files, you want the app loaded
+        # this is because typically, for published files, and versions, you want the app loaded
         # but you want to access it via the launch_from_path() method, normally
         # hooked up via a hook.
-        if self.engine.environment.get("name") not in ["shotgun_tankpublishedfile", "shotgun_publishedfile"]:
+        if self.engine.environment.get("name") not in ["shotgun_tankpublishedfile", 
+                                                       "shotgun_publishedfile",
+                                                       "shotgun_version"]:
 
             properties = { "title": menu_name,
                            "short_name": command_name,
