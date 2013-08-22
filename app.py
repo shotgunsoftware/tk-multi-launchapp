@@ -54,7 +54,7 @@ class LaunchApplication(tank.platform.Application):
 
             properties = { "title": menu_name,
                            "short_name": command_name,
-                           "description": "Launches and initializes the an application environment." }
+                           "description": "Launches and initializes an application environment." }
                 
             self.engine.register_command(command_name, self.launch_from_entity, properties)
         
@@ -147,15 +147,9 @@ class LaunchApplication(tank.platform.Application):
         engine_name = self.get_setting("engine")
     
         # get get path and args for the app
-        try:
-            system_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
-            app_path = self.get_setting("%s_path" % system_name, "")
-            app_args = self.get_setting("%s_args" % system_name, "")
-            if not app_path:
-                raise KeyError()
-        except KeyError:
-            raise TankError("Platform '%s' is not supported." % sys.platform)
-
+        system_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
+        app_path = self.get_setting("%s_path" % system_name, "")
+        app_args = self.get_setting("%s_args" % system_name, "")
         
         if engine_name and engine_name != "":
             

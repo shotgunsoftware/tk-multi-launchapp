@@ -43,7 +43,9 @@ configuration:
     engine:
         type: str
         description: "The name of the Shotgun engine to start. This is typically the application
-                      name prefixed with tk, e.g. tk-maya, tk-nuke, tk-photoshop etc."
+                      name prefixed with tk, e.g. tk-maya, tk-nuke, tk-photoshop etc. If you set 
+                      this to an empty string, no toolkit engine will be started, meaning that 
+                      you can launch applications that do not have toolkit engines set up."
     extra:
         type: dict
         description: "Shotgun engine specific extra values. These are defined per Shotgun engine.
