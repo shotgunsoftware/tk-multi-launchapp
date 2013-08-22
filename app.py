@@ -24,23 +24,16 @@ class LaunchApplication(tank.platform.Application):
     """
     
     def init_app(self):
+
         menu_name = self.get_setting("menu_name")
-
-        # based on the app decide which platform to show up on
-        engine_name = self.get_setting("engine")
         
-        if engine_name in ["tk-motionbuilder", "tk-3dsmax", "tk-softimage"]:
-            if sys.platform in ["darwin", "linux2"]:
-                return
-            
-        if engine_name == "tk-photoshop":
-            if sys.platform == "linux2":
-                return
-
-        if engine_name == "tk-houdini":
-            if sys.platform == "darwin":
-                return
-
+        path_setting = {"linux2": "linux_path", "darwin": "mac_path", "win32": "windows_path"}[sys.platform]
+        app_path = self.get_setting(path_setting)        
+        
+        if app_path is None or app_path == "":
+            # no application path defined for this os. So don't register a menu item!
+            return
+        
         # the command name mustn't contain spaces and funny chars, so sanitize it.
         # Also, should be nice for the shell engine.
         
@@ -61,7 +54,7 @@ class LaunchApplication(tank.platform.Application):
 
             properties = { "title": menu_name,
                            "short_name": command_name,
-                           "description": "Launches and initializes the %s environment." % engine_name }
+                           "description": "Launches and initializes the an application environment." }
                 
             self.engine.register_command(command_name, self.launch_from_entity, properties)
         
@@ -126,11 +119,22 @@ class LaunchApplication(tank.platform.Application):
         
         # Try to create path for the context.
         engine_name = self.get_setting("engine")
-        try:
-            self.log_debug("Creating folders for %s %s, %s" % (entity_type, entity_id, engine_name))
-            self.tank.create_filesystem_structure(entity_type, entity_id, engine=engine_name)
-        except tank.TankError, err:
-            raise TankError("Could not create folders on disk. Error reported: %s" % err)            
+        
+        if engine_name and engine_name != "":
+            # we are starting an engine, so do deferred folder creation
+            try:
+                self.log_debug("Creating folders for %s %s, %s" % (entity_type, entity_id, engine_name))
+                self.tank.create_filesystem_structure(entity_type, entity_id, engine=engine_name)
+            except tank.TankError, err:
+                raise TankError("Could not create folders on disk. Error reported: %s" % err)            
+
+        else:
+            # we are not starting and engine, so do normal folder creation
+            try:
+                self.log_debug("Creating folders for %s %s" % (entity_type, entity_id))
+                self.tank.create_filesystem_structure(entity_type, entity_id)
+            except tank.TankError, err:
+                raise TankError("Could not create folders on disk. Error reported: %s" % err)            
 
         self._launch_app(self.context)
         
@@ -139,56 +143,62 @@ class LaunchApplication(tank.platform.Application):
         """
         Launches an app
         """
-        # pass down the file to open into the startup script via env var.
-        if file_to_open:
-            os.environ["TANK_FILE_TO_OPEN"] = file_to_open
-            self.log_debug("Setting TANK_FILE_TO_OPEN to '%s'" % file_to_open)
-            
-        # serialize the context into an env var
-        os.environ["TANK_CONTEXT"] = tank.context.serialize(context)
-        self.log_debug("Setting TANK_CONTEXT to '%r'" % context)
-
-        # Set environment variables used by apps to prep Tank engine
+        
         engine_name = self.get_setting("engine")
-        os.environ["TANK_ENGINE"] = engine_name
-
+    
         # get get path and args for the app
         try:
             system_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
-            self._app_path = self.get_setting("%s_path" % system_name, "")
-            self._app_args = self.get_setting("%s_args" % system_name, "")
-            if not self._app_path:
+            app_path = self.get_setting("%s_path" % system_name, "")
+            app_args = self.get_setting("%s_args" % system_name, "")
+            if not app_path:
                 raise KeyError()
         except KeyError:
             raise TankError("Platform '%s' is not supported." % sys.platform)
+
         
-        # Prep any application specific things
-        if engine_name == "tk-nuke":
-            self.prepare_nuke_launch(file_to_open)
-        elif engine_name == "tk-maya":
-            self.prepare_maya_launch()
-        elif engine_name == "tk-softimage":
-            self.prepare_softimage_launch()
-        elif engine_name == "tk-motionbuilder":
-            self.prepare_motionbuilder_launch()
-        elif engine_name == "tk-3dsmax":
-            self.prepare_3dsmax_launch()
-        elif engine_name == "tk-hiero":
-            self.prepare_hiero_launch()
-        elif engine_name == "tk-photoshop":
-            self.prepare_photoshop_launch(context)
-        elif engine_name == "tk-houdini":
-            self.prepare_houdini_launch(context)
-        else:
-            raise TankError("The %s engine is not supported!" % engine_name)
+        if engine_name and engine_name != "":
+            
+            # we have an engine we should start as part of this app launch
+            # pass down the file to open into the startup script via env var.
+            if file_to_open:
+                os.environ["TANK_FILE_TO_OPEN"] = file_to_open
+                self.log_debug("Setting TANK_FILE_TO_OPEN to '%s'" % file_to_open)
+                
+            # serialize the context into an env var
+            os.environ["TANK_CONTEXT"] = tank.context.serialize(context)
+            self.log_debug("Setting TANK_CONTEXT to '%r'" % context)
+    
+            # Set environment variables used by apps to prep Tank engine
+            os.environ["TANK_ENGINE"] = engine_name
+                
+            # Prep any application specific things
+            if engine_name == "tk-nuke":
+                self.prepare_nuke_launch(file_to_open)
+            elif engine_name == "tk-maya":
+                self.prepare_maya_launch(app_path)
+            elif engine_name == "tk-softimage":
+                self.prepare_softimage_launch()
+            elif engine_name == "tk-motionbuilder":
+                self.prepare_motionbuilder_launch()
+            elif engine_name == "tk-3dsmax":
+                self.prepare_3dsmax_launch()
+            elif engine_name == "tk-hiero":
+                self.prepare_hiero_launch()
+            elif engine_name == "tk-photoshop":
+                self.prepare_photoshop_launch(context)
+            elif engine_name == "tk-houdini":
+                self.prepare_houdini_launch(context)
+            else:
+                raise TankError("The %s engine is not supported!" % engine_name)
 
         # run before launch hook
         self.log_debug("Running before launch hook...")
         self.execute_hook("hook_before_app_launch")
 
         # Launch the application
-        self.log_debug("Launching executable '%s' with args '%s'" % (self._app_path, self._app_args))
-        result = self.execute_hook("hook_app_launch", app_path=self._app_path, app_args=self._app_args)
+        self.log_debug("Launching executable '%s' with args '%s'" % (app_path, app_args))
+        result = self.execute_hook("hook_app_launch", app_path=app_path, app_args=app_args)
         
         cmd = result.get("command")
         return_code = result.get("return_code")
@@ -221,7 +231,7 @@ class LaunchApplication(tank.platform.Application):
         meta["platform"] = sys.platform
         if ctx.task:
             meta["task"] = ctx.task["id"]
-        desc =  "%s %s: Launched %s" % (self.name, self.version, self.get_setting("engine"))
+        desc =  "%s %s: %s" % (self.name, self.version, self.get_setting("menu_name"))
         tank.util.create_event_log_entry(self.tank, ctx, "Tank_App_Startup", desc, meta)
 
 
@@ -243,7 +253,7 @@ class LaunchApplication(tank.platform.Application):
                 self._app_args = file_to_open
 
 
-    def prepare_maya_launch(self):
+    def prepare_maya_launch(self, app_path):
         """
         Maya specific pre-launch environment setup.
         """
@@ -268,7 +278,7 @@ class LaunchApplication(tank.platform.Application):
             for year in sorted(maya_version_to_ssl_maya_version, reverse=True):
                 # Test for the year in the path.
                 # maya -v returns an empty line with maya 2013.
-                if year in self._app_path:
+                if year in app_path:
                     version_dir = maya_version_to_ssl_maya_version[year]
                     break
 
