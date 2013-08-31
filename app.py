@@ -27,10 +27,10 @@ class LaunchApplication(tank.platform.Application):
 
         menu_name = self.get_setting("menu_name")
         
-        path_setting = {"linux2": "linux_path", "darwin": "mac_path", "win32": "windows_path"}[sys.platform]
-        app_path = self.get_setting(path_setting)        
-        
-        if app_path is None or app_path == "":
+        # get the path setting for this platform:
+        platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
+        self._app_path = self.get_setting("%s_path" % platform_name, "")
+        if not self._app_path:
             # no application path defined for this os. So don't register a menu item!
             return
         
@@ -120,7 +120,7 @@ class LaunchApplication(tank.platform.Application):
         # Try to create path for the context.
         engine_name = self.get_setting("engine")
         
-        if engine_name and engine_name != "":
+        if engine_name:
             # we are starting an engine, so do deferred folder creation
             try:
                 self.log_debug("Creating folders for %s %s, %s" % (entity_type, entity_id, engine_name))
@@ -143,15 +143,12 @@ class LaunchApplication(tank.platform.Application):
         """
         Launches an app
         """
+        # get the app args:
+        platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
+        app_args = self.get_setting("%s_args" % platform_name, "")
         
         engine_name = self.get_setting("engine")
-    
-        # get get path and args for the app
-        system_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
-        app_path = self.get_setting("%s_path" % system_name, "")
-        app_args = self.get_setting("%s_args" % system_name, "")
-        
-        if engine_name and engine_name != "":
+        if engine_name:
             
             # we have an engine we should start as part of this app launch
             # pass down the file to open into the startup script via env var.
@@ -168,15 +165,15 @@ class LaunchApplication(tank.platform.Application):
                 
             # Prep any application specific things
             if engine_name == "tk-nuke":
-                self.prepare_nuke_launch(file_to_open)
+                app_args = self.prepare_nuke_launch(file_to_open, app_args)
             elif engine_name == "tk-maya":
-                self.prepare_maya_launch(app_path)
+                self.prepare_maya_launch()
             elif engine_name == "tk-softimage":
                 self.prepare_softimage_launch()
             elif engine_name == "tk-motionbuilder":
-                self.prepare_motionbuilder_launch()
+                app_args = self.prepare_motionbuilder_launch(app_args)
             elif engine_name == "tk-3dsmax":
-                self.prepare_3dsmax_launch()
+                app_args = self.prepare_3dsmax_launch(app_args)
             elif engine_name == "tk-hiero":
                 self.prepare_hiero_launch()
             elif engine_name == "tk-photoshop":
@@ -191,8 +188,8 @@ class LaunchApplication(tank.platform.Application):
         self.execute_hook("hook_before_app_launch")
 
         # Launch the application
-        self.log_debug("Launching executable '%s' with args '%s'" % (app_path, app_args))
-        result = self.execute_hook("hook_app_launch", app_path=app_path, app_args=app_args)
+        self.log_debug("Launching executable '%s' with args '%s'" % (self._app_path, app_args))
+        result = self.execute_hook("hook_app_launch", app_path=self._app_path, app_args=app_args)
         
         cmd = result.get("command")
         return_code = result.get("return_code")
@@ -229,7 +226,7 @@ class LaunchApplication(tank.platform.Application):
         tank.util.create_event_log_entry(self.tank, ctx, "Tank_App_Startup", desc, meta)
 
 
-    def prepare_nuke_launch(self, file_to_open):
+    def prepare_nuke_launch(self, file_to_open, app_args):
         """
         Nuke specific pre-launch environment setup.
         """
@@ -241,13 +238,14 @@ class LaunchApplication(tank.platform.Application):
         # scripts so if we have a path then we need to pass it through the start
         # up args:
         if file_to_open:
-            if self._app_args:
-                self._app_args = "%s %s" % (file_to_open, self._app_args)
+            if app_args:
+                app_args = "%s %s" % (file_to_open, app_args)
             else:
-                self._app_args = file_to_open
+                app_args = file_to_open
 
+        return app_args
 
-    def prepare_maya_launch(self, app_path):
+    def prepare_maya_launch(self):
         """
         Maya specific pre-launch environment setup.
         """
@@ -272,7 +270,7 @@ class LaunchApplication(tank.platform.Application):
             for year in sorted(maya_version_to_ssl_maya_version, reverse=True):
                 # Test for the year in the path.
                 # maya -v returns an empty line with maya 2013.
-                if year in app_path:
+                if year in self._app_path:
                     version_dir = maya_version_to_ssl_maya_version[year]
                     break
 
@@ -289,18 +287,20 @@ class LaunchApplication(tank.platform.Application):
         tank.util.append_path_to_env_var("XSI_PLUGINS", xsi_plugins)
 
 
-    def prepare_motionbuilder_launch(self):
+    def prepare_motionbuilder_launch(self, app_args):
         """
         Maya specific pre-launch environment setup.
         """
         new_args = "\"%s\"" % os.path.join(self._get_app_specific_path("motionbuilder"), "startup", "init_tank.py")
 
-        if self._app_args:
-            self._app_args += " "
-        self._app_args += new_args
+        if app_args:
+            app_args = "%s %s" % (app_args, new_args)
+        else:
+            app_args = new_args
+            
+        return app_args
 
-
-    def prepare_3dsmax_launch(self):
+    def prepare_3dsmax_launch(self, app_args):
         """
         3DSMax specific pre-launch environment setup.
 
@@ -312,10 +312,12 @@ class LaunchApplication(tank.platform.Application):
         
         new_args = "-U MAXScript \"%s\"" % os.path.join(startup_dir, "init_tank.ms")
 
-        if self._app_args:
-            self._app_args = "%s %s" % (new_args, self._app_args)
+        if app_args:
+            app_args = "%s %s" % (new_args, app_args)
         else:
-            self._app_args = new_args
+            app_args = new_args
+            
+        return app_args
 
 
     def prepare_hiero_launch(self):
