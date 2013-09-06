@@ -223,7 +223,7 @@ class LaunchApplication(tank.platform.Application):
         if ctx.task:
             meta["task"] = ctx.task["id"]
         desc =  "%s %s: %s" % (self.name, self.version, self.get_setting("menu_name"))
-        tank.util.create_event_log_entry(self.tank, ctx, "Tank_App_Startup", desc, meta)
+        tank.util.create_event_log_entry(self.tank, ctx, "Toolkit_App_Startup", desc, meta)
 
 
     def prepare_nuke_launch(self, file_to_open, app_args):
