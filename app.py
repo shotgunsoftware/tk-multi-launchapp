@@ -174,6 +174,8 @@ class LaunchApplication(tank.platform.Application):
                 app_args = self.prepare_motionbuilder_launch(app_args)
             elif engine_name == "tk-3dsmax":
                 app_args = self.prepare_3dsmax_launch(app_args)
+            elif engine_name == "tk-3dsmax-plus":
+                app_args = self.prepare_3dsmax_plus_launch(context, app_args)
             elif engine_name == "tk-hiero":
                 self.prepare_hiero_launch()
             elif engine_name == "tk-photoshop":
@@ -317,6 +319,28 @@ class LaunchApplication(tank.platform.Application):
         else:
             app_args = new_args
             
+        return app_args
+
+
+    def prepare_3dsmax_plus_launch(self, context, app_args):
+        """
+        3DSMax Plus specific pre-launch environment setup.
+
+        Make sure launch args include a bootstrap to load the python engine:
+        3dsmax.exe somefile.max -U PythonHost somescript.py
+        """
+        engine_path = tank.platform.get_engine_path("tk-3dsmax-plus", self.tank, context)
+        if engine_path is None:
+            raise TankError("Path to 3dsmax-plus engine (tk-3dsmax-plus) could not be found.")
+
+        startup_file = os.path.abspath(os.path.join(engine_path, "python", "startup", "bootstrap.py"))
+        new_args = "-U PythonHost \"%s\"" % startup_file
+
+        if app_args:
+            app_args = "%s %s" % (new_args, app_args)
+        else:
+            app_args = new_args
+
         return app_args
 
 
