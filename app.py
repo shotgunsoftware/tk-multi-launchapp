@@ -284,9 +284,26 @@ class LaunchApplication(tank.platform.Application):
 
 
     def prepare_softimage_launch(self):
-        """Softimage specific pre-launch environment setup."""
+        """
+        Softimage specific pre-launch environment setup.
+        """
+        # add the startup plug-in to the XSI_PLUGINS path:
         xsi_plugins = os.path.abspath(os.path.join(self._get_app_specific_path("softimage"), "startup", "Application", "Plugins"))
         tank.util.append_path_to_env_var("XSI_PLUGINS", xsi_plugins)
+        
+        # On Linux, Softimage 2013 is missing libssl and sqlite3 libraries.  We have some that 
+        # we think will work so lets _append_ them to the LD_LIBRARY_PATH & PYTHONPATH before 
+        # launching Softimage.  Note, these can be overriden by specifying a location earlier 
+        # in the LD_LIBRARY_PATH & PYTHONPATH if needed
+        if sys.platform == "linux2":
+            # Note: we can't reliably check the version as the path on linux 
+            # is typically just 'xsi'.  This may become a problem if we start
+            # to support 2014 and beyond...
+            #
+            # if "Softimage_2013" in self._app_path:
+            lib_path = os.path.abspath(os.path.join(self._get_app_specific_path("softimage"), "linux", "lib"))
+            tank.util.append_path_to_env_var("LD_LIBRARY_PATH", lib_path)
+            tank.util.append_path_to_env_var("PYTHONPATH", lib_path)
 
 
     def prepare_motionbuilder_launch(self, app_args):
