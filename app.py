@@ -392,11 +392,27 @@ class LaunchApplication(tank.platform.Application):
         """
         Photoshop specific pre-launch environment setup.
         """
-        extra_configs = self.get_setting("extra", {})
-
-        engine_path = tank.platform.get_engine_path("tk-photoshop", self.tank, context)        
+        engine_path = tank.platform.get_engine_path("tk-photoshop", self.tank, context)
         if engine_path is None:
             raise TankError("Path to photoshop engine (tk-photoshop) could not be found.")
+
+        # if the photoshop engine has the bootstrap logic with it, run it from there
+        startup_path = os.path.join(engine_path, "bootstrap")
+        env_setup = os.path.join(startup_path, "photoshop_environment_setup.py")
+        if os.path.exists(env_setup):
+            sys.path.append(startup_path)
+            try:
+                import photoshop_environment_setup
+                photoshop_environment_setup.setup(self, context)
+            except Exception, e:
+                import traceback
+                print traceback.format_exc()
+                raise TankError("Could not run the Photoshop bootstrap.  Please double check your "
+                    "Toolkit Photoshop settings.  Error Reported: %s" % e)
+            return
+
+        # no bootstrap logic with the engine, run the legacy version
+        extra_configs = self.get_setting("extra", {})
 
         # Get the path to the python executable
         python_setting = {"darwin": "mac_python_path", "win32": "windows_python_path"}[sys.platform]
