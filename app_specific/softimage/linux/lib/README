@@ -1,0 +1,311 @@
+Build instructions for openssl & sqlite on Linux
+================================================
+
+Softimage 2013 on Linux contains a custom version of Python 2.5.2 that does not include ssl
+libraries required by the Shotgun api, or the sqlite3 Python library required by Toolkit.
+
+Versions of these libraries are provided as part of the tk-multi-launchapp app.  However, 
+if for some reason these do not work for your specific distribution of Linux, the following 
+instructions are included detailing how they were built.
+
+Providing alternative libraries on the LD_LIBRARY_PATH & PYTHONPATH prior to launching 
+Softimage using tk-multi-launchapp will allow your libraries to be used instead.
+
+These instructions assume a clean Centos 6 linux build.
+
+The main steps to build these libraries are:
+
+1. Build GCC 4.1.2
+2. Build openssl v0.9.7m
+3. Build sqlite
+4. Build Python 2.5.2 to create _sqlite3.so Python library
+
+Note, the steps for building GCC & Python are the same as those required when building Qt and
+PySide for Softimage 2013 as detailed in tk-softimage/resources/pyside121_py25_qt485_linux/README.
+
+
+Build GCC 4.1.2
+---------------
+
+Softimage 2013 is built using GCC 4.1.2 so it's important to build everything with the same 
+version of the compiler to avoid segmentation errors and other unexpected problems.
+
+Follow these steps to build GCC 4.1.2 and configure your build environment for everything 
+else.
+
+1.  Configure the build environment:
+    
+    a.  You'll need gcc to build gcc! - if you don't have a version of gcc installed then
+        install the latest version:
+        
+        sudo yum install gcc-c++.x86_64
+    
+    b.  Install the gcc development package:
+        
+        sudo yum install glibc-devel.x86_64
+        sudo yum install glibc-devel.i686
+    
+    c.  Building gcc also requires the zlib development package:
+        
+        sudo yum install zlib-devel.x86_64
+        
+    d.  Install texinfo for doc generation:
+    
+        sudo yum install texinfo.x86_64
+
+2.  Download & extract:
+    
+    a.  Download the source from http://ftp.gnu.org/gnu/gcc/gcc-4.1.2 or equivalent
+     
+    b.  Extract to a directory, e.g.: ~/xsi_pyside_build/src/gcc412/gcc-build - you should 
+        end up with the directory: ~/xsi_pyside_build/src/gcc412/gcc-build/gcc-4.1.2
+
+3.  Configure:
+
+    a.  Make sure you are in the correct directory:  
+    
+        cd ~/xsi_pyside_build/src/gcc412/gcc-build 
+        
+        Note: It's very important to be in the gcc-build directory and NOT /gcc-4.1.2
+        otherwise you will have issues when building gcc!
+
+    b.  Configure gcc using the following command:
+    
+        ./gcc-4.1.2/configure --prefix=/opt/gcc412 --program-suffix=412 --enable-shared 
+        --enable-threads=posix -enable-checking=release --with-system-zlib 
+        --disable-libunwind-exceptions --enable-__cxa_atexit 
+
+4.  Build & install:
+    
+    a.  Build gcc:
+    
+        make -j4 bootstrap
+
+    When building, you will probably encounter this error:
+    
+        WARNING: `makeinfo' is missing on your system.  You should only need it if                                                                   
+             you modified a `.texi' or `.texinfo' file, or any other file                                                                        
+            indirectly affecting the aspect of the manual.  The spurious                                                                        
+            call might also be the consequence of using a buggy `make' (AIX,                                                                    
+            DU, IRIX).  You might want to install the `Texinfo' package or
+            the `GNU make' package.  Grab either from any GNU archive site.
+        make[4]: *** [fastjar.info] Error 1
+    
+    This is a known issue with earlier versions of gcc and can be safely fixed by
+    editing the MakeFile (~/xsi_pyside_build/src/gcc412/gcc-build/MakeFile) and changing 
+    the line:
+    
+        MAKEINFO = ~/xsi_pyside_build/src/gcc412/gcc-build/gcc-4.1.2/missing makeinfo
+        
+    to:
+    
+        MAKEINFO = makeinfo
+
+    b.  Install gcc: 
+    
+        sudo make install
+        
+        Note: This will install into the /opt/gcc412 directory that was specified in the
+        configure command.
+
+5.  Setup symlinks:
+
+    Setting up these symlinks will make it easier to compile everything else using this
+    specific version of GCC.
+
+        cd /usr/bin
+        sudo ln -s /opt/gcc412/bin/gcc412 .
+        sudo ln -s /opt/gcc412/bin/g++412 .
+
+
+Build Openssl 0.9.7m
+--------------------
+
+It's important to build this specific version (0.9.7m) for Softimage 2013 to avoid unexpected
+problems. 
+
+1.  Configure the build environment:
+
+    a.  Install the openssl development package:
+    
+        sudo yum install openssl-devel.x86_64 
+
+2.  Download & extract:
+
+    a.  Download the source from http://www.openssl.org/source/openssl-0.9.7m.tar.gz.
+    
+    b.  Extract to the directory ~/xsi_pyside_build/src/openssl097m
+
+3.  Configure:
+
+    a.  Unfortunately, this version of openssl doesn't respect the CC $ CXX environment variables
+        used to define the version of the compiler to use!  Therefore, it is necessary to either:
+        
+        i.  Modify ~/xsi_pyside_build/openssl097m/Configure and replace gcc with gcc412 for your
+            specific target.  To find the target, run ./config as detailed below - the target is
+            specified on the second line of the output, e.g.:
+            
+                ...
+                Configuring for linux-x86_64
+                ...
+                
+            Now search for the target and replace gcc with gcc412.  For example, using the target
+            'linux-x86_64' from above, you would replace:
+            
+                "linux-x86_64", "gcc:-m64 -DL_ENDIAN -DTERMIO...
+            
+            with:
+            
+                "linux-x86_64", "gcc412:-m64 -DL_ENDIAN -DTERMIO...
+
+        ii. Temporarily remap the symlinks for gcc & g++ in /usr/bin to /opt/gcc412/bin/gcc412 and 
+            /opt/gcc412/bin/g++412 respectively (remember to change them back after building openssl)
+
+    b.  Make sure you are in the correct directory:
+    
+        cd ~/xsi_pyside_build/src/openssl097m
+        
+    c.  Configure using the following command:
+    
+        ./config --prefix=$HOME/xsi_pyside_build/openssl097m shared
+
+4.  Build  & install:
+
+    a.  Build openssl
+    
+        make -j4
+        
+    b.  Install openssl:
+    
+        make install
+        
+        Note: This will install into the ~/xsi_pyside_build/openssl097m directory that was specified 
+        in the configure command.
+        
+5.  Copy dso's
+        
+    You should now place the following files on your LD_LIBRARY_PATH prior to launching Softimage
+    renaming them as required: 
+        
+        libssl.so.0.9.7     => libssl.so.4
+        libcrypto.so.0.9.7  => libcrypto.so.4 
+
+
+Build sqlite3
+-------------
+
+1.  Configure the build environment:
+
+    a.  Again, we need to use our specific version of GCC so set the following environment variables
+        to control this: 
+
+        export CC=gcc412
+        export CXX=g++412
+    
+2.  Download & extract:
+    
+    a.  Download the source from http://www.sqlite.org or equivelant - the latest version should
+        be fine but if in doubt, the version used here was downloaded from:
+        http://www.sqlite.org/sqlite-autoconf-3070900.tar.gz
+    
+    b.  Extract to the directory ~/xsi_pyside_build/src/sqlite
+    
+3.  Configure:
+
+    a.  Make sure you are in the correct directory:
+    
+        cd ~/xsi_pyside_build/src/sqlite
+        
+    b.  Configure using the following command:
+    
+        ./configure --prefix=$HOME/xsi_pyside_build/py252
+
+4.  Build  & install:
+
+    a.  Build sqlite
+    
+        make -j4
+        
+    b.  Install sqlite:
+    
+        make install
+        
+        Note: This will install into the ~/xsi_pyside_build/py252 directory that was specified 
+        in the configure command.
+
+
+Build Python 2.5.2 to create _sqlite3.so Python library
+-------------------------------------------------------
+
+Softimage 2013 includes a custom version of Python 2.5.2 which can't be run externally from
+Softimage.  Because we need an install of Python to build PySide, this means we need to build
+a version that's as close to the one bundled with Softimage as we can!
+
+Follow these steps to build Python 2.5.2 with GCC 4.1.2.
+
+1.  Configure the build environment:
+
+    a.  Again, make sure the following environment variables are set to use our specific 
+        version of GCC: 
+
+        export CC=gcc412
+        export CXX=g++412
+        
+    b.  Install the python development package:
+    
+        sudo yum install python-devel.x86_64
+    
+2.  Download & extract:
+    
+    a.  Download the source from http://www.python.org/ftp/python/2.1.2 or equivelant
+    
+    b.  Extract to the directory ~/xsi_pyside_build/src/py252
+    
+3.  Configure:
+
+    a.  Make sure you are in the correct directory:
+    
+        cd ~/xsi_pyside_build/src/py252
+        
+    b.  Configure using the following command:
+    
+        ./configure --prefix=$HOME/xsi_pyside_build/py252 --enable-shared --enable-unicode=ucs4
+    
+4.  Build  & install:
+
+    a.  Build Python 2.5.2
+    
+        make -j4
+        
+    b.  Install Python 2.5.2:
+    
+        make install
+        
+        Note: This will install into the ~/xsi_pyside_build/py252 directory that was specified 
+        in the configure command.
+
+5.  Test
+    
+    Python 2.5.2 should now have been installed to ~/xsi_pyside_build/py252.  This doesn't replace
+    your system python!  To test, add ~/xsi_pyside_build/py252/lib to your LD_LIBRARY_PATH and then
+    run python from within ~/xsi_pyside_build/py252/bin, e.g.:
+        
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/xsi_pyside_build/py252/lib
+        cd ~/xsi_pyside_build/py252/bin
+        ./python
+    
+    To test that sqlite has been built properly, run the following in your python shell:
+    
+        import sqlite3
+    
+    You shouldn't see any errors.
+
+6.  Copy _sqlite3.so
+
+    The _sqlite3.so required by Toolkit can be found in ~/xsi_pyside_build/py252/lib/python2.5/lib-dynload
+    and should be placed on your PYTHONPATH prior to launching Softimage.
+
+
+
+
+
