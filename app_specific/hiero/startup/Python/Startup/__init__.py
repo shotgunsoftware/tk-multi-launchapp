@@ -51,16 +51,5 @@ def bootstrap_tank():
         if var in os.environ:
             del os.environ[var]
 
-    def set_project_root(event):
-        """Hiero may open with default startup projects as well as any that
-        Tank may provide above. Ensure they all have a project root once
-        Hiero starts up.
-        """ 
-        if hiero.core.projects():
-            engine.log_debug("Setting project root on all open projects to: %s" % engine.tank.project_path)
-            for p in hiero.core.projects():
-                p.setProjectRoot(engine.tank.project_path)
-    
-    hiero.core.events.registerInterest('kStartup', set_project_root)
 
 bootstrap_tank()
