@@ -217,6 +217,7 @@ class LaunchApplication(tank.platform.Application):
         about the app launch
         """        
         meta = {}
+        meta["core"] = self.tank.version
         meta["engine"] = "%s %s" % (self.engine.name, self.engine.version) 
         meta["app"] = "%s %s" % (self.name, self.version) 
         meta["launched_engine"] = self.get_setting("engine")
