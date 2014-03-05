@@ -25,8 +25,9 @@ class LaunchApplication(tank.platform.Application):
     
     def init_app(self):
 
+        icon = self.get_setting("icon")
         menu_name = self.get_setting("menu_name")
-        
+
         # get the path setting for this platform:
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
         self._app_path = self.get_setting("%s_path" % platform_name, "")
@@ -54,7 +55,9 @@ class LaunchApplication(tank.platform.Application):
 
             properties = { "title": menu_name,
                            "short_name": command_name,
-                           "description": "Launches and initializes an application environment." }
+                           "description": "Launches and initializes an application environment.",
+                           "icon": icon,
+                         }
                 
             self.engine.register_command(command_name, self.launch_from_entity, properties)
         

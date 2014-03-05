@@ -18,6 +18,11 @@ configuration:
         type: str
         description: Name to appear on the Shotgun menu.
 
+    icon:
+      type: config_path
+      description: The icon to appear for the application
+      default_value: ""
+
     # Path information for multiple platforms
     windows_path:
         type: str
