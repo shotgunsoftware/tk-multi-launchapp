@@ -51,6 +51,21 @@ configuration:
                       name prefixed with tk, e.g. tk-maya, tk-nuke, tk-photoshop etc. If you set 
                       this to an empty string, no toolkit engine will be started, meaning that 
                       you can launch applications that do not have toolkit engines set up."
+
+    versions:
+        type: list
+        allows_empty: True
+        values:
+            type: str
+        default_value: []
+        description: "A list of strings that will be used to substitute for the $VERSION token
+                     in the values for the other settings for the instance of this app.  For
+                     example, a value of [2012, 2013, 2014] for this setting and a value of
+                     'Launch Maya $VERSION' for menu_name would result in the following command
+                     menu names being registered: Launch Maya 2012, Launch Maya 2013, Launch
+                     Maya 2014.  The first version in the list will be considered the 'default'
+                     version if the engine running the app supports the concept."
+
     extra:
         type: dict
         description: "Shotgun engine specific extra values. These are defined per Shotgun engine.
