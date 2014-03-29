@@ -46,13 +46,16 @@ class LaunchApplication(tank.platform.Application):
             self._init_app_internal(icon, menu_name)
 
     def _init_app_internal(self, raw_icon, raw_menu_name, version=None):
-        # do the $VERSION replacement if needed
+        # do the $version replacement if needed
         if version is None:
             icon = raw_icon
             menu_name = raw_menu_name
         else:
-            icon = string.Template(raw_icon).safe_substitute(VERSION=version)
-            menu_name = string.Template(raw_menu_name).safe_substitute(VERSION=version)
+            icon = string.Template(raw_icon).safe_substitute(version=version)
+            menu_name = string.Template(raw_menu_name).safe_substitute(version=version)
+            if menu_name == raw_menu_name:
+                # No replacement happened with multiple versions, warn
+                self.log_warning("versions defined, but no $version token found in menu_name.")
 
         # the command name mustn't contain spaces and funny chars, so sanitize it.
         # Also, should be nice for the shell engine.
@@ -174,11 +177,11 @@ class LaunchApplication(tank.platform.Application):
             # list, which will be treated as the default
             versions = self.get_setting("versions")
             if versions:
-                return string.Template(raw_app_path).safe_substitute(VERSION=versions[0])
+                return string.Template(raw_app_path).safe_substitute(version=versions[0])
             else:
                 return raw_app_path
         else:
-            return string.Template(raw_app_path).safe_substitute(VERSION=version)
+            return string.Template(raw_app_path).safe_substitute(version=version)
 
     def _launch_app(self, context, file_to_open=None, version=None):
         """
@@ -262,7 +265,7 @@ class LaunchApplication(tank.platform.Application):
         """
         menu_name = self.get_setting("menu_name")
         if version is not None:
-            menu_name = string.Template(menu_name).safe_substitute(VERSION=version)
+            menu_name = string.Template(menu_name).safe_substitute(version=version)
 
         meta = {}
         meta["core"] = self.tank.version

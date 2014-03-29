@@ -58,10 +58,10 @@ configuration:
         values:
             type: str
         default_value: []
-        description: "A list of strings that will be used to substitute for the $VERSION token
+        description: "A list of strings that will be used to substitute for the $version token
                      in the values for the other settings for the instance of this app.  For
                      example, a value of [2012, 2013, 2014] for this setting and a value of
-                     'Launch Maya $VERSION' for menu_name would result in the following command
+                     'Launch Maya $version' for menu_name would result in the following command
                      menu names being registered: Launch Maya 2012, Launch Maya 2013, Launch
                      Maya 2014.  The first version in the list will be considered the 'default'
                      version if the engine running the app supports the concept."
