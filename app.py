@@ -15,7 +15,6 @@ App that launches applications.
 import os
 import re
 import sys
-import string
 
 import tank
 from tank import TankError
@@ -46,13 +45,13 @@ class LaunchApplication(tank.platform.Application):
             self._init_app_internal(icon, menu_name)
 
     def _init_app_internal(self, raw_icon, raw_menu_name, version=None):
-        # do the $version replacement if needed
+        # do the {version} replacement if needed
         if version is None:
             icon = raw_icon
             menu_name = raw_menu_name
         else:
-            icon = string.Template(raw_icon).safe_substitute(version=version)
-            menu_name = string.Template(raw_menu_name).safe_substitute(version=version)
+            icon = raw_icon.replace("{version}", version)
+            menu_name = raw_menu_name.replace("{version}", version)
             if menu_name == raw_menu_name:
                 # No replacement happened with multiple versions, warn
                 self.log_warning("versions defined, but no $version token found in menu_name.")
@@ -78,8 +77,6 @@ class LaunchApplication(tank.platform.Application):
                            "short_name": command_name,
                            "description": "Launches and initializes an application environment.",
                            "icon": icon,
-                           "raw_title": raw_menu_name,
-                           "version": version,
                          }
                 
             def launch_version():
@@ -177,11 +174,11 @@ class LaunchApplication(tank.platform.Application):
             # list, which will be treated as the default
             versions = self.get_setting("versions")
             if versions:
-                return string.Template(raw_app_path).safe_substitute(version=versions[0])
+                return raw_app_path.replace("{version}", versions[0])
             else:
                 return raw_app_path
         else:
-            return string.Template(raw_app_path).safe_substitute(version=version)
+            return raw_app_path.replace("{version}", version)
 
     def _launch_app(self, context, file_to_open=None, version=None):
         """
@@ -265,7 +262,7 @@ class LaunchApplication(tank.platform.Application):
         """
         menu_name = self.get_setting("menu_name")
         if version is not None:
-            menu_name = string.Template(menu_name).safe_substitute(version=version)
+            menu_name = menu_name.replace("{version}", version)
 
         meta = {}
         meta["core"] = self.tank.version
