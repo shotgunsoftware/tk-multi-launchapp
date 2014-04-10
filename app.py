@@ -32,12 +32,24 @@ class LaunchApplication(tank.platform.Application):
             # no application path defined for this os. So don't register a menu item!
             return
 
-        icon = self.get_setting("icon")
         versions = self.get_setting("versions")
         menu_name = self.get_setting("menu_name")
 
+        # get icon value, replacing tokens if needed
+        icon = self.get_setting("icon")
+        if icon.startswith("{target_engine}"):
+            engine_name = self.get_setting("engine")
+            if engine_name:
+                engine_path = tank.platform.get_engine_path(engine_name, self.tank, self.context)
+                if engine_path:
+                    icon = icon.replace("{target_engine}", engine_path, 1)
+
+        if icon.startswith("{config_path}"):
+            config_path = self.tank.pipeline_configuration.get_config_location()
+            icon = icon.replace("{config_path}", config_path, 1)
+
+        # Initialize per version
         if versions:
-            # Initialize per version
             for version in versions:
                 self._init_app_internal(icon, menu_name, version)
         else:
