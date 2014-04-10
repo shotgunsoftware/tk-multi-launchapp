@@ -48,6 +48,9 @@ class LaunchApplication(tank.platform.Application):
             config_path = self.tank.pipeline_configuration.get_config_location()
             icon = icon.replace("{config_path}", config_path, 1)
 
+        # and correct the separator
+        icon = icon.replace("/", os.path.sep)
+
         # Initialize per version
         if versions:
             for version in versions:
