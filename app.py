@@ -15,6 +15,7 @@ App that launches applications.
 import os
 import re
 import sys
+
 import tank
 from tank import TankError
 
@@ -22,22 +23,63 @@ class LaunchApplication(tank.platform.Application):
     """
     Multi App to launch applications.
     """
-    
+
     def init_app(self):
-
-        icon = self.get_setting("icon")
-        menu_name = self.get_setting("menu_name")
-
         # get the path setting for this platform:
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
-        self._app_path = self.get_setting("%s_path" % platform_name, "")
-        if not self._app_path:
+        app_path = self.get_setting("%s_path" % platform_name, "")
+        if not app_path:
             # no application path defined for this os. So don't register a menu item!
             return
-        
+
+        versions = self.get_setting("versions")
+        menu_name = self.get_setting("menu_name")
+
+        # get icon value, replacing tokens if needed
+        icon = self.get_setting("icon")
+        if icon.startswith("{target_engine}"):
+            engine_name = self.get_setting("engine")
+            if not engine_name:
+                raise TankError("No engine name found for '{target_engine}' replacement.")
+
+            engine_path = tank.platform.get_engine_path(engine_name, self.tank, self.context)
+            if not engine_path:
+                raise TankError("No engine path found for '{target_engine}' replacement.")
+
+            icon = icon.replace("{target_engine}", engine_path, 1)
+
+        if icon.startswith("{config_path}"):
+            config_path = self.tank.pipeline_configuration.get_config_location()
+            if not config_path:
+                raise TankError("No pipeline configuration path found for '{config_path}' replacement.")
+
+            icon = icon.replace("{config_path}", config_path, 1)
+
+        # and correct the separator
+        icon = icon.replace("/", os.path.sep)
+
+        # Initialize per version
+        if versions:
+            for version in versions:
+                self._init_app_internal(icon, menu_name, version)
+        else:
+            # No replacements defined, just register with the raw values
+            self._init_app_internal(icon, menu_name)
+
+    def _init_app_internal(self, raw_icon, raw_menu_name, version=None):
+        # do the {version} replacement if needed
+        if version is None:
+            icon = raw_icon
+            menu_name = raw_menu_name
+        else:
+            icon = raw_icon.replace("{version}", version)
+            menu_name = raw_menu_name.replace("{version}", version)
+            if menu_name == raw_menu_name:
+                # No replacement happened with multiple versions, warn
+                self.log_warning("versions defined, but no $version token found in menu_name.")
+
         # the command name mustn't contain spaces and funny chars, so sanitize it.
         # Also, should be nice for the shell engine.
-        
         # "Launch NukeX..." -> launch_nukex
         command_name = menu_name.lower().replace(" ", "_")
         if command_name.endswith("..."):
@@ -59,10 +101,12 @@ class LaunchApplication(tank.platform.Application):
                            "icon": icon,
                          }
                 
-            self.engine.register_command(command_name, self.launch_from_entity, properties)
+            def launch_version():
+                self.launch_from_entity(version)
+            self.engine.register_command(command_name, launch_version, properties)
         
         
-    def launch_from_path_and_context(self, path, context):
+    def launch_from_path_and_context(self, path, context, version=None):
         """
         Extended version of launch_from_path. This method takes an additional 
         context parameter which is useful if you want to seed the launch context
@@ -77,13 +121,13 @@ class LaunchApplication(tank.platform.Application):
         """
         if context is None:
             # this context looks sour. So fall back on to path-only launch.
-            self.launch_from_path(path)
+            self.launch_from_path(path, version)
         else:
             # use given context to launch engine!
-            self._launch_app(context, path)
+            self._launch_app(context, path, version=version)
 
 
-    def launch_from_path(self, path):
+    def launch_from_path(self, path, version=None):
         """
         Entry point if you want to launch an app given a particular path.
         Note that there are no checks that the path passed is actually compatible
@@ -91,9 +135,9 @@ class LaunchApplication(tank.platform.Application):
         which is external to this app. 
         """
         context = self.tank.context_from_path(path)
-        self._launch_app(context, path)
+        self._launch_app(context, path, version=version)
 
-    def launch_from_entity(self):
+    def launch_from_entity(self, version=None):
         """
         Default app command. Launches an app based on the current context and settings.
         """
@@ -139,17 +183,36 @@ class LaunchApplication(tank.platform.Application):
             except tank.TankError, err:
                 raise TankError("Could not create folders on disk. Error reported: %s" % err)            
 
-        self._launch_app(self.context)
-        
+        self._launch_app(self.context, version=version)
 
-    def _launch_app(self, context, file_to_open=None):
+    def _get_app_path(self, version=None):
+        """ Return the platform specific app path, performing version substitution. """
+        platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
+        raw_app_path = self.get_setting("%s_path" % platform_name, "")
+        if version is None:
+            # there are two reasons version could be none
+            # the first is if versions have not been configured, in which case the raw path is valid
+            # if versions has been configured, then we should expand with the first element in the
+            # list, which will be treated as the default
+            versions = self.get_setting("versions")
+            if versions:
+                return raw_app_path.replace("{version}", versions[0])
+            else:
+                return raw_app_path
+        else:
+            return raw_app_path.replace("{version}", version)
+
+    def _launch_app(self, context, file_to_open=None, version=None):
         """
         Launches an app
         """
+        # get the executable path
+        app_path = self._get_app_path(version)
+
         # get the app args:
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
         app_args = self.get_setting("%s_args" % platform_name, "")
-        
+
         engine_name = self.get_setting("engine")
         if engine_name:
             
@@ -170,7 +233,7 @@ class LaunchApplication(tank.platform.Application):
             if engine_name == "tk-nuke":
                 app_args = self.prepare_nuke_launch(file_to_open, app_args)
             elif engine_name == "tk-maya":
-                self.prepare_maya_launch()
+                self.prepare_maya_launch(app_path)
             elif engine_name == "tk-softimage":
                 self.prepare_softimage_launch()
             elif engine_name == "tk-motionbuilder":
@@ -193,8 +256,8 @@ class LaunchApplication(tank.platform.Application):
         self.execute_hook("hook_before_app_launch")
 
         # Launch the application
-        self.log_debug("Launching executable '%s' with args '%s'" % (self._app_path, app_args))
-        result = self.execute_hook("hook_app_launch", app_path=self._app_path, app_args=app_args)
+        self.log_debug("Launching executable '%s' with args '%s'" % (app_path, app_args))
+        result = self.execute_hook("hook_app_launch", app_path=app_path, app_args=app_args)
         
         cmd = result.get("command")
         return_code = result.get("return_code")
@@ -212,13 +275,17 @@ class LaunchApplication(tank.platform.Application):
             
         else:
             # Write an event log entry
-            self._register_event_log(context, cmd)
+            self._register_event_log(context, cmd, version)
 
-    def _register_event_log(self, ctx, command_executed):
+    def _register_event_log(self, ctx, command_executed, version=None):
         """
         Writes an event log entry to the shotgun event log, informing
         about the app launch
-        """        
+        """
+        menu_name = self.get_setting("menu_name")
+        if version is not None:
+            menu_name = menu_name.replace("{version}", version)
+
         meta = {}
         meta["core"] = self.tank.version
         meta["engine"] = "%s %s" % (self.engine.name, self.engine.version) 
@@ -228,7 +295,7 @@ class LaunchApplication(tank.platform.Application):
         meta["platform"] = sys.platform
         if ctx.task:
             meta["task"] = ctx.task["id"]
-        desc =  "%s %s: %s" % (self.name, self.version, self.get_setting("menu_name"))
+        desc =  "%s %s: %s" % (self.name, self.version, menu_name)
         tank.util.create_event_log_entry(self.tank, ctx, "Toolkit_App_Startup", desc, meta)
 
 
@@ -251,7 +318,7 @@ class LaunchApplication(tank.platform.Application):
 
         return app_args
 
-    def prepare_maya_launch(self):
+    def prepare_maya_launch(self, app_path):
         """
         Maya specific pre-launch environment setup.
         """
@@ -276,7 +343,7 @@ class LaunchApplication(tank.platform.Application):
             for year in sorted(maya_version_to_ssl_maya_version, reverse=True):
                 # Test for the year in the path.
                 # maya -v returns an empty line with maya 2013.
-                if year in self._app_path:
+                if year in app_path:
                     version_dir = maya_version_to_ssl_maya_version[year]
                     break
 
