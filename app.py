@@ -39,13 +39,20 @@ class LaunchApplication(tank.platform.Application):
         icon = self.get_setting("icon")
         if icon.startswith("{target_engine}"):
             engine_name = self.get_setting("engine")
-            if engine_name:
-                engine_path = tank.platform.get_engine_path(engine_name, self.tank, self.context)
-                if engine_path:
-                    icon = icon.replace("{target_engine}", engine_path, 1)
+            if not engine_name:
+                raise TankError("No engine name found for '{target_engine}' replacement.")
+
+            engine_path = tank.platform.get_engine_path(engine_name, self.tank, self.context)
+            if not engine_path:
+                raise TankError("No engine path found for '{target_engine}' replacement.")
+
+            icon = icon.replace("{target_engine}", engine_path, 1)
 
         if icon.startswith("{config_path}"):
             config_path = self.tank.pipeline_configuration.get_config_location()
+            if not config_path:
+                raise TankError("No pipeline configuration path found for '{config_path}' replacement.")
+
             icon = icon.replace("{config_path}", config_path, 1)
 
         # and correct the separator
