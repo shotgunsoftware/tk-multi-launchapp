@@ -39,14 +39,17 @@ class LaunchApplication(tank.platform.Application):
         icon = self.get_setting("icon")
         if icon.startswith("{target_engine}"):
             engine_name = self.get_setting("engine")
-            if not engine_name:
-                raise TankError("No engine name found for '{target_engine}' replacement.")
+            if engine_name:
+                engine_path = tank.platform.get_engine_path(engine_name, self.tank, self.context)
+                if not engine_path:
+                    raise TankError("No engine path found for '{target_engine}' replacement (%s)." % engine_name)
 
-            engine_path = tank.platform.get_engine_path(engine_name, self.tank, self.context)
-            if not engine_path:
-                raise TankError("No engine path found for '{target_engine}' replacement.")
-
-            icon = icon.replace("{target_engine}", engine_path, 1)
+                icon = icon.replace("{target_engine}", engine_path, 1)
+            else:
+                # This happens if there is no engine associated with the application being run.
+                # Just return an empty string since using this syntax is invalid, but could
+                # have been setup by running upgrades.
+                icon = ""
 
         if icon.startswith("{config_path}"):
             config_path = self.tank.pipeline_configuration.get_config_location()
