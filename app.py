@@ -15,6 +15,7 @@ App that launches applications.
 import os
 import re
 import sys
+import traceback
 
 import tank
 from tank import TankError
@@ -255,7 +256,7 @@ class LaunchApplication(tank.platform.Application):
             elif engine_name == "tk-houdini":
                 self.prepare_houdini_launch(context)
             else:
-                raise TankError("The %s engine is not supported!" % engine_name)
+                self.prepare_generic_launch(engine_name, context, app_path, app_args, file_to_open)
 
         # run before launch hook
         self.log_debug("Running before launch hook...")
@@ -415,6 +416,45 @@ class LaunchApplication(tank.platform.Application):
             
         return app_args
 
+    def prepare_generic_launch(self, engine_name, context, app_path, app_args, file_to_open):
+        """
+        Generic engine launch
+
+        Try to call the bootstrap code associated with the engine to setup the launch
+        environment and get updates to the command arguments.
+
+        The file that gets loaded would be in the engine's path at
+          .../python/startup/bootstrap.py
+        and the 'bootstrap' method will be called with the following argument:
+         - sgtk: the sgtk api instance
+         - launcher: the instance of the launcher app being called
+         - context: the context the engine is being launched in
+         - app_path: the path to the application being launched
+         - app_args: the arguments passed to the application on startup
+         - file_to_open: the path to the file to open on startup
+
+        The return value is a list of updated arguments to use.  If None is
+        returned, then the default list will be used.
+        """
+        engine_path = tank.platform.get_engine_path(engine_name, self.tank, context)
+        if engine_path is None:
+            raise TankError("The %s engine is not supported!" % engine_name)
+
+        startup_file = os.path.abspath(os.path.join(engine_path, "python", "startup", "bootstrap.py"))
+        if not os.path.exists(startup_file):
+            raise TankError("The %s engine is not supported!" % engine_name)
+
+        try:
+            bootstrap = __import__(startup_file)
+            new_args = bootstrap.bootstrap(self.tank, self, context, app_path, app_args, file_to_open)
+            if new_args is not None:
+                app_args = new_args
+        except Exception, e:
+            self.log_error("Error running the bootstrap for '%s': %s" % (engine_name, e))
+            self.log_debug(traceback.format_exc(()))
+            raise TankError("Error running the bootstrap for '%s': %s" % (engine_name, e))
+
+        return app_args
 
     def prepare_3dsmax_plus_launch(self, context, app_args):
         """
@@ -437,7 +477,6 @@ class LaunchApplication(tank.platform.Application):
 
         return app_args
 
-
     def prepare_hiero_launch(self):
         """
         Hiero specific pre-launch environment setup.
@@ -459,7 +498,6 @@ class LaunchApplication(tank.platform.Application):
             import tk_houdini
             tk_houdini.bootstrap.bootstrap(self.tank, context)
         except Exception, e:
-            import traceback
             print traceback.format_exc()
             raise TankError("Could not run the Houdini bootstrap.  Please double check your "
                             "Tank Houdini Settings.  Error Reported: %s" % e)
