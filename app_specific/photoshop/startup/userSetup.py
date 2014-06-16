@@ -22,7 +22,8 @@ def msgbox(msg):
         MessageBox = ctypes.windll.user32.MessageBoxA
         MessageBox(None, msg, "Shotgun", 0)
     elif sys.platform == "darwin":
-        os.system("""osascript -e 'tell app "Finder" to display dialog "%s"'""" % msg)
+        os.system("""osascript -e 'tell app "System Events" to activate""")
+        os.system("""osascript -e 'tell app "System Events" to display dialog "%s"'""" % msg)
 
 
 def bootstrap_tank():
@@ -46,7 +47,7 @@ def bootstrap_tank():
     try:    
         engine = tank.platform.start_engine(engine_name, context.tank, context)
     except Exception, e:
-        msgbox("Shotgun: Could not start engine: %s" % e)
+        msgbox("Shotgun: Could not start Photoshop engine: %s" % e)
         return
 
     file_to_open = os.environ.get("TANK_FILE_TO_OPEN")
