@@ -71,7 +71,7 @@ configuration:
                       Deferred folder creation allows for the creation of partial subfolder structures depending
                       on a specific keyword (see main documentation for details). Before an app is launched, folders
                       are automatically created and by default (e.g. if you leave this setting as null), 
-                      the launch app will pass the name of the engine as the deferred folder creation keword. 
+                      the launch app will pass the name of the engine as the deferred folder creation keyword. 
                       This makes it easy to set up deferred rules in your folder creation config for tk-maya, 
                       tk-nuke etc. However, if you for example wanted to set up specific deferred folder structures 
                       for Nuke and Nuke X (both running the nuke engine), you need a finer granularity. This setting
