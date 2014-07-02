@@ -170,32 +170,19 @@ class LaunchApplication(tank.platform.Application):
             entity_type = self.context.task["type"]
             entity_id = self.context.task["id"]
 
-        # Try to create path for the context.
-        engine_name = self.get_setting("engine")
-
-        if engine_name:
-            # we are starting an engine, so do deferred folder creation
-            try:
-                self.log_debug("Creating folders for %s %s, %s" % (entity_type, entity_id, engine_name))
-                self.tank.create_filesystem_structure(entity_type, entity_id, engine=engine_name)
-            except tank.TankError, err:
-                raise TankError("Could not create folders on disk. Error reported: %s" % err)
-
-        else:
-            # we are not starting and engine, so do normal folder creation
-            #
-            # Note: We pass the menu name instead of the engine name (which is None) into
-            # the folder creation. This will ensure that secondary folder creation passes
-            # (eg. like user sandboxes) are triggered and also makes it possible to actually
-            # set up spefific deferred folder creation for external engines by using the
-            # menu name in the config.
-            menu_name = self.get_setting("menu_name")
-
-            try:
-                self.log_debug("Creating folders for %s %s" % (entity_type, entity_id))
-                self.tank.create_filesystem_structure(entity_type, entity_id, engine=menu_name)
-            except tank.TankError, err:
-                raise TankError("Could not create folders on disk. Error reported: %s" % err)
+        # Now do the folder creation. By default, use
+        # the engine name as the defer keyword
+        defer_keyword = self.get_setting("engine")
+        
+        # if there is a specific defer keyword, this takes precedence
+        if self.get_setting("defer_keyword"):
+            defer_keyword = self.get_setting("defer_keyword")
+        
+        try:
+            self.log_debug("Creating folders for %s %s. Defer keyword: '%s'" % (entity_type, entity_id, defer_keyword))
+            self.tank.create_filesystem_structure(entity_type, entity_id, engine=defer_keyword)
+        except tank.TankError, err:
+            raise TankError("Could not create folders on disk. Error reported: %s" % err)
 
         self._launch_app(self.context, version=version)
 
