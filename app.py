@@ -253,6 +253,8 @@ class LaunchApplication(tank.platform.Application):
                 self.prepare_photoshop_launch(context)
             elif engine_name == "tk-houdini":
                 self.prepare_houdini_launch(context)
+            elif engine_name == "tk-mari":
+                self.__prepare_mari_launch(engine_name, context)                
             else:
                 raise TankError("The %s engine is not supported!" % engine_name)
 
@@ -481,6 +483,23 @@ class LaunchApplication(tank.platform.Application):
                             "Tank Houdini Settings.  Error Reported: %s" % e)
 
 
+    def __prepare_mari_launch(self, engine_name, context):
+        """
+        Mari specific pre-launch environment setup.
+
+        :param engine_name: The name of the Mari engine being launched
+        :param context:     The context that the application is being launched in
+        """
+        # find the path to the engine on disk where the startup script
+        # can be found:
+        engine_path = tank.platform.get_engine_path(engine_name, self.tank, context)
+        if engine_path is None:
+            raise TankError("Path to '%s' engine could not be found." % engine_name)
+        
+        # add the location of our init.py script to the MARI_SCRIPT_PATH
+        startup_folder = os.path.join(engine_path, "startup")
+        tank.util.append_path_to_env_var("MARI_SCRIPT_PATH", startup_folder)
+        
     def prepare_photoshop_launch(self, context):
         """
         Photoshop specific pre-launch environment setup.
