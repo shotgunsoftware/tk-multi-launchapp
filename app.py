@@ -265,14 +265,22 @@ class LaunchApplication(tank.platform.Application):
 
         self.log_debug("Hook tried to launch '%s'" % cmd)
         if return_code != 0:
-            self.log_error(
-                "Failed to launch application (return code: %s)! This is most likely because the path "
-                "to the executable is not set to a correct value. The command used "
-                "is '%s' - please double check that this command is valid and update "
-                "as needed in this app's configuration or hook. If you have any "
-                "questions, don't hesitate to contact support on toolkitsupport@shotgunsoftware.com." %
-                (return_code, cmd)
-            )
+            
+            if self.engine.name == "tk-desktop":
+                # got UI support. Launch dialog with nice message
+                not_found_dialog = self.import_module("not_found_dialog")                
+                not_found_dialog.show_dialog(self, cmd)                
+                
+                
+            else:
+                self.log_error(
+                    "Failed to launch application (return code: %s)! This is most likely because the path "
+                    "to the executable is not set to a correct value. The command used "
+                    "is '%s' - please double check that this command is valid and update "
+                    "as needed in this app's configuration or hook. If you have any "
+                    "questions, don't hesitate to contact support on toolkitsupport@shotgunsoftware.com." %
+                    (return_code, cmd)
+                )
 
         else:
             # Write an event log entry
