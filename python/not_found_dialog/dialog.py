@@ -47,8 +47,8 @@ class AppDialog(QtGui.QWidget):
         """
         Launches documentation describing how to configure the app launch
         """
-        doc_url = "https://toolkit.shotgunsoftware.com/entries/93728833#Setting%20up%20Application%20Paths"
-        QtGui.QDesktopServices.openUrl(QtCore.QUrl(doc_url))
+        app = sgtk.platform.current_bundle()        
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl(app.HELP_DOC_URL))
         self.close()
         
     @property

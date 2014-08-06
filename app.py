@@ -19,10 +19,14 @@ import sys
 import tank
 from tank import TankError
 
+
 class LaunchApplication(tank.platform.Application):
     """
     Multi App to launch applications.
     """
+
+    # documentation explaining how to reconfigure app paths
+    HELP_DOC_URL = "https://toolkit.shotgunsoftware.com/entries/93728833#Setting%20up%20Application%20Paths"
 
     def init_app(self):
         # get the path setting for this platform:
@@ -266,21 +270,30 @@ class LaunchApplication(tank.platform.Application):
         self.log_debug("Hook tried to launch '%s'" % cmd)
         if return_code != 0:
             
-            if self.engine.name == "tk-desktop":
+            # some special logic here to decide how to display failure feedback 
+            
+            if self.engine.name == "tk-shotgun":
+                # for the shotgun engine, use the log info in order to get the proper
+                # html formatting
+                self.log_info("<b>Failed to launch application!</b> "
+                              "This is most likely because the path "
+                              "is not set correctly. The command that was used to attempt to launch is '%s'. "
+                              "<br><br><a href='%s' target=_new>Click here</a> to learn more about how to set "
+                              "up your app launch configuration." % (cmd, self.HELP_DOC_URL))
+            
+            
+            elif self.engine.has_ui:
                 # got UI support. Launch dialog with nice message
                 not_found_dialog = self.import_module("not_found_dialog")                
                 not_found_dialog.show_dialog(self, cmd)                
-                
-                
+            
             else:
-                self.log_error(
-                    "Failed to launch application (return code: %s)! This is most likely because the path "
-                    "to the executable is not set to a correct value. The command used "
-                    "is '%s' - please double check that this command is valid and update "
-                    "as needed in this app's configuration or hook. If you have any "
-                    "questions, don't hesitate to contact support on toolkitsupport@shotgunsoftware.com." %
-                    (return_code, cmd)
-                )
+                # traditional non-ui environment without any html support.
+                self.log_error("Failed to launch application! This is most likely because the path "
+                              "is not set correctly. The command that was used to attempt to launch is '%s'. "
+                              "To learn more about how to set up your app launch configuration, "
+                              "see the following documentation: %s" % (cmd, self.HELP_DOC_URL))
+                
 
         else:
             # Write an event log entry
