@@ -9,22 +9,19 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
-
-# by importing QT from sgtk rather than directly, we ensure that
-# the code will be compatible with both PySide and PyQt.
 from sgtk.platform.qt import QtCore, QtGui
 from .ui.dialog import Ui_Dialog
 
 def show_dialog(app_instance, cmd_line):
     """
-    Shows the main dialog window, using the special Shotgun multi-select mode.
+    Shows the dialog.
     """
     app_instance.engine.show_dialog("Error launching Application", app_instance, AppDialog, cmd_line)
 
 
 class AppDialog(QtGui.QWidget):
     """
-    Main application dialog window
+    Not found UI dialog.
     """
     
     def __init__(self, cmd_line):
@@ -38,17 +35,12 @@ class AppDialog(QtGui.QWidget):
         self.ui = Ui_Dialog() 
         self.ui.setupUi(self)
         
-        # most of the useful accessors are available through the Application class instance
-        # it is often handy to keep a reference to this. You can get it via the following method:
-        self._app = sgtk.platform.current_bundle()
-        
         msg = ("<b style='color: orange'>Failed to launch application!</b> This is most likely because the path "
                "is not set correctly. The command that was used to attempt to launch is '%s'. "
                "<br><br>Click the button below to learn more about how to configure toolkit to launch "
                "applications." %  cmd_line)
         
-        self.ui.message.setText(msg)
-        
+        self.ui.message.setText(msg)        
         self.ui.learn_more.clicked.connect(self._launch_docs)
         
     def _launch_docs(self):

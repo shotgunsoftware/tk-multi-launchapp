@@ -45,7 +45,6 @@ class Ui_Dialog(object):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "The Current Sgtk Environment", None, QtGui.QApplication.UnicodeUTF8))
         self.message.setText(QtGui.QApplication.translate("Dialog", "Text text", None, QtGui.QApplication.UnicodeUTF8))
         self.learn_more.setText(QtGui.QApplication.translate("Dialog", "Learn More", None, QtGui.QApplication.UnicodeUTF8))
 
