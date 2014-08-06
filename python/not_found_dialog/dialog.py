@@ -37,7 +37,7 @@ class AppDialog(QtGui.QWidget):
         
         msg = ("<b style='color: rgb(252, 98, 70)'>Failed to launch application!</b> This is most likely because the path "
                "is not set correctly. The command that was used to attempt to launch is '%s'. "
-               "<br><br>Click the button below to learn more about how to configure toolkit to launch "
+               "<br><br>Click the button below to learn more about how to configure Toolkit to launch "
                "applications." %  cmd_line)
         
         self.ui.message.setText(msg)        
