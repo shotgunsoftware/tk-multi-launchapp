@@ -32,8 +32,8 @@ class BeforeAppLaunch(tank.Hook):
         # accessing the current context (current shot, etc)
         # can be done via the parent object
         #
-        # > multi_publiish_app = self.parent
-        # > current_entity = multi_publiish_app.context.entity
+        # > multi_launchapp = self.parent
+        # > current_entity = multi_launchapp.context.entity
         
         # you can set environment variables like this:
         # os.environ["MY_SETTING"] = "foo bar"
@@ -42,8 +42,8 @@ class BeforeAppLaunch(tank.Hook):
         # you can use the engine setting to figure out which application 
         # is currently being launched:
         #
-        # > multi_publiish_app = self.parent
-        # > if multi_publiish_app.get_setting("engine") == "tk-nuke":
+        # > multi_launchapp = self.parent
+        # > if multi_launchapp.get_setting("engine") == "tk-nuke":
         #       do_something()
         
         
