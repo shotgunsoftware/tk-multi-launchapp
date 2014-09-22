@@ -503,7 +503,7 @@ class LaunchApplication(tank.platform.Application):
             sys.path.insert(0, python_path)
             try:
                 import bootstrap
-                bootstrap.bootstrap(self, context)
+                bootstrap.bootstrap(self.sgtk, engine_name, context)
             except:
                 self.log_exception("Error executing engine bootstrap script.")
                 raise TankError("Error executing bootstrap script. Please see log for details.")
