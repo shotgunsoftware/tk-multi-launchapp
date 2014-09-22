@@ -254,7 +254,9 @@ class LaunchApplication(tank.platform.Application):
             elif engine_name == "tk-houdini":
                 self.prepare_houdini_launch(context)
             elif engine_name == "tk-mari":
-                self.__prepare_mari_launch(engine_name, context)                
+                self.prepare_mari_launch(engine_name, context)
+            elif engine_name in ["tk-flame", "tk-flare"]:
+                self.prepare_flame_flare_launch(engine_name, context)
             else:
                 raise TankError("The %s engine is not supported!" % engine_name)
 
@@ -321,7 +323,6 @@ class LaunchApplication(tank.platform.Application):
             meta["task"] = ctx.task["id"]
         desc =  "%s %s: %s" % (self.name, self.version, menu_name)
         tank.util.create_event_log_entry(self.tank, ctx, "Toolkit_App_Startup", desc, meta)
-
 
     def prepare_nuke_launch(self, file_to_open, app_args):
         """
@@ -476,14 +477,40 @@ class LaunchApplication(tank.platform.Application):
         try:
             import tk_houdini
             tk_houdini.bootstrap.bootstrap(self.tank, context)
-        except Exception, e:
-            import traceback
-            print traceback.format_exc()
-            raise TankError("Could not run the Houdini bootstrap.  Please double check your "
-                            "Tank Houdini Settings.  Error Reported: %s" % e)
+        except:
+            self.log_exception("Error executing engine bootstrap script.")
+            raise TankError("Error executing bootstrap script. Please see log for details.")
 
+    def prepare_flame_flare_launch(self, engine_name, context):
+        """
+        Flame specific pre-launch environment setup.
 
-    def __prepare_mari_launch(self, engine_name, context):
+        :param engine_name: The name of the Flame engine being launched
+        :param context:     The context that the application is being launched in
+        """
+        # find the path to the engine on disk where the startup script can be found:
+        engine_path = tank.platform.get_engine_path(engine_name, self.tank, context)
+        if engine_path is None:
+            raise TankError("Path to '%s' engine could not be found." % engine_name)
+        
+        # find bootstrap file located in the engine and execute that
+        startup_path = os.path.join(engine_path, "python", "startup", "bootstrap.py")
+        
+        if os.path.exists(startup_path):
+            python_path = os.path.dirname(startup_path)
+            # add our bootstrap location to the pythonpath
+            sys.path.insert(0, python_path)
+            try:
+                import bootstrap
+                bootstrap.bootstrap(self, context)
+            except:
+                self.log_exception("Error executing engine bootstrap script.")
+                raise TankError("Error executing bootstrap script. Please see log for details.")
+            finally:
+                # remove bootstrap from sys.path
+                sys.path.pop(0)
+
+    def prepare_mari_launch(self, engine_name, context):
         """
         Mari specific pre-launch environment setup.
 
@@ -516,11 +543,10 @@ class LaunchApplication(tank.platform.Application):
             try:
                 import photoshop_environment_setup
                 photoshop_environment_setup.setup(self, context)
-            except Exception, e:
-                import traceback
-                print traceback.format_exc()
-                raise TankError("Could not run the Photoshop bootstrap.  Please double check your "
-                    "Toolkit Photoshop settings.  Error Reported: %s" % e)
+            except:
+                self.log_exception("Error executing engine bootstrap script.")
+                raise TankError("Error executing bootstrap script. Please see log for details.")
+
             return
 
         # no bootstrap logic with the engine, run the legacy version
