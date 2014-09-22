@@ -485,7 +485,7 @@ class LaunchApplication(tank.platform.Application):
         """
         Flame specific pre-launch environment setup.
 
-        :param engine_name: The name of the Flame engine being launched
+        :param engine_name: The name of the engine being launched (tk-flame or tk-flare)
         :param context:     The context that the application is being launched in
         """
         # find the path to the engine on disk where the startup script can be found:
@@ -493,11 +493,12 @@ class LaunchApplication(tank.platform.Application):
         if engine_path is None:
             raise TankError("Path to '%s' engine could not be found." % engine_name)
         
-        # find bootstrap file located in the engine and execute that
+        # find bootstrap file located in the engine and load that up
         startup_path = os.path.join(engine_path, "python", "startup", "bootstrap.py")
         
         if os.path.exists(startup_path):
             python_path = os.path.dirname(startup_path)
+            
             # add our bootstrap location to the pythonpath
             sys.path.insert(0, python_path)
             try:
