@@ -59,8 +59,8 @@ class AppLaunch(tank.Hook):
             cmd = "start /B \"App\" \"%s\" %s" % (app_path, app_args)
 
         # Ticket 26741: Avoid having odd DLL loading issues on windows
-        # This is repeated to avoid an issue where the project python is the same as the
-        # site python.
+        # Desktop PySide sets an explicit DLL path, which is getting inherited by subprocess. 
+        # The following undoes that to make sure that apps that depend on not having a DLL path are set work properly
         self._push_dll_state()
 
         # run the command to launch the app
