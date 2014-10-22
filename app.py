@@ -256,7 +256,7 @@ class LaunchApplication(tank.platform.Application):
             elif engine_name == "tk-mari":
                 self.prepare_mari_launch(engine_name, context)
             elif engine_name in ["tk-flame", "tk-flare"]:
-                app_args = self.prepare_flame_flare_launch(engine_name, context, app_args)
+                (app_path, app_args) = self.prepare_flame_flare_launch(engine_name, context, app_path, app_args)
             else:
                 raise TankError("The %s engine is not supported!" % engine_name)
 
@@ -517,12 +517,13 @@ class LaunchApplication(tank.platform.Application):
             self.log_exception("Error executing engine bootstrap script.")
             raise TankError("Error executing bootstrap script. Please see log for details.")
 
-    def prepare_flame_flare_launch(self, engine_name, context, app_args):
+    def prepare_flame_flare_launch(self, engine_name, context, app_path, app_args):
         """
         Flame specific pre-launch environment setup.
 
         :param engine_name: The name of the engine being launched (tk-flame or tk-flare)
         :param context: The context that the application is being launched in
+        :param app_path: Path to DCC executable or launch script
         :param app_args: External app arguments
         
         :returns: extra arguments to pass to launch
@@ -536,20 +537,15 @@ class LaunchApplication(tank.platform.Application):
         startup_path = os.path.join(engine_path, "python", "startup", "bootstrap.py")
         
         if not os.path.exists(startup_path):
-            raise Exception("Cannot find bootstrap script '%s'" % startup_path)
-            
+            raise Exception("Cannot find bootstrap script '%s'" % startup_path)        
+        
         python_path = os.path.dirname(startup_path)
         
         # add our bootstrap location to the pythonpath
         sys.path.insert(0, python_path)
         try:
             import bootstrap
-            new_args = bootstrap.bootstrap(engine_name, context)
-            
-            if app_args:
-                app_args = "%s %s" % (new_args, app_args)
-            else:
-                app_args = new_args
+            (app_path, new_args) = bootstrap.bootstrap(engine_name, context, app_path, app_args)            
             
         except:
             self.log_exception("Error executing engine bootstrap script.")
@@ -558,7 +554,7 @@ class LaunchApplication(tank.platform.Application):
             # remove bootstrap from sys.path
             sys.path.pop(0)
         
-        return app_args
+        return (app_path, new_args)
 
     def prepare_mari_launch(self, engine_name, context):
         """
