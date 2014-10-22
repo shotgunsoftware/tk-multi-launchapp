@@ -58,46 +58,10 @@ class AppLaunch(tank.Hook):
             # any command shells popping up as part of the application launch.
             cmd = "start /B \"App\" \"%s\" %s" % (app_path, app_args)
 
-        # Ticket 26741: Avoid having odd DLL loading issues on windows
-        # Desktop PySide sets an explicit DLL path, which is getting inherited by subprocess. 
-        # The following undoes that to make sure that apps that depend on not having a DLL path are set work properly
-        self._push_dll_state()
-
         # run the command to launch the app
         exit_code = os.system(cmd)
-
-        self._pop_dll_state()
 
         return {
             "command": cmd,
             "return_code": exit_code
         }
-
-    def _push_dll_state(self):
-        '''
-        Push current Dll Directory
-        '''
-        if sys.platform == "win32":
-            try:
-                import win32api
-
-                # GetDLLDirectory throws an exception if none was set
-                try:
-                    self._previous_dll_directory = win32api.GetDllDirectory(None)
-                except StandardError:
-                    self._previous_dll_directory = None
-                
-                win32api.SetDllDirectory(None)
-            except StandardError:
-                pass
-            
-    def _pop_dll_state(self):
-        '''
-        Pop the previously pushed DLL Directory
-        '''
-        if sys.platform == "win32":
-            try:
-                import win32api
-                win32api.SetDllDirectory(self._previous_dll_directory)
-            except StandardError:
-                pass
