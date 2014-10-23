@@ -264,12 +264,20 @@ class LaunchApplication(tank.platform.Application):
         self.log_debug("Running before launch hook...")
         self.execute_hook("hook_before_app_launch")
 
-        # Launch the application
-        self.log_debug("Launching executable '%s' with args '%s'" % (app_path, app_args))
-        result = self.execute_hook("hook_app_launch", app_path=app_path, app_args=app_args)
+        # Ticket 26741: Avoid having odd DLL loading issues on windows
+        # Desktop PySide sets an explicit DLL path, which is getting inherited by subprocess. 
+        # The following undoes that to make sure that apps that depend on not having a DLL path are set work properly
+        self._clear_dll_directory()
 
-        cmd = result.get("command")
-        return_code = result.get("return_code")
+        try:
+            # Launch the application
+            self.log_debug("Launching executable '%s' with args '%s'" % (app_path, app_args))
+            result = self.execute_hook("hook_app_launch", app_path=app_path, app_args=app_args)
+
+            cmd = result.get("command")
+            return_code = result.get("return_code")
+        finally:
+            self._restore_dll_directory()
 
         self.log_debug("Hook tried to launch '%s'" % cmd)
         if return_code != 0:
@@ -302,6 +310,35 @@ class LaunchApplication(tank.platform.Application):
         else:
             # Write an event log entry
             self._register_event_log(context, cmd, version)
+
+    def _clear_dll_directory(self):
+        """
+        Push current Dll Directory
+        """
+        if sys.platform == "win32":
+            try:
+                import win32api
+
+                # GetDLLDirectory throws an exception if none was set
+                try:
+                    self._previous_dll_directory = win32api.GetDllDirectory(None)
+                except StandardError:
+                    self._previous_dll_directory = None
+                
+                win32api.SetDllDirectory(None)
+            except StandardError:
+                pass
+            
+    def _restore_dll_directory(self):
+        """
+        Pop the previously pushed DLL Directory
+        """
+        if sys.platform == "win32":
+            try:
+                import win32api
+                win32api.SetDllDirectory(self._previous_dll_directory)
+            except StandardError:
+                pass
 
     def _register_event_log(self, ctx, command_executed, version=None):
         """
