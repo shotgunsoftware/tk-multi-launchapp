@@ -314,8 +314,18 @@ class LaunchApplication(tank.platform.Application):
     def _clear_dll_directory(self):
         """
         Push current Dll Directory
+
+        There are two cases that can happen related to setting a dll directory.
+        
+        1: Project is using different python then Desktop, in which case the desktop will set the dll 
+           directory to none for the project's python interpreter. In this case, the following code is
+           redundant and not needed.
+        2: Desktop is using same python as Project. In which case we need to keep the desktop dll directory.
         """
         if sys.platform == "win32":
+            # This 'try' block will fail silently if user is using a different python interpreter then Desktop,
+            # in which case it will be fine since the Desktop will have set the correct Dll folder for this 
+            # interpreter. Refer to the comments in the method's header for more information.
             try:
                 import win32api
 
@@ -334,6 +344,8 @@ class LaunchApplication(tank.platform.Application):
         Pop the previously pushed DLL Directory
         """
         if sys.platform == "win32":
+            # This may fail silently, which is the correct behavior. Refer to the comments in 
+            # _clear_dll_directory for additional information.
             try:
                 import win32api
                 win32api.SetDllDirectory(self._previous_dll_directory)
