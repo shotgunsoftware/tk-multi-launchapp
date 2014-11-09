@@ -32,8 +32,15 @@ class LaunchApplication(tank.platform.Application):
         # get the path setting for this platform:
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
         app_path = self.get_setting("%s_path" % platform_name, "")
+        perform_path_check = self.get_setting("%s_path_check" % platform_name, False)
+        
         if not app_path:
             # no application path defined for this os. So don't register a menu item!
+            return
+        
+        if perform_path_check and not os.path.exists(app_path):
+            # when perform_path_check is True, we check to determine the existence of
+            # the dcc launch command and if it cannot be found, no menu items are produced.
             return
 
         versions = self.get_setting("versions")
