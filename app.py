@@ -403,7 +403,6 @@ class LaunchApplication(tank.platform.Application):
         os.environ["MODO_PATH"] = os.environ.get("PYTHONPATH", "")
         startup_path = os.path.abspath(os.path.join(self._get_app_specific_path("modo"), "startup"))
         tank.util.append_path_to_env_var("MODO_PATH", startup_path)
-        #tank.util.append_path_to_env_var("MODO_PATH", "/usr/lib64/python2.7/site-packages")
 
         if file_to_open:
             if app_args:
