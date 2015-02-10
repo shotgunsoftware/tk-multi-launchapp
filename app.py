@@ -258,7 +258,7 @@ class LaunchApplication(tank.platform.Application):
             elif engine_name in ["tk-flame", "tk-flare"]:
                 (app_path, app_args) = self.prepare_flame_flare_launch(engine_name, context, app_path, app_args)
             else:
-                raise TankError("The %s engine is not supported!" % engine_name)
+                (app_path, app_args) = self.prepare_generic_launch(engine_name, context, app_path, app_args)
 
         # run before launch hook
         self.log_debug("Running before launch hook...")
@@ -372,6 +372,52 @@ class LaunchApplication(tank.platform.Application):
             meta["task"] = ctx.task["id"]
         desc =  "%s %s: %s" % (self.name, self.version, menu_name)
         tank.util.create_event_log_entry(self.tank, ctx, "Toolkit_App_Startup", desc, meta)
+
+    def prepare_generic_launch(self, engine_name, context, app_path, app_args):
+        """
+        Generic engine launcher.
+
+        This method will look for a bootstrap method in the engine's
+        python/startup/bootstrap.py file if it exists.  That bootstrap will be
+        called if possible.
+
+        :param engine_name: The name of the engine being launched
+        :param context: The context that the application is being launched in
+        :param app_path: Path to DCC executable or launch script
+        :param app_args: External app arguments
+
+        :returns: extra arguments to pass to launch
+        """
+        # find the path to the engine on disk where the startup script can be found:
+        engine_path = tank.platform.get_engine_path(engine_name, self.tank, context)
+        if engine_path is None:
+            raise TankError(
+                "Could not find the path to the '%s' engine. It may not be configured "
+                "in the environment for the current context ('%s')." % (engine_name, str(context)))
+
+        # find bootstrap file located in the engine and load that up
+        startup_path = os.path.join(engine_path, "python", "startup", "bootstrap.py")
+
+        if not os.path.exists(startup_path):
+            raise TankError("Could not find the bootstrap for the '%s' engine at '%s'" % (
+                engine_name, startup_path))
+
+        python_path = os.path.dirname(startup_path)
+
+        # add our bootstrap location to the pythonpath
+        sys.path.insert(0, python_path)
+        try:
+            import bootstrap
+            (app_path, new_args) = bootstrap.bootstrap(engine_name, context, app_path, app_args)
+
+        except Exception:
+            self.log_exception("Error executing engine bootstrap script.")
+            raise TankError("Error executing bootstrap script. Please see log for details.")
+        finally:
+            # remove bootstrap from sys.path
+            sys.path.pop(0)
+
+        return (app_path, new_args)
 
     def prepare_nuke_launch(self, file_to_open, app_args):
         """
