@@ -391,14 +391,16 @@ class LaunchApplication(tank.platform.Application):
         # find the path to the engine on disk where the startup script can be found:
         engine_path = tank.platform.get_engine_path(engine_name, self.tank, context)
         if engine_path is None:
-            raise TankError("Path to '%s' engine could not be found." % engine_name)
+            raise TankError(
+                "Could not find the path to the '%s' engine. It may not be configured "
+                "in the environment for the current context ('%s')." % (engine_name, str(context)))
 
         # find bootstrap file located in the engine and load that up
         startup_path = os.path.join(engine_path, "python", "startup", "bootstrap.py")
 
         if not os.path.exists(startup_path):
-            # Generic bootstrap is not supported, match the old behavior for an unsupported engine.
-            raise TankError("The %s engine is not supported!" % engine_name)
+            raise TankError("Could not find the bootstrap for the '%s' engine at '%s'" % (
+                engine_name, startup_path))
 
         python_path = os.path.dirname(startup_path)
 
@@ -408,7 +410,7 @@ class LaunchApplication(tank.platform.Application):
             import bootstrap
             (app_path, new_args) = bootstrap.bootstrap(engine_name, context, app_path, app_args)
 
-        except:
+        except Exception:
             self.log_exception("Error executing engine bootstrap script.")
             raise TankError("Error executing bootstrap script. Please see log for details.")
         finally:
