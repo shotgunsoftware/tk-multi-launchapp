@@ -209,13 +209,17 @@ class LaunchApplication(tank.platform.Application):
 
     def _launch_app(self, context, file_to_open=None, version=None):
         """
-        Launches an app
+        Launches an application. No environment variable change is leaked to the outside world.
+        :param context: Tank context we will opening the app in.
+        :param file_to_open: Optional file to open when the app launches. Can be None.
+        :param version: Version of the app to launch. Specifying None means the default version will
+                        be picked.
         """
         try:
             # Clone the environment variables
             environ_clone = os.environ.copy()
             sys_path_clone = sys.path[:]
-            self._launch_app_internal(context, file_to_open, version)
+            self.__launch_app_internal(context, file_to_open, version)
         finally:
             # Clear the original structures and add into them so that users who did
             # from os import environ and from sys import path get the restored values.
@@ -225,9 +229,14 @@ class LaunchApplication(tank.platform.Application):
             del sys.path[:]
             sys.path.extend(sys_path_clone)
 
-    def _launch_app_internal(self, context, file_to_open=None, version=None):
+    def __launch_app_internal(self, context, file_to_open=None, version=None):
         """
-        Launches an app
+        Launches an application. This method may have side-effects in the environment variables table.
+        Call the _launch_app method instead.
+        :param context: Tank context we will opening the app in.
+        :param file_to_open: Optional file to open when the app launches. Can be None.
+        :param version: Version of the app to launch. Specifying None means the default version will
+                        be picked.
         """
         # get the executable path
         app_path = self._get_app_path(version)
