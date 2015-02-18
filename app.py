@@ -211,6 +211,24 @@ class LaunchApplication(tank.platform.Application):
         """
         Launches an app
         """
+        try:
+            # Clone the environment variables
+            environ_clone = os.environ.copy()
+            sys_path_clone = sys.path[:]
+            self._launch_app_internal(context, file_to_open, version)
+        finally:
+            # Clear the original structures and add into them so that users who did
+            # from os import environ and from sys import path get the restored values.
+            os.environ.clear()
+            for k, v in environ_clone.items():
+                os.environ[k] = v
+            del sys.path[:]
+            sys.path.extend(sys_path_clone)
+
+    def _launch_app_internal(self, context, file_to_open=None, version=None):
+        """
+        Launches an app
+        """
         # get the executable path
         app_path = self._get_app_path(version)
 
@@ -413,9 +431,6 @@ class LaunchApplication(tank.platform.Application):
         except Exception:
             self.log_exception("Error executing engine bootstrap script.")
             raise TankError("Error executing bootstrap script. Please see log for details.")
-        finally:
-            # remove bootstrap from sys.path
-            sys.path.pop(0)
 
         return (app_path, new_args)
 
@@ -609,9 +624,6 @@ class LaunchApplication(tank.platform.Application):
         except:
             self.log_exception("Error executing engine bootstrap script.")
             raise TankError("Error executing bootstrap script. Please see log for details.")
-        finally:
-            # remove bootstrap from sys.path
-            sys.path.pop(0)
         
         return (app_path, new_args)
 
