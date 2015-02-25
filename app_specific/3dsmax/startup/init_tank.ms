@@ -9,7 +9,14 @@ if ( python != undefined ) then
 
     if ( bootstrap_script != undefined ) then 
     (
-        python.run( bootstrap_script )
+        try 
+        (
+            python.run( bootstrap_script )
+        )
+        catch
+        (
+            messageBox "Shotgun Pipeline Toolkit:\n\nYou are running a version of 3dsMax that is not supported by the tk-3dsmax engine.  If you intend to use 3dsMax's built-in Python support, please update your launcher settings to use the tk-3dsmaxplus engine."
+        )
     )
     else
     ( 
