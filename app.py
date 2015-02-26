@@ -439,6 +439,9 @@ class LaunchApplication(tank.platform.Application):
         except Exception:
             self.log_exception("Error executing engine bootstrap script.")
             raise TankError("Error executing bootstrap script. Please see log for details.")
+        finally:
+            # remove bootstrap from sys.path
+            sys.path.pop(0)
 
         return (app_path, new_args)
 
@@ -632,6 +635,9 @@ class LaunchApplication(tank.platform.Application):
         except:
             self.log_exception("Error executing engine bootstrap script.")
             raise TankError("Error executing bootstrap script. Please see log for details.")
+        finally:
+            # remove bootstrap from sys.path
+            sys.path.pop(0)
         
         return (app_path, new_args)
 
