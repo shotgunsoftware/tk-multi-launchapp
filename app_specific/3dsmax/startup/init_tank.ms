@@ -1,3 +1,6 @@
+-- This is a wrapper around the Toolkit bootstrap python script for the tk-3dsmax
+-- engine. It requires the Blur Python extensions and will raise an error if they 
+-- are not found.
 if ( python != undefined ) then 
 (
     if ( _blurLibrary != undefined ) then
@@ -9,6 +12,9 @@ if ( python != undefined ) then
 
     if ( bootstrap_script != undefined ) then 
     (
+        -- Since 2015+ uses the native built-in Python, this Blur-specific function
+        -- won't exist. This catches a common use-case where users upgrade to 2015+
+        -- but don't update their Launcher to use the new tk-3dsmaxplus engine. 
         try
         (
             python.run( bootstrap_script )
