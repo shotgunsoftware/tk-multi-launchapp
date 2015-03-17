@@ -434,7 +434,7 @@ class LaunchApplication(tank.platform.Application):
         sys.path.insert(0, python_path)
         try:
             import bootstrap
-            (app_path, new_args) = bootstrap.bootstrap(engine_name, context, app_path, app_args)
+            (app_path, new_args) = bootstrap.bootstrap(engine_name, context, app_path, app_args, self)
 
         except Exception:
             self.log_exception("Error executing engine bootstrap script.")
