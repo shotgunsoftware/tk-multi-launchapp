@@ -82,8 +82,8 @@ class LaunchApplication(tank.platform.Application):
             icon = raw_icon
             menu_name = raw_menu_name
         else:
-            icon = raw_icon.replace("{version}", version)
-            menu_name = raw_menu_name.replace("{version}", version)
+            icon = self._translate_version_tokens(raw_icon, version)
+            menu_name = self._translate_version_tokens(raw_menu_name, version)
             if menu_name == raw_menu_name:
                 # No replacement happened with multiple versions, warn
                 self.log_warning("versions defined, but no $version token found in menu_name.")
@@ -190,6 +190,27 @@ class LaunchApplication(tank.platform.Application):
 
         self._launch_app(self.context, version=version)
 
+    def _translate_version_tokens(self, raw_string, version):
+        """
+        Returns string with version tokens replaced by their values. Replaces 
+        {version} and {v0}, {v1}, etc. tokens in raw_string with their values. The {v} 
+        tokens are created by splitting the version string by non-numeric chunks which 
+        can be used to specify parts of the version string by their index. For example:
+            {version} = "9.0v4"
+            {v0} = "9"
+            {v1} = "." 
+            {v2} = "0" 
+            {v3} = "v" 
+            {v4} = "4" 
+        :param raw_string: raw string with un-translated tokens 
+        :param version: version string to use for replacement tokens
+        """
+        version_tokens = re.findall(r'\d+|\D+', version)
+        string = raw_string.replace("{version}", version)
+        for i, token in enumerate(version_tokens):
+            string = string.replace("{v%d}" % i, token)
+        return string
+
     def _get_app_path(self, version=None):
         """ Return the platform specific app path, performing version substitution. """
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
@@ -201,11 +222,11 @@ class LaunchApplication(tank.platform.Application):
             # list, which will be treated as the default
             versions = self.get_setting("versions")
             if versions:
-                return raw_app_path.replace("{version}", versions[0])
+                return self._translate_version_tokens(raw_app_path, versions[0])
             else:
                 return raw_app_path
         else:
-            return raw_app_path.replace("{version}", version)
+            return self._translate_version_tokens(raw_app_path, version)
 
     def _launch_app(self, context, file_to_open=None, version=None):
         """
