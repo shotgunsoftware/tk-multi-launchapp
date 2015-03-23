@@ -194,19 +194,20 @@ class LaunchApplication(tank.platform.Application):
         """
         Returns string with version tokens replaced by their values. Replaces 
         {version} and {v0}, {v1}, etc. tokens in raw_string with their values. The {v} 
-        tokens are created by splitting the version string by non-numeric chunks which 
-        can be used to specify parts of the version string by their index. For example:
+        tokens are created by using groups defined by () within the version string.
+        For example, if the version setting is "(9.0)v4(beta1)"
             {version} = "9.0v4"
-            {v0} = "9"
-            {v1} = "." 
-            {v2} = "0" 
-            {v3} = "v" 
-            {v4} = "4" 
+            {v0} = "9.0"
+            {v1} = "beta1" 
         :param raw_string: raw string with un-translated tokens 
         :param version: version string to use for replacement tokens
         """
-        version_tokens = re.findall(r'\d+|\D+', version)
-        string = raw_string.replace("{version}", version)
+        # split version string into tokens defined by ()s
+        version_tokens = re.findall(r"\(([^\)]+)\)", version)
+        # ensure we have a clean complete version string without ()s
+        clean_version = re.sub('[()]', '', version)
+        # do the substitution
+        string = raw_string.replace("{version}", clean_version)
         for i, token in enumerate(version_tokens):
             string = string.replace("{v%d}" % i, token)
         return string
