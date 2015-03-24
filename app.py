@@ -434,7 +434,18 @@ class LaunchApplication(tank.platform.Application):
         sys.path.insert(0, python_path)
         try:
             import bootstrap
-            (app_path, new_args) = bootstrap.bootstrap(engine_name, context, app_path, app_args, self)
+            extra_args = self.get_setting("extra", {})
+
+            # bootstrap should take kwargs in order to protect from changes in
+            # this signature in the future.  For example:
+            # def bootstrap(engine, context, app_path, app_args, **kwargs)
+            (app_path, new_args) = bootstrap.bootstrap(
+                engine_name=engine_name,
+                context=context,
+                app_path=app_path,
+                app_args=app_args,
+                extra_args=extra_args,
+            )
 
         except Exception:
             self.log_exception("Error executing engine bootstrap script.")
