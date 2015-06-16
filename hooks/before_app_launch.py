@@ -24,9 +24,15 @@ class BeforeAppLaunch(tank.Hook):
     Hook to set up the system prior to app launch.
     """
     
-    def execute(self, **kwargs):
+    def execute(self, app_path, app_args, version, **kwargs):
         """
-        The execute functon of the hook will be called to start the required application        
+        The execute functon of the hook will be called prior to starting the required application        
+        
+        :param app_path: (str) The path of the application executable
+        :param app_args: (str) Any arguments the application may require
+        :param version: (str) version of the application being run if set in the "versions" settings
+                              of the Launcher instance, otherwise None
+
         """
 
         # accessing the current context (current shot, etc)
