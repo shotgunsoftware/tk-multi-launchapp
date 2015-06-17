@@ -201,7 +201,7 @@ class LaunchApplication(tank.platform.Application):
                         this will be None.
         """
         if version is None:
-            return version
+            return None
         clean_version = re.sub('[()]', '', version)
         return clean_version
 
