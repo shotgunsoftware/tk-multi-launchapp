@@ -190,6 +190,21 @@ class LaunchApplication(tank.platform.Application):
 
         self._launch_app(self.context, version=version)
 
+    def _get_clean_version_string(self, version):
+        """
+        Returns version string used for current app launch stripped of any ()'s defining 
+        additional version tokens. For example, if the version setting is "(8.4)v6" this will 
+        return "8.4v6"
+
+        :param version: version of the application being launched specified by the value from 
+                        'versions' settings. If no 'versions' were defined in the settings, then 
+                        this will be None.
+        """
+        if version is None:
+            return None
+        clean_version = re.sub('[()]', '', version)
+        return clean_version
+
     def _translate_version_tokens(self, raw_string, version):
         """
         Returns string with version tokens replaced by their values. Replaces 
@@ -205,7 +220,7 @@ class LaunchApplication(tank.platform.Application):
         # split version string into tokens defined by ()s
         version_tokens = re.findall(r"\(([^\)]+)\)", version)
         # ensure we have a clean complete version string without ()s
-        clean_version = re.sub('[()]', '', version)
+        clean_version = self._get_clean_version_string(version)
         # do the substitution
         string = raw_string.replace("{version}", clean_version)
         for i, token in enumerate(version_tokens):
@@ -217,7 +232,7 @@ class LaunchApplication(tank.platform.Application):
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
         raw_app_path = self.get_setting("%s_path" % platform_name, "")
         if version is None:
-            # there are two reasons version could be none
+            # there are two reasons version could be None
             # the first is if versions have not been configured, in which case the raw path is valid
             # if versions has been configured, then we should expand with the first element in the
             # list, which will be treated as the default
@@ -308,9 +323,11 @@ class LaunchApplication(tank.platform.Application):
             else:
                 (app_path, app_args) = self.prepare_generic_launch(engine_name, context, app_path, app_args)
 
+        version_string = self._get_clean_version_string(version)
         # run before launch hook
-        self.log_debug("Running before launch hook...")
-        self.execute_hook("hook_before_app_launch")
+        self.log_debug("Running before app launch hook...")
+        self.execute_hook("hook_before_app_launch", app_path=app_path, app_args=app_args, 
+                          version=version_string)
 
         # Ticket 26741: Avoid having odd DLL loading issues on windows
         # Desktop PySide sets an explicit DLL path, which is getting inherited by subprocess. 
@@ -320,7 +337,8 @@ class LaunchApplication(tank.platform.Application):
         try:
             # Launch the application
             self.log_debug("Launching executable '%s' with args '%s'" % (app_path, app_args))
-            result = self.execute_hook("hook_app_launch", app_path=app_path, app_args=app_args)
+            result = self.execute_hook("hook_app_launch", app_path=app_path, app_args=app_args,
+                                       version=version_string)
 
             cmd = result.get("command")
             return_code = result.get("return_code")
