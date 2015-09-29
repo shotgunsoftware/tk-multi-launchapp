@@ -26,7 +26,7 @@ class LaunchApplication(tank.platform.Application):
     """
 
     # documentation explaining how to reconfigure app paths
-    HELP_DOC_URL = "https://toolkit.shotgunsoftware.com/entries/93728833#Setting%20up%20Application%20Paths"
+    HELP_DOC_URL = "https://support.shotgunsoftware.com/entries/95443887#Setting%20up%20Application%20Paths"
 
     def init_app(self):
         # get the path setting for this platform:
