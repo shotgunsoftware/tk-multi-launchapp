@@ -12,11 +12,20 @@ import sgtk
 from sgtk.platform.qt import QtCore, QtGui
 from .ui.dialog import Ui_Dialog
 
-def show_dialog(app_instance, cmd_line):
+def show_path_error_dialog(app_instance, cmd_line):
     """
     Shows the dialog.
     """
-    app_instance.engine.show_dialog("Error launching Application", app_instance, AppDialog, cmd_line)
+    widget = app_instance.engine.show_dialog("Error launching Application", app_instance, AppDialog)
+    widget.show_path_error_message(cmd_line)
+    
+
+def show_generic_error_dialog(app_instance, cmd_line):
+    """
+    Shows the dialog.
+    """
+    widget = app_instance.engine.show_dialog("Error launching Application", app_instance, AppDialog)
+    widget.show_generic_error_message(cmd_line)
 
 
 class AppDialog(QtGui.QWidget):
@@ -24,7 +33,7 @@ class AppDialog(QtGui.QWidget):
     Not found UI dialog.
     """
     
-    def __init__(self, cmd_line):
+    def __init__(self):
         """
         Constructor
         """
@@ -35,13 +44,30 @@ class AppDialog(QtGui.QWidget):
         self.ui = Ui_Dialog() 
         self.ui.setupUi(self)
         
+        self.ui.learn_more.clicked.connect(self._launch_docs)
+        
+    def show_path_error_message(self, cmd_line):
+        """
+        
+        """
         msg = ("<b style='color: rgb(252, 98, 70)'>Failed to launch application!</b> This is most likely because the path "
                "is not set correctly. The command that was used to attempt to launch is '%s'. "
                "<br><br>Click the button below to learn more about how to configure Toolkit to launch "
                "applications." %  cmd_line)
         
         self.ui.message.setText(msg)        
-        self.ui.learn_more.clicked.connect(self._launch_docs)
+
+    def show_generic_error_message(self, error_msg):
+        """
+        
+        """
+        msg = ("<b style='color: rgb(252, 98, 70)'>Failed to launch application!</b> "
+               "<br><br>The following error was reported: <b>%s</b>"
+               "<br><br>Click the button below to learn more about how to configure Toolkit to launch "
+               "applications." %  error_msg)
+        
+        self.ui.message.setText(msg)        
+        
         
     def _launch_docs(self):
         """

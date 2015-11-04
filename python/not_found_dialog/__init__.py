@@ -8,4 +8,4 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-from .dialog import show_dialog
+from .dialog import show_path_error_dialog, show_generic_error_dialog
