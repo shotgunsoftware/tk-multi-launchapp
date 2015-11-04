@@ -363,7 +363,7 @@ class LaunchApplication(tank.platform.Application):
             elif self.engine.has_ui:
                 # got UI support. Launch dialog with nice message
                 not_found_dialog = self.import_module("not_found_dialog")                
-                not_found_dialog.show_dialog(self, cmd)                
+                not_found_dialog.show_path_error_dialog(self, cmd)                
             
             else:
                 # traditional non-ui environment without any html support.
@@ -683,8 +683,14 @@ class LaunchApplication(tank.platform.Application):
             import bootstrap
             (app_path, new_args) = bootstrap.bootstrap(engine_name, context, app_path, app_args)            
             
-        except:
+        except Exception, e:
             self.log_exception("Error executing engine bootstrap script.")
+            
+            if self.engine.has_ui:
+                # got UI support. Launch dialog with nice message
+                not_found_dialog = self.import_module("not_found_dialog")                
+                not_found_dialog.show_generic_error_dialog(self, str(e))
+            
             raise TankError("Error executing bootstrap script. Please see log for details.")
         finally:
             # remove bootstrap from sys.path
