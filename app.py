@@ -320,6 +320,8 @@ class LaunchApplication(tank.platform.Application):
                 self.prepare_mari_launch(engine_name, context)
             elif engine_name in ["tk-flame", "tk-flare"]:
                 (app_path, app_args) = self.prepare_flame_flare_launch(engine_name, context, app_path, app_args)
+            elif engine_name == "tk-modo":
+                self.prepare_modo_launch(engine_name, context)
             else:
                 (app_path, app_args) = self.prepare_generic_launch(engine_name, context, app_path, app_args)
 
@@ -507,6 +509,24 @@ class LaunchApplication(tank.platform.Application):
         # it's not possible to open a nuke script from within the initialization
         # scripts so if we have a path then we need to pass it through the start
         # up args:
+        if file_to_open:
+            if app_args:
+                app_args = "%s %s" % (file_to_open, app_args)
+            else:
+                app_args = file_to_open
+
+        return app_args
+
+    def prepare_modo_launch(self, file_to_open, app_args):
+        """
+        Modo specific pre-launch environment setup.
+        """
+        # get the PYTHONPATH and store in MODO_PATH, Modo seems to clear PYTHONPATH
+        # we use MODO_PATH later in module shotgunsupport
+        os.environ["MODO_PATH"] = os.environ.get("PYTHONPATH", "")
+        startup_path = os.path.abspath(os.path.join(self._get_app_specific_path("modo"), "startup"))
+        tank.util.append_path_to_env_var("MODO_PATH", startup_path)
+
         if file_to_open:
             if app_args:
                 app_args = "%s %s" % (file_to_open, app_args)
