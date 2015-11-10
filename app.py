@@ -244,6 +244,23 @@ class LaunchApplication(tank.platform.Application):
         else:
             return self._translate_version_tokens(raw_app_path, version)
 
+    def _get_app_args(self, version=None):
+        """ Return the platform specific app args, performing version substitution. """
+        platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
+        raw_app_args = self.get_setting("%s_args" % platform_name, "")
+        if version is None:
+            # there are two reasons version could be None
+            # the first is if versions have not been configured, in which case the raw args are valid
+            # if versions has been configured, then we should expand with the first element in the
+            # list, which will be treated as the default
+            versions = self.get_setting("versions")
+            if versions:
+                return self._translate_version_tokens(raw_app_args, versions[0])
+            else:
+                return raw_app_args
+        else:
+            return self._translate_version_tokens(raw_app_args, version)
+
     def _launch_app(self, context, file_to_open=None, version=None):
         """
         Launches an application. No environment variable change is leaked to the outside world.
@@ -279,7 +296,7 @@ class LaunchApplication(tank.platform.Application):
 
         # get the app args:
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
-        app_args = self.get_setting("%s_args" % platform_name, "")
+        app_args = self._get_app_args(version)
 
         engine_name = self.get_setting("engine")
         if engine_name:
