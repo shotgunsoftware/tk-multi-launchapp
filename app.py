@@ -298,9 +298,7 @@ class LaunchApplication(tank.platform.Application):
             os.environ["TANK_ENGINE"] = engine_name
 
             # Prep any application specific things
-            if engine_name == "tk-nuke":
-                app_args = self.prepare_nuke_launch(file_to_open, app_args)
-            elif engine_name == "tk-maya":
+            if engine_name == "tk-maya":
                 self.prepare_maya_launch(app_path)
             elif engine_name == "tk-softimage":
                 self.prepare_softimage_launch()
@@ -310,8 +308,6 @@ class LaunchApplication(tank.platform.Application):
                 app_args = self.prepare_3dsmax_launch(app_args)
             elif engine_name == "tk-3dsmaxplus":
                 app_args = self.prepare_3dsmaxplus_launch(context, app_args)
-            elif engine_name == "tk-hiero":
-                self.prepare_hiero_launch()
             elif engine_name == "tk-photoshop":
                 self.prepare_photoshop_launch(context)
             elif engine_name == "tk-houdini":
@@ -496,25 +492,6 @@ class LaunchApplication(tank.platform.Application):
 
         return (app_path, new_args)
 
-    def prepare_nuke_launch(self, file_to_open, app_args):
-        """
-        Nuke specific pre-launch environment setup.
-        """
-        # Make sure Nuke can find the Tank menu
-        startup_path = os.path.abspath(os.path.join(self._get_app_specific_path("nuke"), "startup"))
-        tank.util.append_path_to_env_var("NUKE_PATH", startup_path)
-
-        # it's not possible to open a nuke script from within the initialization
-        # scripts so if we have a path then we need to pass it through the start
-        # up args:
-        if file_to_open:
-            if app_args:
-                app_args = "%s %s" % (file_to_open, app_args)
-            else:
-                app_args = file_to_open
-
-        return app_args
-
     def prepare_maya_launch(self, app_path):
         """
         Maya specific pre-launch environment setup.
@@ -627,14 +604,6 @@ class LaunchApplication(tank.platform.Application):
             app_args = new_args
 
         return app_args
-
-
-    def prepare_hiero_launch(self):
-        """
-        Hiero specific pre-launch environment setup.
-        """
-        startup_path = os.path.abspath(os.path.join(self._get_app_specific_path("hiero"), "startup"))
-        tank.util.append_path_to_env_var("HIERO_PLUGIN_PATH", startup_path)
 
     def prepare_houdini_launch(self, context):
         """
