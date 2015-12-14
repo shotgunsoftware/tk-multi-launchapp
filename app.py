@@ -806,8 +806,8 @@ class LaunchApplication(tank.platform.Application):
         return os.path.join(self.disk_location, "app_specific", app_dir)
 
 
-    ##########################################################################################
-    # Exceptions
+##########################################################################################
+# Exceptions
 
 class TankBootstrapNotFoundError(TankError):
     """
