@@ -297,31 +297,52 @@ class LaunchApplication(tank.platform.Application):
             # Set environment variables used by apps to prep Tank engine
             os.environ["TANK_ENGINE"] = engine_name
 
-            # Prep any application specific things
-            if engine_name == "tk-nuke":
-                app_args = self.prepare_nuke_launch(file_to_open, app_args)
-            elif engine_name == "tk-maya":
-                self.prepare_maya_launch(app_path)
-            elif engine_name == "tk-softimage":
-                self.prepare_softimage_launch()
-            elif engine_name == "tk-motionbuilder":
-                app_args = self.prepare_motionbuilder_launch(app_args)
-            elif engine_name == "tk-3dsmax":
-                app_args = self.prepare_3dsmax_launch(app_args)
-            elif engine_name == "tk-3dsmaxplus":
-                app_args = self.prepare_3dsmaxplus_launch(context, app_args)
-            elif engine_name == "tk-hiero":
-                self.prepare_hiero_launch()
-            elif engine_name == "tk-photoshop":
-                self.prepare_photoshop_launch(context)
-            elif engine_name == "tk-houdini":
-                self.prepare_houdini_launch(context)
-            elif engine_name == "tk-mari":
-                self.prepare_mari_launch(engine_name, context)
-            elif engine_name in ["tk-flame", "tk-flare"]:
-                (app_path, app_args) = self.prepare_flame_flare_launch(engine_name, context, app_path, app_args)
-            else:
-                (app_path, app_args) = self.prepare_generic_launch(engine_name, context, app_path, app_args)
+            # First thing we'll do is look for a bootstrap routine in the engine
+            # itself. If we don't find that then we'll fall back on our application
+            # specific methods of bootstrapping here in launchapp.
+            try:
+                (app_path, app_args) = self.prepare_generic_launch(
+                    engine_name,
+                    context,
+                    app_path,
+                    app_args,
+                )
+            except TankBootstrapNotFoundError:
+                # Prep any application specific things now that we know we don't
+                # have an engine-specific bootstrap to use.
+                if engine_name == "tk-maya":
+                    self.prepare_maya_launch(app_path)
+                elif engine_name == "tk-nuke":
+                    app_args = self.prepare_nuke_launch(file_to_open, app_args)
+                elif engine_name == "tk-hiero":
+                    self.prepare_hiero_launch()
+                elif engine_name == "tk-softimage":
+                    self.prepare_softimage_launch()
+                elif engine_name == "tk-motionbuilder":
+                    app_args = self.prepare_motionbuilder_launch(app_args)
+                elif engine_name == "tk-3dsmax":
+                    app_args = self.prepare_3dsmax_launch(app_args)
+                elif engine_name == "tk-3dsmaxplus":
+                    app_args = self.prepare_3dsmaxplus_launch(context, app_args)
+                elif engine_name == "tk-photoshop":
+                    self.prepare_photoshop_launch(context)
+                elif engine_name == "tk-houdini":
+                    self.prepare_houdini_launch(context)
+                elif engine_name == "tk-mari":
+                    self.prepare_mari_launch(engine_name, context)
+                elif engine_name in ["tk-flame", "tk-flare"]:
+                    (app_path, app_args) = self.prepare_flame_flare_launch(
+                        engine_name,
+                        context,
+                        app_path,
+                        app_args,
+                    )
+                else:
+                    # We have neither an engine-specific nor launchapp-specific
+                    # bootstrap for this engine, so we have to bail out here.
+                    raise TankError(
+                        "No bootstrap routine found for %s. The engine will not be started." % engine_name
+                    )
 
         version_string = self._get_clean_version_string(version)
         # run before launch hook
@@ -465,8 +486,11 @@ class LaunchApplication(tank.platform.Application):
         startup_path = os.path.join(engine_path, "python", "startup", "bootstrap.py")
 
         if not os.path.exists(startup_path):
-            raise TankError("Could not find the bootstrap for the '%s' engine at '%s'" % (
-                engine_name, startup_path))
+            raise TankBootstrapNotFoundError(
+                "Could not find the bootstrap for the '%s' engine at '%s'" % (
+                    engine_name, startup_path
+                )
+            )
 
         python_path = os.path.dirname(startup_path)
 
@@ -486,7 +510,6 @@ class LaunchApplication(tank.platform.Application):
                 app_args=app_args,
                 extra_args=extra_args,
             )
-
         except Exception:
             self.log_exception("Error executing engine bootstrap script.")
             raise TankError("Error executing bootstrap script. Please see log for details.")
@@ -514,6 +537,13 @@ class LaunchApplication(tank.platform.Application):
                 app_args = file_to_open
 
         return app_args
+
+    def prepare_hiero_launch(self):
+        """
+        Hiero specific pre-launch environment setup.
+        """
+        startup_path = os.path.abspath(os.path.join(self._get_app_specific_path("hiero"), "startup"))
+        tank.util.append_path_to_env_var("HIERO_PLUGIN_PATH", startup_path)
 
     def prepare_maya_launch(self, app_path):
         """
@@ -627,14 +657,6 @@ class LaunchApplication(tank.platform.Application):
             app_args = new_args
 
         return app_args
-
-
-    def prepare_hiero_launch(self):
-        """
-        Hiero specific pre-launch environment setup.
-        """
-        startup_path = os.path.abspath(os.path.join(self._get_app_specific_path("hiero"), "startup"))
-        tank.util.append_path_to_env_var("HIERO_PLUGIN_PATH", startup_path)
 
     def prepare_houdini_launch(self, context):
         """
@@ -782,3 +804,14 @@ class LaunchApplication(tank.platform.Application):
         """
 
         return os.path.join(self.disk_location, "app_specific", app_dir)
+
+
+##########################################################################################
+# Exceptions
+
+class TankBootstrapNotFoundError(TankError):
+    """
+    Exception raised when an engine-specific bootstrap routine is not
+    found.
+    """
+    pass
