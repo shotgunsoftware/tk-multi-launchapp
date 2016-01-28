@@ -297,52 +297,58 @@ class LaunchApplication(tank.platform.Application):
             # Set environment variables used by apps to prep Tank engine
             os.environ["TANK_ENGINE"] = engine_name
 
-            # First thing we'll do is look for a bootstrap routine in the engine
-            # itself. If we don't find that then we'll fall back on our application
-            # specific methods of bootstrapping here in launchapp.
-            try:
-                (app_path, app_args) = self.prepare_generic_launch(
+            # Prep any application specific things now that we know we don't
+            # have an engine-specific bootstrap to use.
+            if engine_name == "tk-maya":
+                self.prepare_maya_launch(app_path)
+            elif engine_name == "tk-softimage":
+                self.prepare_softimage_launch()
+            elif engine_name == "tk-motionbuilder":
+                app_args = self.prepare_motionbuilder_launch(app_args)
+            elif engine_name == "tk-3dsmax":
+                app_args = self.prepare_3dsmax_launch(app_args)
+            elif engine_name == "tk-3dsmaxplus":
+                app_args = self.prepare_3dsmaxplus_launch(context, app_args)
+            elif engine_name == "tk-photoshop":
+                self.prepare_photoshop_launch(context)
+            elif engine_name == "tk-houdini":
+                self.prepare_houdini_launch(context)
+            elif engine_name == "tk-mari":
+                self.prepare_mari_launch(engine_name, context)
+            elif engine_name in ["tk-flame", "tk-flare"]:
+                (app_path, app_args) = self.prepare_flame_flare_launch(
                     engine_name,
                     context,
                     app_path,
                     app_args,
                 )
-            except TankBootstrapNotFoundError:
-                # Prep any application specific things now that we know we don't
-                # have an engine-specific bootstrap to use.
-                if engine_name == "tk-maya":
-                    self.prepare_maya_launch(app_path)
-                elif engine_name == "tk-nuke":
-                    app_args = self.prepare_nuke_launch(file_to_open, app_args)
-                elif engine_name == "tk-hiero":
-                    self.prepare_hiero_launch()
-                elif engine_name == "tk-softimage":
-                    self.prepare_softimage_launch()
-                elif engine_name == "tk-motionbuilder":
-                    app_args = self.prepare_motionbuilder_launch(app_args)
-                elif engine_name == "tk-3dsmax":
-                    app_args = self.prepare_3dsmax_launch(app_args)
-                elif engine_name == "tk-3dsmaxplus":
-                    app_args = self.prepare_3dsmaxplus_launch(context, app_args)
-                elif engine_name == "tk-photoshop":
-                    self.prepare_photoshop_launch(context)
-                elif engine_name == "tk-houdini":
-                    self.prepare_houdini_launch(context)
-                elif engine_name == "tk-mari":
-                    self.prepare_mari_launch(engine_name, context)
-                elif engine_name in ["tk-flame", "tk-flare"]:
-                    (app_path, app_args) = self.prepare_flame_flare_launch(
+            else:
+                # This should really be the first thing we try, but some of
+                # the engines (like tk-3dsmaxplus, as an example) have bootstrapping
+                # logic that doesn't properly stand alone and still requires
+                # their "prepare" method here in launchapp to be run. As engines
+                # are updated to handle all their own bootstrapping, they can be
+                # pulled out from above and moved into the except block below in
+                # the way that tk-nuke and tk-hiero have.
+                try:
+                    (app_path, app_args) = self.prepare_generic_launch(
                         engine_name,
                         context,
                         app_path,
                         app_args,
                     )
-                else:
-                    # We have neither an engine-specific nor launchapp-specific
-                    # bootstrap for this engine, so we have to bail out here.
-                    raise TankError(
-                        "No bootstrap routine found for %s. The engine will not be started." % engine_name
-                    )
+                except TankBootstrapNotFoundError:
+                    # Backwards compatibility here for earlier engine versions.
+                    if engine_name == "tk-nuke":
+                        app_args = self.prepare_nuke_launch(file_to_open, app_args)
+                    elif engine_name == "tk-hiero":
+                        self.prepare_hiero_launch()
+                    else:
+                        # We have neither an engine-specific nor launchapp-specific
+                        # bootstrap for this engine, so we have to bail out here.
+                        raise TankError(
+                            "No bootstrap routine found for %s. The engine will not be started." % engine_name
+                        )
 
         version_string = self._get_clean_version_string(version)
         # run before launch hook
