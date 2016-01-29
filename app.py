@@ -520,8 +520,16 @@ class LaunchApplication(tank.platform.Application):
             self.log_exception("Error executing engine bootstrap script.")
             raise TankError("Error executing bootstrap script. Please see log for details.")
         finally:
-            # remove bootstrap from sys.path
+            # Remove bootstrap from sys.path
             sys.path.pop(0)
+
+            # We also need to unload the bootstrap module so that any
+            # subsequent launches that import a different bootstrap
+            # will succeed.
+            try:
+                del sys.modules["bootstrap"]
+            except Exception:
+                pass
 
         return (app_path, new_args)
 
