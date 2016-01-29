@@ -526,10 +526,9 @@ class LaunchApplication(tank.platform.Application):
             # We also need to unload the bootstrap module so that any
             # subsequent launches that import a different bootstrap
             # will succeed.
-            try:
+            if "bootstrap" in sys.modules:
+                self.log_debug("Removing 'bootstrap' from sys.modules.")
                 del sys.modules["bootstrap"]
-            except Exception:
-                pass
 
         return (app_path, new_args)
 
