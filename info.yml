@@ -29,7 +29,6 @@ configuration:
                    the correct operating system separator when used."
       default_value: "{target_engine}/icon_256.png"
 
-    # Path information for multiple platforms
     windows_path:
         type: str
         description: The path to the application executable on Windows.
@@ -38,6 +37,13 @@ configuration:
         type: str
         description: The arguments to be passed to application on Windows, as a string.
         default_value: ""
+
+    windows_path_check:
+        type: bool
+        description: "If this flag is set to true, the app will try to detect the path to
+                      the application on disk. If the application path is not found, no
+                      launch commands are registered." 
+        default_value: false
     
     linux_path:
         type: str
@@ -47,6 +53,13 @@ configuration:
         type: str
         description: The arguments to be passed to application on Linux, as a string.
         default_value: ""
+
+    linux_path_check:
+        type: bool
+        description: "If this flag is set to true, the app will try to detect the path to
+                      the application on disk. If the application path is not found, no
+                      launch commands are registered." 
+        default_value: false
     
     mac_path:
         type: str
@@ -56,6 +69,13 @@ configuration:
         type: str
         description: The arguments to be passed to application on Mac OS X, as a string.
         default_value: ""
+
+    mac_path_check:
+        type: bool
+        description: "If this flag is set to true, the app will try to detect the path to
+                      the application on disk. If the application path is not found, no
+                      launch commands are registered." 
+        default_value: false
     
     engine:
         type: str

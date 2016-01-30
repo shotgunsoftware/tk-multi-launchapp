@@ -29,15 +29,12 @@ class LaunchApplication(tank.platform.Application):
     HELP_DOC_URL = "https://support.shotgunsoftware.com/entries/95443887#Setting%20up%20Application%20Paths"
 
     def init_app(self):
-        # get the path setting for this platform:
-        platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
-        app_path = self.get_setting("%s_path" % platform_name, "")
-        if not app_path:
-            # no application path defined for this os. So don't register a menu item!
-            return
-
-        versions = self.get_setting("versions")
-        menu_name = self.get_setting("menu_name")
+        """
+        App initialization entry point.
+        """
+        # get the settings for this app
+        versions = self.get_setting("versions")        
+        menu_name = self.get_setting("menu_name")        
 
         # get icon value, replacing tokens if needed
         icon = self.get_setting("icon")
@@ -77,6 +74,26 @@ class LaunchApplication(tank.platform.Application):
             self._init_app_internal(icon, menu_name)
 
     def _init_app_internal(self, raw_icon, raw_menu_name, version=None):
+        """
+        Helper method that carries out the actual command registration.
+        """
+        platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
+        perform_path_check = self.get_setting("%s_path_check" % platform_name, False)
+        app_path = self._get_app_path(version)
+        
+        self.log_debug("Processing launch entry %s, version %s, path '%s'" % (raw_menu_name, version, app_path))
+        
+        if not app_path:
+            # no application path defined for this os. So don't register a menu item!
+            self.log_debug("Application path is not defined. No launch entry will be created.")
+            return
+        
+        if perform_path_check and not os.path.exists(app_path):
+            # when perform_path_check is True, we check to determine the existence of
+            # the dcc launch command and if it cannot be found, no menu items are produced.
+            self.log_debug("Application path does not exist. No launch entry will be created.")
+            return        
+        
         # do the {version} replacement if needed
         if version is None:
             icon = raw_icon
@@ -228,7 +245,9 @@ class LaunchApplication(tank.platform.Application):
         return string
 
     def _get_app_path(self, version=None):
-        """ Return the platform specific app path, performing version substitution. """
+        """
+        Return the platform specific app path, performing version substitution. 
+        """
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
         raw_app_path = self.get_setting("%s_path" % platform_name, "")
         if version is None:
