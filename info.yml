@@ -81,7 +81,11 @@ configuration:
                       conjunction with launching of apps which do not have a toolkit engine defined - for these 
                       app launch instances, the engine setting is left blank, and therefore no engine name is passed
                       into the deferred folder creation. In such cases you can utilize this parameter to control
-                      the deferred folder creation."
+                      the deferred folder creation. 
+
+                      You can specify multiple keywords using a comma as a delimiter (eg. 'nuke, nuke_x').
+                      This will trigger folder creation for folders in your schema that have any
+                      of these values in their deferred folder creation setting."
 
     versions:
         type: list
