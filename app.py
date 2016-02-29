@@ -84,9 +84,6 @@ class LaunchApplication(tank.platform.Application):
         else:
             icon = self._translate_version_tokens(raw_icon, version)
             menu_name = self._translate_version_tokens(raw_menu_name, version)
-            if menu_name == raw_menu_name:
-                # No replacement happened with multiple versions, warn
-                self.log_warning("versions defined, but no $version token found in menu_name.")
 
         # the command name mustn't contain spaces and funny chars, so sanitize it.
         # Also, should be nice for the shell engine.
