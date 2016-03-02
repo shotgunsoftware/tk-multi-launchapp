@@ -99,7 +99,10 @@ configuration:
                      'Launch Maya {version}' for menu_name would result in the following command
                      menu names being registered: Launch Maya 2012, Launch Maya 2013, Launch
                      Maya 2014.  The first version in the list will be considered the 'default'
-                     version if the engine running the app supports the concept."
+                     version if the engine running the app supports the concept. You can use pieces
+                     of the version if you wrap the parts in parenthesis like ['(7.0)v3', '(8.0)v1'].
+                     These pieces of the version string are available in the other settings via the
+                     {v0}, {v1}, {v2}, ... replacement tokens."
 
     extra:
         type: dict
