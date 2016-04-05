@@ -214,6 +214,9 @@ class LaunchApplication(tank.platform.Application):
         :param raw_string: raw string with un-translated tokens 
         :param version: version string to use for replacement tokens
         """
+        if version is None:
+            return raw_string
+            
         # split version string into tokens defined by ()s
         version_tokens = re.findall(r"\(([^\)]+)\)", version)
         # ensure we have a clean complete version string without ()s
@@ -276,7 +279,8 @@ class LaunchApplication(tank.platform.Application):
 
         # get the app args:
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
-        app_args = self.get_setting("%s_args" % platform_name, "")
+        raw_app_args = self.get_setting("%s_args" % platform_name, "")
+        app_args = self._translate_version_tokens(raw_app_args, version)
 
         engine_name = self.get_setting("engine")
         if engine_name:
