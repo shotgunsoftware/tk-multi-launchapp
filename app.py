@@ -209,7 +209,7 @@ class LaunchApplication(tank.platform.Application):
             {v1} = "beta1" 
         :param raw_string: raw string with un-translated tokens 
         :param version: version string to use for replacement tokens
-        """            
+        """
         # split version string into tokens defined by ()s
         version_tokens = re.findall(r"\(([^\)]+)\)", version)
         # ensure we have a clean complete version string without ()s
@@ -242,9 +242,9 @@ class LaunchApplication(tank.platform.Application):
             #    expand with the first element in the versions list, and use it as the default
             versions = self.get_setting("versions")
             if versions:
-               return self._translate_version_tokens(raw_string, versions[0])
+                return self._translate_version_tokens(raw_string, versions[0])
             else:
-               return raw_string
+                return raw_string
         else:
             return self._translate_version_tokens(raw_string, version)
 
