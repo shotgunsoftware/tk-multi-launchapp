@@ -78,12 +78,8 @@ class LaunchApplication(tank.platform.Application):
 
     def _init_app_internal(self, raw_icon, raw_menu_name, version=None):
         # do the {version} replacement if needed
-        if version is None:
-            icon = raw_icon
-            menu_name = raw_menu_name
-        else:
-            icon = self._translate_version_tokens(raw_icon, version)
-            menu_name = self._translate_version_tokens(raw_menu_name, version)
+        icon = self._apply_version_to_setting(raw_icon, version)
+        menu_name = self._apply_version_to_setting(raw_menu_name, version)
 
         # the command name mustn't contain spaces and funny chars, so sanitize it.
         # Also, should be nice for the shell engine.
@@ -224,22 +220,47 @@ class LaunchApplication(tank.platform.Application):
             string = string.replace("{v%d}" % i, token)
         return string
 
+    def _apply_version_to_setting(self, raw_string, version=None):
+        """
+        Replace any version tokens  contained in the raw_string with the appropriate version value from 
+        the app settings. 
+
+        If version is None, then no version has been specified and we will return the first version 
+        from the versions list in the settings. If no versions have been defined in the settings, then 
+        we return the raw_string since there's no replacement to do.
+        
+        :param raw_string: the raw string potentially containing the version tokens (eg. {version}, 
+                           {v0}, ...) we will be replacing. This string could represent a number of 
+                           things including a path, an args string, etc. 
+        :param version: version string to use for the token replacement. 
+        :returns: string with version tokens replaced with their appropriate values
+        """
+        if version is None:
+            # there are two reasons version could be None
+            # 1. if versions have not been configured, the raw string is assumed valid
+            # 2. if versions has been configured, but no specific version was requested, then we 
+            #    expand with the first element in the versions list, and use it as the default
+            versions = self.get_setting("versions")
+            if versions:
+                return self._translate_version_tokens(raw_string, versions[0])
+            else:
+                return raw_string
+        else:
+            return self._translate_version_tokens(raw_string, version)
+
     def _get_app_path(self, version=None):
         """ Return the platform specific app path, performing version substitution. """
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
         raw_app_path = self.get_setting("%s_path" % platform_name, "")
-        if version is None:
-            # there are two reasons version could be None
-            # the first is if versions have not been configured, in which case the raw path is valid
-            # if versions has been configured, then we should expand with the first element in the
-            # list, which will be treated as the default
-            versions = self.get_setting("versions")
-            if versions:
-                return self._translate_version_tokens(raw_app_path, versions[0])
-            else:
-                return raw_app_path
-        else:
-            return self._translate_version_tokens(raw_app_path, version)
+        
+        return self._apply_version_to_setting(raw_app_path)
+
+    def _get_app_args(self, version=None):
+        """ Return the platform specific app path, performing version substitution. """
+        platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
+        raw_app_args = self.get_setting("%s_args" % platform_name, "")
+        
+        return self._apply_version_to_setting(raw_app_args)
 
     def _launch_app(self, context, file_to_open=None, version=None):
         """
@@ -273,10 +294,8 @@ class LaunchApplication(tank.platform.Application):
         """
         # get the executable path
         app_path = self._get_app_path(version)
-
         # get the app args:
-        platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
-        app_args = self.get_setting("%s_args" % platform_name, "")
+        app_args = self._get_app_args(version)
 
         engine_name = self.get_setting("engine")
         if engine_name:
