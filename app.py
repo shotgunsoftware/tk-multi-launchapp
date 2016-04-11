@@ -149,12 +149,6 @@ class LaunchApplication(tank.platform.Application):
         if self.context.project is None:
             raise TankError("Your context does not have a project defined. Cannot continue.")
 
-        # make sure that we don't launch from tasks with no step - while this is not technically
-        # incorrect, it can be confusing with any config that requires a step.
-        if self.engine.name == "tk-shotgun" and self.context.task and self.context.step is None:
-            raise TankError("Looks like you are trying to launch from a Task that "
-                            "does not have a Pipeline Step associated! ")
-
         # first do project
         entity_type = self.context.project["type"]
         entity_id = self.context.project["id"]
