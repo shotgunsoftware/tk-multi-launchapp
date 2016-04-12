@@ -247,14 +247,14 @@ class LaunchApplication(tank.platform.Application):
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
         raw_app_path = self.get_setting("%s_path" % platform_name, "")
         
-        return self._apply_version_to_setting(raw_app_path)
+        return self._apply_version_to_setting(raw_app_path, version)
 
     def _get_app_args(self, version=None):
         """ Return the platform specific app path, performing version substitution. """
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
         raw_app_args = self.get_setting("%s_args" % platform_name, "")
         
-        return self._apply_version_to_setting(raw_app_args)
+        return self._apply_version_to_setting(raw_app_args, version)
 
     def _launch_app(self, context, file_to_open=None, version=None):
         """
