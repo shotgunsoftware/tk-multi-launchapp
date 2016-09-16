@@ -318,7 +318,7 @@ class LaunchApplication(tank.platform.Application):
             elif engine_name == "tk-3dsmax":
                 app_args = self.prepare_3dsmax_launch(app_args)
             elif engine_name == "tk-3dsmaxplus":
-                app_args = self.prepare_3dsmaxplus_launch(context, app_args)
+                app_args = self.prepare_3dsmaxplus_launch(context, app_args, app_path)
             elif engine_name == "tk-photoshop":
                 self.prepare_photoshop_launch(context)
             elif engine_name == "tk-houdini":
@@ -660,7 +660,7 @@ class LaunchApplication(tank.platform.Application):
         return app_args
 
 
-    def prepare_3dsmaxplus_launch(self, context, app_args):
+    def prepare_3dsmaxplus_launch(self, context, app_args, app_path):
         """
         3DSMax Plus specific pre-launch environment setup.
 
@@ -668,8 +668,21 @@ class LaunchApplication(tank.platform.Application):
         3dsmax.exe somefile.max -U PythonHost somescript.py
         """
         engine_path = tank.platform.get_engine_path("tk-3dsmaxplus", self.tank, context)
+
         if engine_path is None:
             raise TankError("Path to 3dsmaxplus engine (tk-3dsmaxplus) could not be found.")
+
+        # This is a fix for PySide problems in 2017+ versions of Max. Now that
+        # Max ships with a full install of PySide, we need to ensure that dlls
+        # for the native Max install are sourced. If we don't do this, we end
+        # up with dlls loaded from SG Desktop's bin and we have a mismatch that
+        # results in complete breakage.
+        paths = os.environ.get("PATH", "").split(";")
+        max_root = os.path.dirname(app_path)
+
+        if not paths or paths[0] != max_root:
+            paths.insert(0, os.path.dirname(app_path))
+            os.environ["PATH"] = ";".join(paths)
 
         startup_file = os.path.abspath(os.path.join(engine_path, "python", "startup", "bootstrap.py"))
         new_args = "-U PythonHost \"%s\"" % startup_file
