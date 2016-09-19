@@ -677,12 +677,8 @@ class LaunchApplication(tank.platform.Application):
         # for the native Max install are sourced. If we don't do this, we end
         # up with dlls loaded from SG Desktop's bin and we have a mismatch that
         # results in complete breakage.
-        paths = os.environ.get("PATH", "").split(";")
         max_root = os.path.dirname(app_path)
-
-        if not paths or paths[0] != max_root:
-            paths.insert(0, os.path.dirname(app_path))
-            os.environ["PATH"] = ";".join(paths)
+        tank.util.prepend_path_to_env_var("PATH", max_root)
 
         startup_file = os.path.abspath(os.path.join(engine_path, "python", "startup", "bootstrap.py"))
         new_args = "-U PythonHost \"%s\"" % startup_file
