@@ -577,33 +577,6 @@ class LaunchApplication(tank.platform.Application):
         startup_path = os.path.abspath(os.path.join(app_specific_path, "startup"))
         tank.util.append_path_to_env_var("PYTHONPATH", startup_path)
 
-        # Push our patched _ssl compiled module to the front of the PYTHONPATH for Windows
-        # SSL Connection time fix.
-        if sys.platform == "win32":
-            # maps the maya version to the ssl maya version;  (maya 2011 can use the maya 2012 _ssl.pyd)
-            # the ssl directory name is the version of maya it was compiled for.
-            maya_version_to_ssl_maya_version = {
-                "2011": "2012",
-                "2012": "2012",
-                "2013": "2013",
-            }
-
-            version_dir = None
-            # From most recent to past version
-            for year in sorted(maya_version_to_ssl_maya_version, reverse=True):
-                # Test for the year in the path.
-                # maya -v returns an empty line with maya 2013.
-                if year in app_path:
-                    version_dir = maya_version_to_ssl_maya_version[year]
-                    break
-
-            # if there is an ssl lib for that current version of maya being used then
-            # add it to the python path.
-            if version_dir:
-                ssl_path = os.path.abspath(os.path.join(app_specific_path, "ssl_patch", version_dir))
-                tank.util.prepend_path_to_env_var("PYTHONPATH", ssl_path)
-
-
     def prepare_softimage_launch(self):
         """
         Softimage specific pre-launch environment setup.
@@ -625,7 +598,6 @@ class LaunchApplication(tank.platform.Application):
             lib_path = os.path.abspath(os.path.join(self._get_app_specific_path("softimage"), "linux", "lib"))
             tank.util.append_path_to_env_var("LD_LIBRARY_PATH", lib_path)
             tank.util.append_path_to_env_var("PYTHONPATH", lib_path)
-
 
     def prepare_motionbuilder_launch(self, app_args):
         """
