@@ -18,6 +18,7 @@ import sys
 
 import tank
 from tank import TankError
+from tank.descriptor import Descriptor, create_descriptor
 
 
 class LaunchApplication(tank.platform.Application):
@@ -30,9 +31,10 @@ class LaunchApplication(tank.platform.Application):
 
     def init_app(self):
         # get the path setting for this platform:
-        platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
-        app_path = self.get_setting("%s_path" % platform_name, "")
-        if not app_path:
+        self.__app_path = None
+
+        # overrides descriptor, if provided
+        if not self._get_app_path():
             # no application path defined for this os. So don't register a menu item!
             return
 
@@ -244,10 +246,15 @@ class LaunchApplication(tank.platform.Application):
 
     def _get_app_path(self, version=None):
         """ Return the platform specific app path, performing version substitution. """
-        platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
-        raw_app_path = self.get_setting("%s_path" % platform_name, "")
-        
-        return self._apply_version_to_setting(raw_app_path, version)
+        if self.__app_path is None:
+            if self.get_setting("app_location"):
+                app_descriptor = create_descriptor(self.shotgun, Descriptor.THIRD_PARTY, self.get_setting("app_location"))
+                self.__app_path = app_descriptor.get_path()
+            else:
+                platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
+                raw_app_path = self.get_setting("%s_path" % platform_name, "")
+                self.__app_path = self._apply_version_to_setting(raw_app_path, version)
+        return self.__app_path
 
     def _get_app_args(self, version=None):
         """ Return the platform specific app path, performing version substitution. """
@@ -408,7 +415,6 @@ class LaunchApplication(tank.platform.Application):
                               "is not set correctly. The command that was used to attempt to launch is '%s'. "
                               "To learn more about how to set up your app launch configuration, "
                               "see the following documentation: %s" % (cmd, self.HELP_DOC_URL))
-                
 
         else:
             # Write an event log entry
