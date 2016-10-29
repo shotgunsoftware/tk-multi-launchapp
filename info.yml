@@ -14,9 +14,21 @@
 # expected fields in the configuration file for this app
 configuration:
 
+    sg_software_entity:
+        type: str
+        description: SG CustomNonProjectEntity designated as the Software entity 
+                     until the Software entity becomes native.
+        default_value: CustomNonProjectEntity23
+
+    use_software_entity:
+        type: bool
+        description: Whether to use SG Software Entities to launch available DCCs.
+        default_value: false
+
     menu_name:
         type: str
         description: Name to appear on the Shotgun menu.
+        default_value: ""
 
     icon:
       type: str
@@ -33,6 +45,7 @@ configuration:
     windows_path:
         type: str
         description: The path to the application executable on Windows.
+        default_value: ""
     
     windows_args:
         type: str
@@ -42,6 +55,7 @@ configuration:
     linux_path:
         type: str
         description: The path to the application executable on Linux.
+        default_value: ""
     
     linux_args:
         type: str
@@ -51,6 +65,7 @@ configuration:
     mac_path:
         type: str
         description: The path to the application executable on Mac OS X.
+        default_value: ""
     
     mac_args:
         type: str
@@ -63,6 +78,7 @@ configuration:
                       name prefixed with tk, e.g. tk-maya, tk-nuke, tk-photoshop etc. If you set 
                       this to an empty string, no toolkit engine will be started, meaning that 
                       you can launch applications that do not have toolkit engines set up."
+        default_value: ""
 
     defer_keyword:
         type: str
@@ -108,6 +124,7 @@ configuration:
         type: dict
         description: "Shotgun engine specific extra values. These are defined per Shotgun engine.
                      Please look in the app documentation for more details."
+        default_value: {}
 
     hook_app_launch:
         type: hook

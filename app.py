@@ -16,6 +16,9 @@ import os
 import re
 import sys
 
+import urlparse
+import tempfile
+
 import tank
 from tank import TankError
 
@@ -29,6 +32,14 @@ class LaunchApplication(tank.platform.Application):
     HELP_DOC_URL = "https://support.shotgunsoftware.com/entries/95443887#Setting%20up%20Application%20Paths"
 
     def init_app(self):
+
+        # First check to see if SG Software entities are being used to define
+        # the list of apps available to load.
+        if self.get_setting("use_software_entity"):
+            sg_software_entity = self.get_setting("sg_software_entity")
+            self.init_sg_software_apps(sg_software_entity)
+            return
+
         # get the path setting for this platform:
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
         app_path = self.get_setting("%s_path" % platform_name, "")
@@ -76,7 +87,137 @@ class LaunchApplication(tank.platform.Application):
             # No replacements defined, just register with the raw values
             self._init_app_internal(icon, menu_name)
 
-    def _init_app_internal(self, raw_icon, raw_menu_name, version=None):
+    def init_sg_software_apps(self, sg_software_entity=None):
+        # Expand Software field names that rely on the current platform
+        platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
+        platform_fields = ["sg_%s_path", "sg_%s_args"]
+        for i, field in enumerate(platform_fields):
+            platform_fields[i] = field % platform_name
+        app_path_field = platform_fields[0]
+        app_args_field = platform_fields[1]
+
+        # Determine the information to retrieve from SG
+        sw_entity = sg_software_entity or "Software"
+        sw_filters = [
+            ["sg_status_list", "is", "act"],
+        ]
+        sw_fields = [
+            "code",
+            "description",
+            "image",
+            "sg_engine",
+            "sg_group_restrictions",
+            "sg_projects",
+            "sg_versions",
+            "sg_user_restrictions",
+        ]
+        sw_fields.extend(platform_fields)
+
+        # Get the list of Software apps that match the specified filters.
+        sg_softwares = self.shotgun.find(sw_entity, sw_filters, sw_fields)
+        if not sg_softwares:
+            # No apps found matching filters, nothing to do.
+            self.log_debug("No SG %s entities found matching filters : %s" %
+                (sw_entity, sw_filters)
+            )
+            return
+
+        # Get the list of Software apps to initialize. Filter out apps
+        # with project/group/user restrictions that are not relevant to
+        # the current context.
+        ctx_user = self.context.user
+        ctx_user_group_ids = []
+        if ctx_user:
+            sg_user = self.shotgun.find_one(
+                ctx_user["type"], [["id", "is", ctx_user["id"]]], ["groups"]
+            )
+            ctx_user_group_ids = [grp["id"] for grp in (sg_user["groups"] or [])]
+
+        ctx_project = self.context.project
+        for app in sg_softwares:
+            app_name = app["code"]
+
+            # If there are Project restrictions, check if the current Project is one of them.
+            app_project_ids = [proj["id"] for proj in (app["sg_projects"] or [])]
+            if app_project_ids and (not ctx_project or ctx_project["id"] not in app_project_ids):
+                self.log_debug(
+                    "Context Project %s not found in Project restrictions for app [%s]." %
+                    (ctx_project, app_name)
+                )
+                continue
+
+            # If there are user restrictions, check if the current user is one of them.
+            app_user_ids = [user["id"] for user in (app["sg_user_restrictions"] or [])]
+            if app_user_ids and (not ctx_user or ctx_user["id"] not in app_user_ids):
+                self.log_debug(
+                    "Context user %s not found in user restrictions for app [%s]." %
+                    (ctx_user, app_name)
+                )
+                continue
+
+            # If there are group restrictions, check if the current user is in one of them.
+            app_group_ids = [grp["id"] for grp in (app["sg_group_restrictions"] or [])]
+            if app_group_ids and (not ctx_user_group_ids or 
+                    not set(ctx_user_group_ids).intersection(app_group_ids)):
+                self.log_debug(
+                    "Context user %s is not a member of Group restrictions for app [%s]." %
+                    (ctx_user, app_name)
+                )
+                continue
+
+            # If an engine name has been specified, make sure it has been loaded in 
+            # the current environment.
+            engine_name = app["sg_engine"]
+            if engine_name not in self.engine.get_env().get_engines():
+                self.log_warning("App engine %s is not loaded in the current environment." %
+                    (engine_name)
+                )
+                continue
+
+            # If no path has been set for the app, we will eventually go look for one,
+            # but for now, don't load the app.
+            if not app[app_path_field]:
+                self.log_warning("No path specified for app [%s]." % app_name)
+                continue
+
+            # Resolve any env vars in the app path string and verify it exists
+            resolved_app_path = os.path.expandvars(app[app_path_field])
+            if not os.path.exists(resolved_app_path):
+                self.log_warning("%s application path [%s] does not exist!" %
+                    (app_name, resolved_app_path)
+                )
+                continue
+
+            # Download the thumbnail to use as the app's icon
+            app_icon = None
+            if app["image"]:
+                icon_temp_dir = tempfile.mkdtemp()
+                image_url_path = urlparse.urlparse(app["image"]).path
+                app_icon = os.path.join(icon_temp_dir, os.path.basename(image_url_path))
+                tank.util.download_url(self.shotgun, app["image"], app_icon)
+
+            # Parse the Software versions field to determine the specific list of 
+            # versions to load. Assume the list of versions is stored as a comma-separated
+            # list in SG.
+            menu_name = app_name
+            if not menu_name.startswith("Launch "):
+                menu_name = "Launch %s" % menu_name
+            app_versions = []
+            if app["sg_versions"]:
+                app_versions = app["sg_versions"].split(",")
+            for app_version in app_versions:
+                self._init_app_internal(
+                    app_icon, menu_name, app_version.strip() or None, engine_name, 
+                    resolved_app_path, app[app_args_field]
+                )
+            else:
+                self._init_app_internal(
+                    app_icon, menu_name, None, engine_name, 
+                    resolved_app_path, app[app_args_field]
+                )
+
+
+    def _init_app_internal(self, raw_icon, raw_menu_name, version=None, engine_name=None, app_path=None, app_args=None):
         # do the {version} replacement if needed
         icon = self._apply_version_to_setting(raw_icon, version)
         menu_name = self._apply_version_to_setting(raw_menu_name, version)
@@ -105,7 +246,7 @@ class LaunchApplication(tank.platform.Application):
                          }
 
             def launch_version():
-                self.launch_from_entity(version)
+                self.launch_from_entity(version, engine_name, app_path, app_args)
             self.engine.register_command(command_name, launch_version, properties)
 
 
@@ -140,7 +281,7 @@ class LaunchApplication(tank.platform.Application):
         context = self.tank.context_from_path(path)
         self._launch_app(context, path, version=version)
 
-    def launch_from_entity(self, version=None):
+    def launch_from_entity(self, version=None, engine_name=None, app_path=None, app_args=None):
         """
         Default app command. Launches an app based on the current context and settings.
         """
@@ -163,7 +304,7 @@ class LaunchApplication(tank.platform.Application):
 
         # Now do the folder creation. By default, use
         # the engine name as the defer keyword
-        defer_keyword = self.get_setting("engine")
+        defer_keyword = engine_name or self.get_setting("engine")
         
         # if there is a specific defer keyword, this takes precedence
         if self.get_setting("defer_keyword"):
@@ -175,7 +316,9 @@ class LaunchApplication(tank.platform.Application):
         except tank.TankError, err:
             raise TankError("Could not create folders on disk. Error reported: %s" % err)
 
-        self._launch_app(self.context, version=version)
+        self._launch_app(
+            self.context, version=version, engine_name=engine_name, app_path=app_path, app_args=app_args
+        )
 
     def _get_clean_version_string(self, version):
         """
@@ -242,21 +385,23 @@ class LaunchApplication(tank.platform.Application):
         else:
             return self._translate_version_tokens(raw_string, version)
 
-    def _get_app_path(self, version=None):
+    def _get_app_path(self, version=None, raw_app_path=None):
         """ Return the platform specific app path, performing version substitution. """
-        platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
-        raw_app_path = self.get_setting("%s_path" % platform_name, "")
+        if not raw_app_path:
+            platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
+            raw_app_path = self.get_setting("%s_path" % platform_name, "")
         
         return self._apply_version_to_setting(raw_app_path, version)
 
-    def _get_app_args(self, version=None):
+    def _get_app_args(self, version=None, raw_app_args=None):
         """ Return the platform specific app path, performing version substitution. """
-        platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
-        raw_app_args = self.get_setting("%s_args" % platform_name, "")
+        if not raw_app_args:
+            platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
+            raw_app_args = self.get_setting("%s_args" % platform_name, "")
         
         return self._apply_version_to_setting(raw_app_args, version)
 
-    def _launch_app(self, context, file_to_open=None, version=None):
+    def _launch_app(self, context, file_to_open=None, version=None, engine_name=None, app_path=None, app_args=None):
         """
         Launches an application. No environment variable change is leaked to the outside world.
         :param context: Toolkit context we will opening the app in.
@@ -268,7 +413,7 @@ class LaunchApplication(tank.platform.Application):
             # Clone the environment variables
             environ_clone = os.environ.copy()
             sys_path_clone = list(sys.path)
-            self._launch_app_internal(context, file_to_open, version)
+            self._launch_app_internal(context, file_to_open, version, engine_name, app_path, app_args)
         finally:
             # Clear the original structures and add into them so that users who did
             # from os import environ and from sys import path get the restored values.
@@ -277,7 +422,7 @@ class LaunchApplication(tank.platform.Application):
             del sys.path[:]
             sys.path.extend(sys_path_clone)
 
-    def _launch_app_internal(self, context, file_to_open=None, version=None):
+    def _launch_app_internal(self, context, file_to_open=None, version=None, engine_name=None, app_path=None, app_args=None):
         """
         Launches an application. This method may have side-effects in the environment variables table.
         Call the _launch_app method instead.
@@ -287,11 +432,11 @@ class LaunchApplication(tank.platform.Application):
                         be picked.
         """
         # get the executable path
-        app_path = self._get_app_path(version)
+        app_path = self._get_app_path(version, app_path)
         # get the app args:
-        app_args = self._get_app_args(version)
+        app_args = self._get_app_args(version, app_args)
 
-        engine_name = self.get_setting("engine")
+        engine_name = engine_name or self.get_setting("engine")
         if engine_name:
 
             # we have an engine we should start as part of this app launch
