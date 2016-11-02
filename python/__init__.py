@@ -9,3 +9,4 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 from . import not_found_dialog
+from . import tk_multi_launchapp

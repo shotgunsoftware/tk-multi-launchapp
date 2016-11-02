@@ -158,3 +158,6 @@ requires_engine_version:
 
 # the engines that this app can operate in:
 supported_engines: 
+
+frameworks:
+    - {"name": "tk-framework-shotgunutils", "version": "v4.x.x"}
