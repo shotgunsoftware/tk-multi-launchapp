@@ -33,7 +33,7 @@ class InitAndLaunchApps(object):
         self._context = self._app.context
         self._sg = self._app.shotgun
 
-    def init_app_from_settings(self):
+    def init_from_settings(self):
         # get the path setting for this platform:
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
         app_path = self._app.get_setting("%s_path" % platform_name, "")
@@ -56,7 +56,6 @@ class InitAndLaunchApps(object):
                     # This can happen when an engine is configured in an environment that isn't
                     # supported on the current operating system.  Simply return an empty string.
                     icon = ""
-
             else:
                 # This happens if there is no engine associated with the application being run.
                 # Just return an empty string since using this syntax is invalid, but could
@@ -81,7 +80,7 @@ class InitAndLaunchApps(object):
             # No replacements defined, just register with the raw values
             self._init_app_internal(icon, menu_name)
 
-    def init_sg_software_apps(self, sg_software_entity=None):
+    def init_from_shotgun(self):
         # Expand Software field names that rely on the current platform
         platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[sys.platform]
         platform_fields = ["sg_%s_path", "sg_%s_args"]
@@ -91,6 +90,7 @@ class InitAndLaunchApps(object):
         app_args_field = platform_fields[1]
 
         # Determine the information to retrieve from SG
+        sg_software_entity = self._app.get_setting("sg_software_entity")
         sw_entity = sg_software_entity or "Software"
         sw_filters = [
             ["sg_status_list", "is", "act"],
@@ -115,9 +115,7 @@ class InitAndLaunchApps(object):
             )
             return
 
-        # Get the list of Software apps to initialize. Filter out apps
-        # with project/group/user restrictions that are not relevant to
-        # the current context.
+        # Record what Groups the current context user is a member of
         ctx_user = self._context.user
         ctx_user_group_ids = []
         if ctx_user:
@@ -128,6 +126,9 @@ class InitAndLaunchApps(object):
 
         ctx_project = self._context.project
         for app in sg_softwares:
+            # Get the list of Software apps to initialize. Filter out apps
+            # with project/group/user restrictions that are not relevant to
+            # the current context.
             app_name = app["code"]
 
             # If no path has been set for the app, we will eventually go look for one,
@@ -186,15 +187,20 @@ class InitAndLaunchApps(object):
             # tend to timeout quickly.
             app_icon = None
             if app["image"]:
-                app_icon = shotgun_data.ShotgunDataRetriever.download_thumbnail(app["image"], self._app)
-                self._app.log_info("App icon from ShotgunDataRetriever : %s" % app_icon)
+                app_icon = shotgun_data.ShotgunDataRetriever.download_thumbnail(
+                    app["image"], self._app
+                )
+                self._app.log_debug("App icon from ShotgunDataRetriever : %s" % app_icon)
 
-            # Parse the Software versions field to determine the specific list of 
-            # versions to load. Assume the list of versions is stored as a comma-separated
-            # list in SG.
+            # Prepend "Launch" to the application name to produce a familiar
+            # menu/command name
             menu_name = app_name
             if not menu_name.lower().startswith("launch"):
                 menu_name = "Launch %s" % menu_name
+
+            # Parse the Software versions field to determine the specific list of
+            # versions to load. Assume the list of versions is stored as comma-separated
+            # in SG.
             app_versions = []
             if app["sg_versions"]:
                 app_versions = app["sg_versions"].split(",")
@@ -548,4 +554,15 @@ class InitAndLaunchApps(object):
         desc =  "%s %s: %s" % (self._app.name, self._app.version, menu_name)
         sgtk.util.create_event_log_entry(self._sgtk, ctx, "Toolkit_App_Startup", desc, meta)
 
+def init_apps_from_settings():
+    InitAndLaunchApps().init_from_settings()
+
+def init_apps_from_shotgun():
+    InitAndLaunchApps().init_from_shotgun()
+
+def launch_app_from_path_and_context(path, context, version=None):
+    InitAndLaunchApps().launch_from_path_and_context(path, context, version)
+
+def launch_app_from_path(path, version=None):
+    InitAndLaunchApps().launch_from_path(path, version)
 

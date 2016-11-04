@@ -12,19 +12,10 @@
 App that launches applications.
 
 """
-import os
-import re
-import sys
 
-import urlparse
-import tempfile
+import sgtk
 
-import tank
-from tank import TankError
-
-#shotgun_data = tank.platform.import_framework("tk-framework-shotgunutils", "shotgun_data")
-
-class LaunchApplication(tank.platform.Application):
+class LaunchApplication(sgtk.platform.Application):
     """
     Multi App to launch applications.
     """
@@ -32,10 +23,9 @@ class LaunchApplication(tank.platform.Application):
     def init_app(self):
         app_payload = self.import_module("tk_multi_launchapp")
         if self.get_setting("use_software_entity"):
-            sg_software_entity = self.get_setting("sg_software_entity")
-            app_payload.InitAndLaunchApps().init_sg_software_apps(sg_software_entity)
+            app_payload.init_apps_from_shotgun()
         else:
-            app_payload.InitAndLaunchApps().init_app_from_settings()
+            app_payload.init_apps_from_settings()
 
     def launch_from_path_and_context(self, path, context, version=None):
         """
@@ -51,7 +41,7 @@ class LaunchApplication(tank.platform.Application):
         which is external to this app.
         """
         app_payload = self.import_module("tk_multi_launchapp")
-        app_payload.InitAndLaunchApps().launch_from_path_and_context(path, context, version)
+        app_payload.launch_app_from_path_and_context(path, context, version)
 
     def launch_from_path(self, path, version=None):
         """
@@ -61,4 +51,4 @@ class LaunchApplication(tank.platform.Application):
         which is external to this app.
         """
         app_payload = self.import_module("tk_multi_launchapp")
-        app_payload.InitAndLaunchApps().launch_from_path(path, version)
+        app_payload.launch_app_from_path(path, version)
