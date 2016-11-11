@@ -16,10 +16,10 @@ from sgtk import TankError
 
 def prepare_launch_for_engine(
     engine_name, 
+    app_path,
+    app_args,
     context, 
-    file_to_open=None, 
-    app_path=None, 
-    app_args=None
+    file_to_open=None
 ):
     # Retrieve the TK Application instance from the current bundle
     tk_app = sgtk.platform.current_bundle()
@@ -84,6 +84,7 @@ def prepare_launch_for_engine(
                     "No bootstrap routine found for %s. The engine will not be started." %
                     (engine_name)
                 )
+    return (app_path, app_args)
 
 def _prepare_generic_launch(tk_app, engine_name, context, app_path, app_args):
     """
