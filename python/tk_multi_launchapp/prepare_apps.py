@@ -14,13 +14,21 @@ import sys
 import sgtk
 from sgtk import TankError
 
-def prepare_launch_for_engine(
-    engine_name, 
-    app_path,
-    app_args,
-    context, 
-    file_to_open=None
-):
+def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_open=None):
+    """
+    Prepares the environment to launch a DCC application in for the
+    specified TK engine name.
+
+    :param engine_name: Name of the TK engine to launch
+    :param app_path: Path to DCC executable or launch script
+    :param app_args: External app arguments
+    :param context: The context that the application is being launched in
+    :param file_to_open: (optional) File path to open once DCC finishes launching
+
+    :returns: Tuple (app_path, app_args) Potentially modified app_path or
+              app_args value, depending on preparation requirements for 
+              the specific DCC.
+    """
     # Retrieve the TK Application instance from the current bundle
     tk_app = sgtk.platform.current_bundle()
 
@@ -464,7 +472,10 @@ def _prepare_photoshop_launch(context):
 
 def _get_app_specific_path(app_dir):
     """
-    Get the path for application specific files for a given application.
+    Returns the path for application specific files for a given application.
+
+    :param app_dir: (string) Sub directory name to append to
+                    the current bundle's location.
     """
     # Retrieve the TK Application instance from the current bundle
     # to determine the bundle's disk location.
@@ -473,7 +484,9 @@ def _get_app_specific_path(app_dir):
 
 def _get_app_startup_path(app_name):
     """
-    Get the standard 'startup' path for the given application.
+    Returns the standard 'startup' path for the given application.
+
+    :param app_name: (string) Application name 
     """
     return os.path.abspath(os.path.join(_get_app_specific_path(app_name), "startup"))
 

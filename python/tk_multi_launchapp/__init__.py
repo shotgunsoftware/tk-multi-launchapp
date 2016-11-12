@@ -8,5 +8,4 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-from .launch_apps import init_apps_from_settings, init_apps_from_shotgun
-from .launch_apps import launch_app_from_path_and_context, launch_app_from_path
+from .launch_apps import SingleConfigLauncher, SoftwareEntityLauncher

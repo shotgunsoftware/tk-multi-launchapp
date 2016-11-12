@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Shotgun Software Inc.
+# Copyright (c) 2016 Shotgun Software Inc.
 #
 # CONFIDENTIAL AND PROPRIETARY
 #
@@ -21,34 +21,35 @@ class LaunchApplication(sgtk.platform.Application):
     """
 
     def init_app(self):
+        """
+        Called as app is being initialized
+        """
+        # Use the Launchers defined in the tk_multi_launchapp payload
+        # to do all of the heavy lifting for this app
         app_payload = self.import_module("tk_multi_launchapp")
         if self.get_setting("use_software_entity"):
-            app_payload.init_apps_from_shotgun()
+            # For zero config type setups
+            self._launcher = app_payload.SoftwareEntityLauncher()
         else:
-            app_payload.init_apps_from_settings()
+            # For traditional setups
+            self._launcher = app_payload.SingleConfigLauncher()
+    
+        # Register the appropriate DCC launch commands
+        self._launcher.init_launch_commands()
 
     def launch_from_path_and_context(self, path, context, version=None):
         """
-        Extended version of launch_from_path. This method takes an additional
-        context parameter which is useful if you want to seed the launch context
-        with more context data than is available in the path itself. Typically
-        paths may not contain a task, so this may need to be pushed through
-        separately via the context.
-
-        Entry point if you want to launch an app given a particular path.
-        Note that there are no checks that the path passed is actually compatible
-        with the app that is being launched. This should be handled in logic
-        which is external to this app.
+        Launch an app with the specified path and context. The context can
+        contain more information than is available from the path itself, 
+        such as Task information.
         """
-        app_payload = self.import_module("tk_multi_launchapp")
-        app_payload.launch_app_from_path_and_context(path, context, version)
+        self._launcher.launch_from_path_and_context(path, context, version)
 
     def launch_from_path(self, path, version=None):
         """
-        Entry point if you want to launch an app given a particular path.
-        Note that there are no checks that the path passed is actually compatible
-        with the app that is being launched. This should be handled in logic
-        which is external to this app.
+        Launch an app to open the specified file path. Also derive the 
+        context from this path. Note that there are no checks that the 
+        input path is actually compatible with the app that is being launched. 
+        This should be handled in logic which is external to this app.
         """
-        app_payload = self.import_module("tk_multi_launchapp")
-        app_payload.launch_app_from_path(path, version)
+        self._launcher.launch_from_path(path, version)
