@@ -35,7 +35,7 @@ class LaunchApplication(sgtk.platform.Application):
             self._launcher = app_payload.SingleConfigLauncher()
     
         # Register the appropriate DCC launch commands
-        self._launcher.init_launch_commands()
+        self._launcher.register_launch_commands()
 
     def launch_from_path_and_context(self, path, context, version=None):
         """

@@ -26,7 +26,7 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
     :param file_to_open: (optional) File path to open once DCC finishes launching
 
     :returns: Tuple (app_path, app_args) Potentially modified app_path or
-              app_args value, depending on preparation requirements for 
+              app_args value, depending on preparation requirements for
               the specific DCC.
     """
     # Retrieve the TK Application instance from the current bundle
@@ -108,7 +108,9 @@ def _prepare_generic_launch(tk_app, engine_name, context, app_path, app_args):
     :param app_path: Path to DCC executable or launch script
     :param app_args: External app arguments
 
-    :returns: extra arguments to pass to launch
+    :returns: Tuple (app_path, app_args) Potentially modified app_path or
+              app_args value, depending on preparation requirements for
+              the specific DCC.
     """
     # find the path to the engine on disk where the startup script can be found:
     engine_path = sgtk.platform.get_engine_path(engine_name, tk_app.sgtk, context)
@@ -167,7 +169,7 @@ def _prepare_nuke_launch(file_to_open, app_args):
     :param file_to_open: File name to open when Nuke is launched.
     :param app_args: External app arguments
 
-    :returns: extra arguments to pass to launch
+    :returns: (string) Command line arguments to launch DCC with.
     """
     # Make sure Nuke can find the Tank menu
     startup_path = _get_app_startup_path("nuke")
@@ -231,7 +233,7 @@ def _prepare_motionbuilder_launch(app_args):
 
     :param app_args: External app arguments
 
-    :returns: extra arguments to pass to launch
+    :returns: (string) Command line arguments to launch DCC with.
     """
     new_args = "\"%s\"" % os.path.join(
         _get_app_specific_path("motionbuilder"), "startup", "init_tank.py"
@@ -252,7 +254,7 @@ def _prepare_3dsmax_launch(app_args):
 
     :param app_args: External app arguments
 
-    :returns: extra arguments to pass to launch
+    :returns: (string) Command line arguments to launch DCC with.
     """
     startup_dir = _get_app_startup_path("3dsmax")
     os.environ["TANK_BOOTSTRAP_SCRIPT"] = os.path.join(startup_dir, "tank_startup.py")
@@ -275,7 +277,7 @@ def _prepare_3dsmaxplus_launch(context, app_args, app_path):
     :param app_args: External app arguments
     :param app_path: Path to DCC executable or launch script
 
-    :returns: extra arguments to pass to launch
+    :returns: (string) Command line arguments to launch DCC with.
     """
     # Retrieve the TK Application instance from the current bundle
     tk_app = sgtk.platform.current_bundle()
@@ -334,7 +336,9 @@ def _prepare_flame_flare_launch(engine_name, context, app_path, app_args):
     :param app_path: Path to DCC executable or launch script
     :param app_args: External app arguments
 
-    :returns: extra arguments to pass to launch
+    :returns: Tuple (app_path, app_args) Potentially modified app_path or
+              app_args value, depending on preparation requirements for
+              flame.
     """
     # Retrieve the TK Application instance from the current bundle
     tk_app = sgtk.platform.current_bundle()
@@ -395,6 +399,8 @@ def _prepare_mari_launch(engine_name, context):
 def _prepare_photoshop_launch(context):
     """
     Photoshop specific pre-launch environment setup.
+
+    :param context: The context that the application is being launched in
     """
     # Retrieve the TK Application instance from the current bundle
     tk_app = sgtk.platform.current_bundle()
@@ -414,7 +420,6 @@ def _prepare_photoshop_launch(context):
         except:
             tk_app.log_exception("Error executing engine bootstrap script.")
             raise TankError("Error executing bootstrap script. Please see log for details.")
-
         return
 
     # no bootstrap logic with the engine, run the legacy version
@@ -486,7 +491,7 @@ def _get_app_startup_path(app_name):
     """
     Returns the standard 'startup' path for the given application.
 
-    :param app_name: (string) Application name 
+    :param app_name: (string) Application name
     """
     return os.path.abspath(os.path.join(_get_app_specific_path(app_name), "startup"))
 

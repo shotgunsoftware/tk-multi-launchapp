@@ -8,4 +8,5 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-from .launch_apps import SingleConfigLauncher, SoftwareEntityLauncher
+from .single_config_launcher import SingleConfigLauncher
+from .software_entity_launcher import SoftwareEntityLauncher
