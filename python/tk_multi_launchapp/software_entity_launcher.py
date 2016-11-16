@@ -31,31 +31,37 @@ class SoftwareEntityLauncher(BaseLauncher):
         sw_entity = self._tk_app.get_setting("sg_software_entity") or "Software"
 
         # Use filters to retrieve Software entities that match specified
-        # Project, HumanUser, and Group restrictions.
+        # Project, HumanUser, and Group restrictions. The filter specification
+        # is broken up to allow for empty Project and or HumanUser values in
+        # the current context. The resolved filter can be found in the log
+        # files with "debug_logging" toggled on.
+
+        # First, make sure to only include active entries.
         sw_filters = [["sg_status_list", "is", "act"]]
 
-        current_project = self._tk_app.context.project
-        # Always include Software entities that have no Project restrictions.
+        # Next handle Project restrictions. Always include Software entities
+        # that have no Project restrictions.
         project_filters = [["sg_projects", "is", None]]
+        current_project = self._tk_app.context.project
         if current_project:
-            # If a current Project is defined, retrieve Software
-            # entities that have either no Project restrictions OR
-            # include the current Project as a restriction.
+            # If a Project is defined in the current context, retrieve
+            # Software entities that have either no Project restrictions OR
+            # include the context Project as a restriction.
             project_filters.append(
-                ["sg_projects", "is", current_project],
+                ["sg_projects", "in", current_project],
             )
             sw_filters.append({
                 "filter_operator": "or",
                 "filters": project_filters,
             })
         else:
-            # If no current Project is defined, then only retrieve
+            # If no context Project is defined, then only retrieve
             # Software entities that do not have any Project restrictions.
             sw_filters.extend(project_filters)
 
+        # Now Group and User restrictions. Always retrieve Software entities
+        # that have no Group or User restrictions.
         current_user = self._tk_app.context.user
-        # Always include Software entities that have no Group
-        # or User restrictions.
         user_group_filters = [
             ["sg_user_restrictions", "is", None],
             ["sg_group_restrictions", "is", None],
@@ -72,8 +78,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                      "filters": user_group_filters},
                     {"filter_operator": "or",
                      "filters": [
-                        ["sg_user_restrictions", "is", current_user],
-                        ["sg_group_restrictions.Group.users", "is", current_user],
+                        ["sg_user_restrictions", "in", current_user],
+                        ["sg_group_restrictions.Group.users", "in", current_user],
                      ]},
                 ]
             })
@@ -108,11 +114,13 @@ class SoftwareEntityLauncher(BaseLauncher):
             )
             return
 
-        self._tk_app.log_debug("Found (%d) %s entities matching filters %s: " %
+        # Record how many Software entities were found and what the resolved
+        # filter looks like.
+        self._tk_app.log_debug("Found (%d) %s entities matching filters:\n%s " %
             (len(sw_entities), sw_entity, pprint.pformat(sw_filters, indent=4))
         )
         for sw_entity in sw_entities:
-            self._tk_app.log_debug(pprint.pformat(sw_entity, indent=4))
+            self._tk_app.log_debug("Software Entity:\n%s" % pprint.pformat(sw_entity, indent=4))
 
             app_menu_name = sw_entity["code"]
             app_icon = sw_entity["image"]
