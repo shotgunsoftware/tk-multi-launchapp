@@ -10,7 +10,6 @@
 import pprint
 
 import sgtk
-from sgtk import TankError
 
 from .base_launcher import BaseLauncher
 
