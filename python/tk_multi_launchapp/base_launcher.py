@@ -26,10 +26,6 @@ class BaseLauncher(object):
     information required to launch an application from a variety
     of sources.
     """
-
-    # documentation explaining how to reconfigure app paths
-    HELP_DOC_URL = "https://support.shotgunsoftware.com/entries/95443887#Setting%20up%20Application%20Paths"
-
     def __init__(self):
         """
         Initialize members
@@ -111,7 +107,7 @@ class BaseLauncher(object):
             )
             self._tk_app.engine.register_command(command_name, launch_version, properties)
 
-    def _launch_app(self, menu_name, app_engine, app_path, app_args, version=None, context=None, file_to_open=None):
+    def _launch_app(self, menu_name, app_engine, app_path, app_args, context, version=None, file_to_open=None):
         """
         Launches an application. No environment variable change is
         leaked to the outside world.
@@ -123,14 +119,11 @@ class BaseLauncher(object):
                          variables and/or the locally supported {version}, {v0},
                          {v1}, ... variables
         :param app_args: Args string to pass to the DCC at launch time
+        :param context: Toolkit context to open the app in.
         :param version: (Optional) Version of the app to launch. Specifying
                         None means no {version} substitutions will take place.
-        :param context: (Optional) Toolkit context to open the app in.
         :param file_to_open: (Optional) File to open when the app launches.
         """
-        # If no context has been specified, use the current TK Application's.
-        context = context or self._tk_app.context
-
         try:
             # Clone the environment variables
             environ_clone = os.environ.copy()
@@ -192,7 +185,7 @@ class BaseLauncher(object):
                         "The command that was used to attempt to launch is '%s'. "
                         "<br><br><a href='%s' target=_new>Click here</a> to learn more about "
                         "how to setup your app launch configuration." %
-                        (launch_cmd, self.HELP_DOC_URL)
+                        (launch_cmd, self._tk_app.HELP_DOC_URL)
                     )
 
                 elif self._tk_app.engine.has_ui:
@@ -207,7 +200,7 @@ class BaseLauncher(object):
                         "is not set correctly. The command that was used to attempt to launch "
                         "is '%s'. To learn more about how to set up your app launch "
                         "configuration, see the following documentation: %s" %
-                        (launch_cmd, self.HELP_DOC_URL)
+                        (launch_cmd, self._tk_app.HELP_DOC_URL)
                     )
 
             else:
@@ -291,7 +284,7 @@ class BaseLauncher(object):
             raise TankError("Could not create folders on disk. Error reported: %s" % err)
 
         # Launch the DCC
-        self._launch_app(menu_name, app_engine, app_path, app_args, version)
+        self._launch_app(menu_name, app_engine, app_path, app_args, self._tk_app.context, version)
 
     def register_launch_commands(self):
         """
