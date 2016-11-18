@@ -94,13 +94,16 @@ class BaseLauncher(object):
             "shotgun_version",
         ]
         if self._tk_app.engine.environment.get("name") not in skip_environments:
-            properties = { "title": menu_name,
-                           "short_name": command_name,
-                           "description": "Launches and initializes an application environment.",
-                           "icon": icon,
-                         }
+            properties = {
+                "title": menu_name,
+                "short_name": command_name,
+                "description": "Launches and initializes an application environment.",
+                "icon": icon,
+            }
+
             def launch_version():
                 self._launch_callback(menu_name, app_engine, app_path, app_args, version)
+
             self._tk_app.log_debug(
                 "Registering command %s to launch %s with args %s for engine %s" %
                 (command_name, app_path, app_args, app_engine)
@@ -236,7 +239,7 @@ class BaseLauncher(object):
         meta["platform"] = sys.platform
         if ctx.task:
             meta["task"] = ctx.task["id"]
-        desc =  "%s %s: %s" % (self._tk_app.name, self._tk_app.version, menu_name)
+        desc = "%s %s: %s" % (self._tk_app.name, self._tk_app.version, menu_name)
         sgtk.util.create_event_log_entry(
             self._tk_app.sgtk, ctx, "Toolkit_App_Startup", desc, meta
         )
@@ -270,18 +273,26 @@ class BaseLauncher(object):
             entity_type = self._tk_app.context.task["type"]
             entity_id = self._tk_app.context.task["id"]
 
-        # Now do the folder creation. If there is a specific defer keyword, this takes
-        # precedence. Otherwise, use the engine name for the DCC application by default.
-        defer_keyword = self._tk_app.get_setting("defer_keyword") or app_engine
-        try:
-            self._tk_app.log_info("Creating folders for %s %s. Defer keyword: '%s'" %
-                (entity_type, entity_id, defer_keyword)
+        if len(self._tk_app.sgtk.roots) == 0:
+            # configuration doesn't have any filesystem roots defined
+            self._tk_app.log_debug(
+                "Configuration does not have any filesystem roots defined. "
+                "Skipping folder creation."
             )
-            self._tk_app.sgtk.create_filesystem_structure(
-                entity_type, entity_id, engine=defer_keyword
-            )
-        except sgtk.TankError, err:
-            raise TankError("Could not create folders on disk. Error reported: %s" % err)
+
+        else:
+            # Do the folder creation. If there is a specific defer keyword, this takes
+            # precedence. Otherwise, use the engine name for the DCC application by default.
+            defer_keyword = self._tk_app.get_setting("defer_keyword") or app_engine
+            try:
+                self._tk_app.log_info("Creating folders for %s %s. Defer keyword: '%s'" %
+                    (entity_type, entity_id, defer_keyword)
+                )
+                self._tk_app.sgtk.create_filesystem_structure(
+                    entity_type, entity_id, engine=defer_keyword
+                )
+            except sgtk.TankError, err:
+                raise TankError("Could not create folders on disk. Error reported: %s" % err)
 
         # Launch the DCC
         self._launch_app(menu_name, app_engine, app_path, app_args, self._tk_app.context, version)
@@ -295,11 +306,18 @@ class BaseLauncher(object):
     def launch_from_path(self, path, version=None):
         """
         Abstract method that can optionally be implemented by derived classes
+
+        :param path: File path DCC should open after launch.
+        :param version: (Optional) Specific version of DCC to launch.
         """
         raise NotImplementedError
 
     def launch_from_path_and_context(self, path, context, version=None):
         """
         Abstract method that can optionally be implemented by derived classes
+
+        :param path: File path DCC should open after launch.
+        :param context: Specific context to launch DCC with.
+        :param version: (Optional) Specific version of DCC to launch.
         """
         raise NotImplementedError
