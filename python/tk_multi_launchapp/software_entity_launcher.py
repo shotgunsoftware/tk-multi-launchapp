@@ -126,7 +126,7 @@ class SoftwareEntityLauncher(BaseLauncher):
             app_icon = sw_entity["image"]
             app_engine = sw_entity["sg_engine"]
             app_path = sw_entity[app_path_field]
-            app_args = sw_entity[app_args_field]
+            app_args = sw_entity[app_args_field] or ""
 
             if not app_path:
                 # If no path has been set for the app, we will eventually go look for one,
