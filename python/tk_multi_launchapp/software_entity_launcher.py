@@ -128,11 +128,21 @@ class SoftwareEntityLauncher(BaseLauncher):
             app_path = sw_entity[app_path_field]
             app_args = sw_entity[app_args_field] or ""
 
-            if not app_path:
-                # If no path has been set for the app, we will eventually go look for one,
-                # but for now, don't load the app.
-                self._tk_app.log_warning("No path specified for app [%s]." % app_menu_name)
-                continue
+            # Parse the Software versions field to determine the specific list of
+            # versions to load. Assume the list of versions is stored as comma-separated
+            # in Shotgun.
+            app_versions = sw_entity["sg_versions"] or []
+            if isinstance(app_versions, basestring):
+                ver_strings = [v.strip() for v in app_versions.split(",") if v.strip()]
+                app_versions = ver_strings
+
+            # Download the thumbnail to use as the app's icon.
+            if app_icon:
+                sg_icon = shotgun_data.ShotgunDataRetriever.download_thumbnail(
+                    app_icon, self._tk_app
+                )
+                app_icon = sg_icon
+                self._tk_app.log_debug("App icon from ShotgunDataRetriever : %s" % app_icon)
 
             if app_engine:
                 # Try to retrieve the path to the specified engine. If nothing is
@@ -148,22 +158,21 @@ class SoftwareEntityLauncher(BaseLauncher):
                     )
                     continue
 
-            # Download the thumbnail to use as the app's icon.
-            if app_icon:
-                sg_icon = shotgun_data.ShotgunDataRetriever.download_thumbnail(
-                    app_icon, self._tk_app
+            if "create_engine_launcher" in dir(sgtk.platform) and app_engine:
+                self._tk_app.log_info("Running new-fangled sgtk.platform.create_engine_launcher() ...")
+                self._register_software_version_commands(
+                    app_menu_name, app_icon, app_engine, app_path, app_args, app_versions
                 )
-                app_icon = sg_icon
-                self._tk_app.log_debug("App icon from ShotgunDataRetriever : %s" % app_icon)
+                continue
 
-            # Parse the Software versions field to determine the specific list of
-            # versions to load. Assume the list of versions is stored as comma-separated
-            # in Shotgun.
-            app_versions = sw_entity["sg_versions"]
+            if not app_path:
+                # If no path has been set for the app, we will eventually go look for one,
+                # but for now, don't load the app.
+                self._tk_app.log_warning("No path specified for app [%s]." % app_menu_name)
+                continue
+
             if app_versions:
-                for app_version in [v.strip() for v in app_versions.split(",")]:
-                    if not app_version :
-                        continue
+                for app_version in app_versions:
                     self._register_launch_command(
                         app_menu_name, app_icon, app_engine, app_path, app_args, app_version
                     )
