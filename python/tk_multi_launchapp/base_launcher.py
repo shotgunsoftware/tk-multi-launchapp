@@ -255,7 +255,6 @@ class BaseLauncher(object):
             environ_clone = os.environ.copy()
             sys_path_clone = list(sys.path)
 
-            launch_info = None
             engine_launcher = self._engine_launcher(app_engine)
             if sw_version and engine_launcher:
                 launch_args = apply_version_to_setting(app_args, sw_version.version)

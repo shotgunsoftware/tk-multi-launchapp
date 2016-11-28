@@ -159,7 +159,6 @@ class SoftwareEntityLauncher(BaseLauncher):
                     continue
 
             if "create_engine_launcher" in dir(sgtk.platform) and app_engine:
-                self._tk_app.log_info("Running new-fangled sgtk.platform.create_engine_launcher() ...")
                 self._register_software_version_commands(
                     app_menu_name, app_icon, app_engine, app_path, app_args, app_versions
                 )
