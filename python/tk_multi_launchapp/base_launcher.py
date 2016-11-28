@@ -232,7 +232,7 @@ class BaseLauncher(object):
 
     def _launch_app(
             self, menu_name, app_engine, app_path, app_args, context,
-            version=None, sw_version=None, file_to_open=None
+            version=None, file_to_open=None, sw_version=None,
         ):
         """
         Launches an application. No environment variable change is
@@ -381,7 +381,7 @@ class BaseLauncher(object):
         )
 
     def _launch_callback(
-            self, menu_name, app_engine, app_path, app_args, version, sw_version=None
+            self, menu_name, app_engine, app_path, app_args, version=None, sw_version=None
         ):
         """
         Default method to launch DCC application command based on the current context.
@@ -434,7 +434,8 @@ class BaseLauncher(object):
 
         # Launch the DCC
         self._launch_app(
-            menu_name, app_engine, app_path, app_args, self._tk_app.context, version, sw_version
+            menu_name, app_engine, app_path, app_args,
+            self._tk_app.context, version, None, sw_version
         )
 
     def _engine_launcher(self, engine_name):
