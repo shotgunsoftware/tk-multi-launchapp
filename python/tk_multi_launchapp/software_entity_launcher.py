@@ -25,6 +25,69 @@ class SoftwareEntityLauncher(BaseLauncher):
         Multiple commands may be registered based on the number of retrieved
         Software entities and their corresponding 'versions' field.
         """
+        # Retrieve the Software entities from SG and record how many were found.
+        sw_entities = self._sg_software_entities()
+        self._tk_app.log_info("Found (%d) Software entities." % len(sw_entities))
+        if not sw_entities:
+            # No commands to register if no entities were found.
+            return
+
+        # Resolve the app path and args field names for the current platform
+        app_path_field = "sg_%s_path" % self._platform_name
+        app_args_field = "sg_%s_args" % self._platform_name
+
+        # Collect a list of dictionaries that contain the information required
+        # to register a Toolkit command to launch the DCC.
+        register_cmds = []
+        for sw_entity in sw_entities:
+            self._tk_app.log_debug("Software Entity:\n%s" % pprint.pformat(sw_entity, indent=4))
+
+            # Parse the Software versions field to determine the specific list
+            # of versions to load. Assume the list of versions is stored as
+            # comma-separated in Shotgun.
+            app_versions = sw_entity["sg_versions"] or []
+            if isinstance(app_versions, basestring):
+                ver_strings = [v.strip() for v in app_versions.split(",") if v.strip()]
+                app_versions = ver_strings
+
+            # Download the thumbnail to use as the app's icon.
+            app_icon = sw_entity["image"]
+            if app_icon:
+                sg_icon = shotgun_data.ShotgunDataRetriever.download_thumbnail(
+                    app_icon, self._tk_app
+                )
+                app_icon = sg_icon
+                self._tk_app.log_debug("App icon from ShotgunDataRetriever : %s" % app_icon)
+
+            app_engine = sw_entity["sg_engine"]
+            if app_engine:
+                # Try to retrieve the path to the specified engine. If nothing is
+                # returned, then this engine hasn't been loaded in the current
+                # environment, and there's not much more we can do.
+                app_engine_path = sgtk.platform.get_engine_path(
+                    app_engine, self._tk_app.sgtk, self._tk_app.context
+                )
+                if not app_engine_path:
+                    self._tk_app.log_warning(
+                        "Software engine %s is not loaded in the current environment. "
+                        "Cannot launch %s" % (app_engine, app_path)
+                    )
+                    continue
+
+            app_menu_name = sw_entity["code"]
+            app_args = sw_entity[app_args_field] or ""
+            app_path = sw_entity[app_path_field]
+            register_cmds.extend(self._build_register_commands(
+                app_menu_name, app_icon, app_engine, app_path, app_args, app_versions
+            ))
+
+        for rc in register_cmds:
+            self._register_launch_command(
+                rc["menu_name"], rc["icon"], rc["engine"], rc["path"],
+                rc["args"], rc["version"]
+            )
+
+    def _sg_software_entities(self):
         # Determine the information to retrieve from Shotgun
         # @todo: The 'sg_software_entity' setting can be removed once the
         #        Software entity becomes native.
@@ -103,82 +166,53 @@ class SoftwareEntityLauncher(BaseLauncher):
             "sg_versions",
         ]
 
-        # Get the list of Software apps that match the specified filters.
-        sw_entities = self._tk_app.shotgun.find(
-            sw_entity, sw_filters, sw_fields
+        # Log the resolved filter.
+        self._tk_app.log_debug("Searching for %s entities matching filters:\n%s" %
+            (sw_entity, pprint.pformat(sw_filters, indent=4))
         )
+        sw_entities = self._tk_app.shotgun.find(sw_entity, sw_filters, sw_fields)
         if not sw_entities:
             # No Entities found matching filters, nothing to do.
             self._tk_app.log_info("No Shotgun %s entities found matching filters : %s" %
-                (sw_entity, pprint.pformat(sw_filters))
+                (sw_entity, pprint.pformat(sw_filters, indent=4))
             )
-            return
+        return sw_entities
 
-        # Record how many Software entities were found and what the resolved
-        # filter looks like.
-        self._tk_app.log_debug("Found (%d) %s entities matching filters:\n%s " %
-            (len(sw_entities), sw_entity, pprint.pformat(sw_filters, indent=4))
-        )
-        for sw_entity in sw_entities:
-            self._tk_app.log_debug("Software Entity:\n%s" % pprint.pformat(sw_entity, indent=4))
-
-            app_menu_name = sw_entity["code"]
-            app_icon = sw_entity["image"]
-            app_engine = sw_entity["sg_engine"]
-            app_path = sw_entity[app_path_field]
-            app_args = sw_entity[app_args_field] or ""
-
-            # Parse the Software versions field to determine the specific list of
-            # versions to load. Assume the list of versions is stored as comma-separated
-            # in Shotgun.
-            app_versions = sw_entity["sg_versions"] or []
-            if isinstance(app_versions, basestring):
-                ver_strings = [v.strip() for v in app_versions.split(",") if v.strip()]
-                app_versions = ver_strings
-
-            # Download the thumbnail to use as the app's icon.
-            if app_icon:
-                sg_icon = shotgun_data.ShotgunDataRetriever.download_thumbnail(
-                    app_icon, self._tk_app
+    def _build_register_commands(self, menu_name, icon, engine, path, args, versions=None):
+        commands = []
+        if path:
+            for version in (versions or [None]):
+                commands.append(self._register_command_data(
+                    menu_name, icon, engine, path, args, version
+                ))
+        else:
+            try:
+                launcher = sgtk.platform.create_engine_launcher(
+                    self._tk_app.sgtk, self._tk_app.context, engine
                 )
-                app_icon = sg_icon
-                self._tk_app.log_debug("App icon from ShotgunDataRetriever : %s" % app_icon)
-
-            if app_engine:
-                # Try to retrieve the path to the specified engine. If nothing is
-                # returned, then this engine hasn't been loaded in the current
-                # environment, and there's not much more we can do.
-                app_engine_path = sgtk.platform.get_engine_path(
-                    app_engine, self._tk_app.sgtk, self._tk_app.context
-                )
-                if not app_engine_path:
-                    self._tk_app.log_warning(
-                        "Software engine %s is not loaded in the current environment. "
-                        "Cannot launch %s" % (app_engine, app_path)
-                    )
-                    continue
-
-            if "create_engine_launcher" in dir(sgtk.platform) and app_engine:
-                self._register_software_version_commands(
-                    app_menu_name, app_icon, app_engine, app_path, app_args, app_versions
-                )
-                continue
-
-            if not app_path:
+                sw_versions = launcher.scan_software(versions, menu_name, icon)
+                for swv in sw_versions:
+                    commands.append(self._register_command_data(
+                        swv.display_name, swv.icon, engine, swv.path, args, swv.version
+                    ))
+            except Exception, e:
                 # If no path has been set for the app, we will eventually go look for one,
                 # but for now, don't load the app.
-                self._tk_app.log_warning("No path specified for app [%s]." % app_menu_name)
-                continue
-
-            if app_versions:
-                for app_version in app_versions:
-                    self._register_launch_command(
-                        app_menu_name, app_icon, app_engine, app_path, app_args, app_version
-                    )
-            else:
-                self._register_launch_command(
-                    app_menu_name, app_icon, app_engine, app_path, app_args
+                self._tk_app.log_warning(
+                    "Unable to determine path(s) for app [%s] from SoftwareLauncher "
+                    "for engine %s. Exception raised :\n%s" %  (menu_name, engine, e)
                 )
+        return commands
+
+    def _register_command_data(self, menu_name, icon, engine, path, args, version=None):
+        return {
+            "menu_name": menu_name,
+            "icon": icon,
+            "engine": engine,
+            "path": path,
+            "args": args,
+            "version": version
+        }
 
     def launch_from_path(self, path, version=None):
         """

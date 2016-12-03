@@ -32,131 +32,11 @@ class BaseLauncher(object):
         """
         # Retrieve the TK Application from the current bundle
         self._tk_app = sgtk.platform.current_bundle()
-        self.__engine_launchers = {}
 
         # Store the current platform value
         self._platform_name = {
             "linux2": "linux", "darwin": "mac", "win32": "windows"
         }[sys.platform]
-
-    def _register_software_version_command(self, sw_version, app_args, app_engine):
-        """
-        Register a launch command with the current engine deriving the
-        required information from a SoftwareVersion instance.
-
-        :param sw_version: SoftwareVersion instance to retrieve launch information from.
-        :param app_args: Args string to pass to the DCC at launch time
-        :param app_engine: The TK engine associated with the DCC to be launched
-        """
-        # First determine a command name from the SoftwareVersion display name.
-        command_name = sw_version.display_name.lower().replace(" ", "_")
-        if command_name.endswith("..."):
-            command_name = command_name[:-3]
-
-        # Populate the properties dictionary to pass to the launch command.
-        properties = {
-            "title": sw_version.display_name,
-            "short_name": command_name,
-            "description": "Launches and initializes an application environment",
-            "icon": sw_version.icon,
-        }
-
-        # Define the callback method for the command
-        def launch_software_version():
-            self._launch_callback(None, app_engine, None, app_args, None, sw_version)
-
-        # Register the command with the current engine.
-        self._tk_app.log_debug(
-            "Registering command %s to use the %s SoftwareLauncher" %
-            (command_name, app_engine)
-        )
-        self._tk_app.engine.register_command(
-            command_name, launch_software_version, properties
-        )
-
-    def _register_software_version_commands(
-            self, app_menu_name, app_icon, app_engine, app_path, app_args, app_versions
-        ):
-        """
-        Create SoftwareVersion instances using a TK engine launcher constructed for the
-        input app_engine. Actual commands for these SoftwareVersions will be registered
-        with the engine via the _register_software_version_command() method.
-
-        :param app_menu_name: Menu name to display to launch this DCC. This is
-                              also used to construct the associated command name.
-        :param app_icon: Icon to display for this DCC
-        :param app_engine: The TK engine associated with the DCC to be launched
-        :param app_path: Full path name to the DCC. This may contain environment
-                         variables and/or the locally supported {version}, {v0},
-                         {v1}, ... variables
-        :param app_args: Args string to pass to the DCC at launch time
-        :param app_versions: Specifc list of DCC versions to create commands for.
-        """
-        # special case! @todo: fix this.
-        # this is to allow this app to be loaded for sg entities of
-        # type publish but not show up on the Shotgun menu. The
-        # launch_from_path() and launch_from_path_and_context()
-        # methods for this app should be used for these environments
-        # instead. These methods are normally accessed via a hook.
-        skip_environments = [
-            "shotgun_tankpublishedfile",
-            "shotgun_publishedfile",
-            "shotgun_version",
-        ]
-        if self._tk_app.engine.environment.get("name") in skip_environments:
-            self._tk_app.log_debug(
-                "Engine Launcher commands not supported in environment %s" %
-                self._tk_app.engine.environment["name"]
-            )
-            return
-
-        # Attempt to initialize a TK engine SoftwareLauncher for the specified
-        # engine name.
-        engine_launcher = self._engine_launcher(app_engine)
-        if not engine_launcher:
-            self._tk_app.log_debug(
-                "Could not initialize SoftwareLauncher for TK engine %s." %
-                app_engine
-            )
-            return
-
-        sw_versions = []
-        if app_path:
-            # If a path to the DCC has been specified, use the SoftwareLauncher
-            # to resolve the relevant SoftwareVersion(s). Multiple SoftwareVersions
-            # will be returned only if multiple app versions have been specified
-            # and exist.
-            if isinstance(app_versions, list):
-                for version in app_versions:
-                    sw_path = os.path.expandvars(
-                        apply_version_to_setting(app_path, version)
-                    )
-                    sw_version = engine_launcher.resolve_software(sw_path)
-                    if sw_version:
-                        sw_versions.append(sw_version)
-            else:
-                # No versions specfied, simply resolve the input path.
-                sw_path = os.path.expandvars(app_path)
-                sw_version = engine_launcher.resolve_software(sw_path)
-                if sw_version:
-                    sw_versions.append(sw_version)
-        else:
-            # If no path has been specified, have the SoftwareLauncher scan
-            # the system for valid SoftwareVersions. Limit to any versions
-            # specifically requested.
-            sw_versions = engine_launcher.scan_software(app_versions)
-
-        for sw_version in sw_versions:
-            if app_menu_name:
-                # Override the default menu name if one was specified.
-                use_menu_name = apply_version_to_setting(app_menu_name, sw_version.version)
-                sw_version.display_name = use_menu_name
-            if app_icon:
-                # Override the default icon if one was specified.
-                sw_version.icon = app_icon
-
-            # Register a command with the current engine to launch this SoftwareVersion
-            self._register_software_version_command(sw_version, app_args, app_engine)
 
     def _register_launch_command(
             self,
@@ -232,7 +112,7 @@ class BaseLauncher(object):
 
     def _launch_app(
             self, menu_name, app_engine, app_path, app_args, context,
-            version=None, file_to_open=None, sw_version=None,
+            version=None, file_to_open=None
         ):
         """
         Launches an application. No environment variable change is
@@ -255,35 +135,22 @@ class BaseLauncher(object):
             environ_clone = os.environ.copy()
             sys_path_clone = list(sys.path)
 
-            engine_launcher = self._engine_launcher(app_engine)
-            if sw_version and engine_launcher:
-                launch_args = apply_version_to_setting(app_args, sw_version.version)
-                launch_info = engine_launcher.prepare_launch(
-                    sw_version, launch_args, None, file_to_open
+            # Get the executable path path and args. Adjust according to
+            # the relevant engine.
+            app_path = apply_version_to_setting(app_path, version)
+            app_args = apply_version_to_setting(app_args, version)
+            if app_engine:
+                (prepped_path, prepped_args) = prepare_launch_for_engine(
+                    app_engine, app_path, app_args, context, file_to_open
                 )
-                app_path = launch_info.path
-                app_args = launch_info.args
-                os.environ.clear()
-                os.environ.update(launch_info.environment)
-                version_string = sw_version.version
+                # QUESTION: Since *some* of the "prep" methods may modify
+                # the app_path and app_args values (e.g. _prepare_flame_flare_launch),
+                # should they be reset here like this?
+                # (This is not what it does currently)
+                app_path = prepped_path or app_path
+                app_args = prepped_args or app_args
 
-            else:
-                # Get the executable path path and args. Adjust according to
-                # the relevant engine.
-                app_path = apply_version_to_setting(app_path, version)
-                app_args = apply_version_to_setting(app_args, version)
-                if app_engine:
-                    (prepped_path, prepped_args) = prepare_launch_for_engine(
-                        app_engine, app_path, app_args, context, file_to_open
-                    )
-                    # QUESTION: Since *some* of the "prep" methods may modify
-                    # the app_path and app_args values (e.g. _prepare_flame_flare_launch),
-                    # should they be reset here like this?
-                    # (This is not what it does currently)
-                    app_path = prepped_path or app_path
-                    app_args = prepped_args or app_args
-
-                version_string = get_clean_version_string(version)
+            version_string = get_clean_version_string(version)
 
             # run before launch hook
             self._tk_app.log_debug("Running before app launch hook...")
@@ -380,9 +247,7 @@ class BaseLauncher(object):
             self._tk_app.sgtk, ctx, "Toolkit_App_Startup", desc, meta
         )
 
-    def _launch_callback(
-            self, menu_name, app_engine, app_path, app_args, version=None, sw_version=None
-        ):
+    def _launch_callback(self, menu_name, app_engine, app_path, app_args, version=None):
         """
         Default method to launch DCC application command based on the current context.
 
@@ -434,27 +299,8 @@ class BaseLauncher(object):
 
         # Launch the DCC
         self._launch_app(
-            menu_name, app_engine, app_path, app_args,
-            self._tk_app.context, version, None, sw_version
+            menu_name, app_engine, app_path, app_args, self._tk_app.context, version
         )
-
-    def _engine_launcher(self, engine_name):
-        """
-        Attempt to create a SoftwareLauncher for the specified engine name.
-        Keep track of which SoftwareLaunchers have been created for optimization.
-
-        :param engine_name: Name of the Toolkit engine to create a SoftwareLauncher
-                            instance for.
-        :returns: Instance of SoftwareLauncher associated with the engine_name or None.
-        """
-        # Make sure the create method is available from tk-core.
-        if "create_engine_launcher" in dir(sgtk.platform):
-            if engine_name not in self.__engine_launchers:
-                self.__engine_launchers[engine_name] = sgtk.platform.create_engine_launcher(
-                    self._tk_app.sgtk, self._tk_app.context, engine_name
-                )
-            return self.__engine_launchers[engine_name]
-        return None
 
     def register_launch_commands(self):
         """
