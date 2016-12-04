@@ -37,7 +37,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         app_args_field = "sg_%s_args" % self._platform_name
 
         # Collect a list of dictionaries that contain the information required
-        # to register a Toolkit command to launch the DCC.
+        # to register a command with the current engine to launch a DCC.
         register_cmds = []
         for sw_entity in sw_entities:
             self._tk_app.log_debug("Software Entity:\n%s" % pprint.pformat(sw_entity, indent=4))
@@ -190,14 +190,13 @@ class SoftwareEntityLauncher(BaseLauncher):
                 launcher = sgtk.platform.create_engine_launcher(
                     self._tk_app.sgtk, self._tk_app.context, engine
                 )
-                sw_versions = launcher.scan_software(versions, menu_name, icon)
-                for swv in sw_versions:
-                    commands.append(self._register_command_data(
-                        swv.display_name, swv.icon, engine, swv.path, args, swv.version
-                    ))
+                if launcher:
+                    sw_versions = launcher.scan_software(versions, menu_name, icon)
+                    for swv in sw_versions:
+                        commands.append(self._register_command_data(
+                            swv.display_name, swv.icon, engine, swv.path, args, swv.version
+                        ))
             except Exception, e:
-                # If no path has been set for the app, we will eventually go look for one,
-                # but for now, don't load the app.
                 self._tk_app.log_warning(
                     "Unable to determine path(s) for app [%s] from SoftwareLauncher "
                     "for engine %s. Exception raised :\n%s" %  (menu_name, engine, e)

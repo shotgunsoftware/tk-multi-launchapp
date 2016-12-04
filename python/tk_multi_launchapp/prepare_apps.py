@@ -34,14 +34,20 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
 
     try:
         # Try to use the TK engine to perform the necessary preparations
-        # to launch the DCC. If any part fails, fallback on default behavior.
+        # to launch the DCC. If launcher is None, then chances are the
+        # installed version of the specified engine isn't up-to-date.
         launcher = sgtk.platform.create_engine_launcher(
             tk_app.sgtk, context, engine_name
         )
-        launch_info = launcher.prepare_launch(app_path, app_args, None, file_to_open)
-        app_path = launch_info.path
-        app_args = launch_info.args
-        os.environ.update(launch_info.environment)
+        if launcher:
+            launch_info = launcher.prepare_launch(app_path, app_args, None, file_to_open)
+            app_path = launch_info.path
+            app_args = launch_info.args
+            os.environ.update(launch_info.environment)
+    except AttributeError:
+        # Assuming 'create_engine_launcher' wasn't found in sgtk.platform
+        # Fallback to use default behavior
+        launcher = None
     except Exception, e:
         # Something unexpected happened. Make a note of it and fall
         # back on default behavior
@@ -50,7 +56,9 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
             "Unable to use SoftwareLauncher for engine %s to prepare "
             "DCC launch. Using launch app logic instead." % engine_name
         )
+        launcher = None
 
+    if launcher is None:
         # we have an engine we should start as part of this app launch
         # pass down the file to open into the startup script via env var.
         if file_to_open:
@@ -111,6 +119,8 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
                         "No bootstrap routine found for %s. The engine will not be started." %
                         (engine_name)
                     )
+
+    # Return resolved app path and args
     return (app_path, app_args)
 
 def _prepare_generic_launch(tk_app, engine_name, context, app_path, app_args):
