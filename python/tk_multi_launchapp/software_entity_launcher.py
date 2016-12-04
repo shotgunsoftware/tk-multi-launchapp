@@ -74,18 +74,50 @@ class SoftwareEntityLauncher(BaseLauncher):
                     )
                     continue
 
-            app_menu_name = sw_entity["code"]
+            app_display_name = sw_entity["code"]
             app_args = sw_entity[app_args_field] or ""
             app_path = sw_entity[app_path_field]
             register_cmds.extend(self._build_register_commands(
-                app_menu_name, app_icon, app_engine, app_path, app_args, app_versions
+                app_display_name, app_icon, app_engine, app_path, app_args, app_versions
             ))
 
         for rc in register_cmds:
             self._register_launch_command(
-                rc["menu_name"], rc["icon"], rc["engine"], rc["path"],
+                rc["display_name"], rc["icon"], rc["engine"], rc["path"],
                 rc["args"], rc["version"]
             )
+
+    def launch_from_path(self, path, version=None):
+        """
+        Entry point if you want to launch an app given a particular path.
+
+        :param path: File path DCC should open after launch.
+        :param version: (Optional) Specific version of DCC to launch.
+        """
+        # This functionality is not supported for Software entities.
+        self._tk_app.log_error(
+            "launch_from_path() is not supported by SoftwareEntityLauncher. "
+            "Please register individual application launch commands in your "
+            "Project's configuration to use this functionality."
+        )
+
+    def launch_from_path_and_context(self, path, context, version=None):
+        """
+        Entry point if you want to launch an app given a particular path
+        and context.
+
+        :param path: File path DCC should open after launch.
+        :param context: Specific context to launch DCC with.
+        :param version: (Optional) Specific version of DCC to launch.
+        """
+        # This functionality is not supported for Software entities.
+        self._tk_app.log_error(
+            "launch_from_path_and_context() is not supported by "
+            "SoftwareEntityLauncher. Please register individual application "
+            "launch commands in your Project's configuration to use this "
+            "functionality."
+        )
+
 
     def _sg_software_entities(self):
         # Determine the information to retrieve from Shotgun
@@ -178,20 +210,42 @@ class SoftwareEntityLauncher(BaseLauncher):
             )
         return sw_entities
 
-    def _build_register_commands(self, menu_name, icon, engine, path, args, versions=None):
+    def _build_register_commands(self, display_name, icon, engine, path, args, versions=None):
+        """
+        Determine the list of command data to register basded on the input
+        path and versions information.
+
+        :param display_name: Label string for the registered command.
+        :param icon: Path to icon to load for the registered command.
+        :param engine: Name of the Toolkit engine this command will run
+        :param path: Path to the DCC execuable to register a launch command for.
+        :param args: Args to pass to the DCC executable when launched.
+        :param versions: (optional) List of specific versions (as strings) to
+                         register launch commands for.
+
+        :returns: List of dictionaries containing required information to register
+                  a command with the current engine.
+        """
+        # List of command data to return
         commands = []
         if path:
+            # Register a command for each version for the path specified.
             for version in (versions or [None]):
                 commands.append(self._register_command_data(
-                    menu_name, icon, engine, path, args, version
+                    display_name, icon, engine, path, args, version
                 ))
         else:
             try:
+                # Instantiate a SoftwareLauncher for the requested engine
+                # to see if it can determine a list of executable paths to
+                # register launch commands for.
                 launcher = sgtk.platform.create_engine_launcher(
                     self._tk_app.sgtk, self._tk_app.context, engine
                 )
                 if launcher:
-                    sw_versions = launcher.scan_software(versions, menu_name, icon)
+                    # Get a list of SoftwareVersions for this engine and use that
+                    # data to construct a launch command to register.
+                    sw_versions = launcher.scan_software(versions, display_name, icon)
                     for swv in sw_versions:
                         commands.append(self._register_command_data(
                             swv.display_name, swv.icon, engine, swv.path, args, swv.version
@@ -199,47 +253,26 @@ class SoftwareEntityLauncher(BaseLauncher):
             except Exception, e:
                 self._tk_app.log_warning(
                     "Unable to determine path(s) for app [%s] from SoftwareLauncher "
-                    "for engine %s. Exception raised :\n%s" %  (menu_name, engine, e)
+                    "for engine %s. Exception raised :\n%s" %  (display_name, engine, e)
                 )
         return commands
 
-    def _register_command_data(self, menu_name, icon, engine, path, args, version=None):
+    def _register_command_data(self, display_name, icon, engine, path, args, version=None):
+        """
+        Creates a dictionary to store the required information for
+        registering a launch command.
+
+        :param display_name: Label string for the registered command.
+        :param icon: Path to icon to load for the registered command.
+        :param engine: Name of the Toolkit engine this command will run
+        :param path: Path to the DCC execuable to register a launch command for.
+        :param args: Args to pass to the DCC executable when launched.
+        :param version: (optional) Version number (as a string) to use for this
+                        launch command.
+
+        :returns: Dict
+        """
         return {
-            "menu_name": menu_name,
-            "icon": icon,
-            "engine": engine,
-            "path": path,
-            "args": args,
-            "version": version
+            "display_name": display_name, "icon": icon, "engine": engine,
+            "path": path, "args": args, "version": version
         }
-
-    def launch_from_path(self, path, version=None):
-        """
-        Entry point if you want to launch an app given a particular path.
-
-        :param path: File path DCC should open after launch.
-        :param version: (Optional) Specific version of DCC to launch.
-        """
-        # This functionality is not supported for Software entities.
-        self._tk_app.log_error(
-            "launch_from_path() is not supported by SoftwareEntityLauncher. "
-            "Please register individual application launch commands in your "
-            "Project's configuration to use this functionality."
-        )
-
-    def launch_from_path_and_context(self, path, context, version=None):
-        """
-        Entry point if you want to launch an app given a particular path
-        and context.
-
-        :param path: File path DCC should open after launch.
-        :param context: Specific context to launch DCC with.
-        :param version: (Optional) Specific version of DCC to launch.
-        """
-        # This functionality is not supported for Software entities.
-        self._tk_app.log_error(
-            "launch_from_path_and_context() is not supported by "
-            "SoftwareEntityLauncher. Please register individual application "
-            "launch commands in your Project's configuration to use this "
-            "functionality."
-        )
