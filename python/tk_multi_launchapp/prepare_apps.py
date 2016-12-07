@@ -54,6 +54,11 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
             # There's nothing left to do at this point, simply return
             # the resolved app_path and args values.
             return (launch_info.path, launch_info.args)
+        else:
+            tk_app.log_error(
+                "Engine %s does not support preparing application launches." %
+                engine_name
+            )
 
     except AttributeError:
         # Assuming 'create_engine_launcher' wasn't found in sgtk.platform
