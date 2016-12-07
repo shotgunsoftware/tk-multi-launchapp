@@ -26,7 +26,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         Software entities and their corresponding 'versions' field.
         """
         # Retrieve the Software entities from SG and record how many were found.
-        sw_entities = self._sg_software_entities()
+        sw_entities = self._get_sg_software_entities()
         self._tk_app.log_info("Found (%d) Software entities." % len(sw_entities))
         if not sw_entities:
             # No commands to register if no entities were found.
@@ -38,17 +38,16 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         # Collect a list of dictionaries that contain the information required
         # to register a command with the current engine to launch a DCC.
-        register_cmds = []
+        register_cmd_data = []
         for sw_entity in sw_entities:
             self._tk_app.log_debug("Software Entity:\n%s" % pprint.pformat(sw_entity, indent=4))
 
             # Parse the Software versions field to determine the specific list
             # of versions to load. Assume the list of versions is stored as
-            # comma-separated in Shotgun.
-            app_versions = sw_entity["sg_versions"] or []
-            if isinstance(app_versions, basestring):
-                ver_strings = [v.strip() for v in app_versions.split(",") if v.strip()]
-                app_versions = ver_strings
+            # a comma-separated string in Shotgun.
+            app_versions = sw_entity["sg_versions"] or ""
+            ver_strings = [v.strip() for v in app_versions.split(",") if v.strip()]
+            app_versions = ver_strings
 
             # Download the thumbnail to use as the app's icon.
             app_icon = sw_entity["image"]
@@ -77,15 +76,21 @@ class SoftwareEntityLauncher(BaseLauncher):
             app_display_name = sw_entity["code"]
             app_args = sw_entity[app_args_field] or ""
             app_path = sw_entity[app_path_field]
-            register_cmds.extend(self._build_register_commands(
+            register_cmd_data.extend(self._build_register_command_data(
                 app_display_name, app_icon, app_engine, app_path, app_args, app_versions
             ))
 
-        for rc in register_cmds:
+        registered_cmds = []
+        for register_cmd in register_cmd_data:
+            if register_cmd in registered_cmds:
+                # Don't register the same command data more than once.
+                continue
             self._register_launch_command(
-                rc["display_name"], rc["icon"], rc["engine"], rc["path"],
-                rc["args"], rc["version"]
+                register_cmd["display_name"], register_cmd["icon"],
+                register_cmd["engine"], register_cmd["path"], register_cmd["args"],
+                register_cmd["version"]
             )
+            registered_cmds.append(register_cmd)
 
     def launch_from_path(self, path, version=None):
         """
@@ -119,7 +124,11 @@ class SoftwareEntityLauncher(BaseLauncher):
         )
 
 
-    def _sg_software_entities(self):
+    def _get_sg_software_entities(self):
+        """
+        Retrieve a list of Software entities from Shotgun that
+        are active for the current project and user.
+        """
         # Determine the information to retrieve from Shotgun
         # @todo: The 'sg_software_entity' setting can be removed once the
         #        Software entity becomes native.
@@ -210,18 +219,18 @@ class SoftwareEntityLauncher(BaseLauncher):
             )
         return sw_entities
 
-    def _build_register_commands(self, display_name, icon, engine, path, args, versions=None):
+    def _build_register_command_data(self, display_name, icon, engine, path, args, versions=None):
         """
-        Determine the list of command data to register basded on the input
+        Determine the list of command data to register based on the input
         path and versions information.
 
-        :param display_name: Label string for the registered command.
-        :param icon: Path to icon to load for the registered command.
-        :param engine: Name of the Toolkit engine this command will run
-        :param path: Path to the DCC execuable to register a launch command for.
-        :param args: Args to pass to the DCC executable when launched.
-        :param versions: (optional) List of specific versions (as strings) to
-                         register launch commands for.
+        :param str display_name: Label for the registered command.
+        :param str icon: Path to icon to load for the registered command.
+        :param str engine: Name of the Toolkit engine this command will run
+        :param str path: Path to the DCC executable to register a launch command for.
+        :param str args: Args to pass to the DCC executable when launched.
+        :param list versions: (optional) Specific versions (as strings) to
+                              register launch commands for.
 
         :returns: List of dictionaries containing required information to register
                   a command with the current engine.
@@ -229,11 +238,21 @@ class SoftwareEntityLauncher(BaseLauncher):
         # List of command data to return
         commands = []
         if path:
-            # Register a command for each version for the path specified.
-            for version in (versions or [None]):
-                commands.append(self._register_command_data(
-                    display_name, icon, engine, path, args, version
-                ))
+            if versions:
+                for version in versions:
+                    # Register a command for each version for the path specified.
+                    commands.append({
+                        "display_name": display_name, "icon": icon,
+                        "engine": engine, "path": path, "args": args,
+                        "version": version,
+                    })
+            else:
+                # Register a launch command for the specified path
+                commands.append({
+                    "display_name": display_name, "icon": icon,
+                    "engine": engine, "path": path, "args": args,
+                    "version": None,
+                })
         else:
             try:
                 # Instantiate a SoftwareLauncher for the requested engine
@@ -247,32 +266,20 @@ class SoftwareEntityLauncher(BaseLauncher):
                     # data to construct a launch command to register.
                     sw_versions = launcher.scan_software(versions, display_name, icon)
                     for swv in sw_versions:
-                        commands.append(self._register_command_data(
-                            swv.display_name, swv.icon, engine, swv.path, args, swv.version
-                        ))
+                        commands.append({
+                            "display_name": swv.display_name, "icon": swv.icon,
+                            "engine": engine, "path": swv.path, "args": args,
+                            "version": swv.version
+                        })
+                else:
+                    self._tk_app.log_error(
+                        "Engine %s does not support scanning for software versions." %
+                        engine
+                    )
             except Exception, e:
                 self._tk_app.log_warning(
-                    "Unable to determine path(s) for app [%s] from SoftwareLauncher "
-                    "for engine %s. Exception raised :\n%s" %  (display_name, engine, e)
+                    "Cannot determine executable paths for %s: %s" %
+                    (engine, e)
                 )
+
         return commands
-
-    def _register_command_data(self, display_name, icon, engine, path, args, version=None):
-        """
-        Creates a dictionary to store the required information for
-        registering a launch command.
-
-        :param display_name: Label string for the registered command.
-        :param icon: Path to icon to load for the registered command.
-        :param engine: Name of the Toolkit engine this command will run
-        :param path: Path to the DCC execuable to register a launch command for.
-        :param args: Args to pass to the DCC executable when launched.
-        :param version: (optional) Version number (as a string) to use for this
-                        launch command.
-
-        :returns: Dict
-        """
-        return {
-            "display_name": display_name, "icon": icon, "engine": engine,
-            "path": path, "args": args, "version": version
-        }

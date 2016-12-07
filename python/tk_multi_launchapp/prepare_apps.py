@@ -39,86 +39,92 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
         launcher = sgtk.platform.create_engine_launcher(
             tk_app.sgtk, context, engine_name
         )
+        tk_app.log_debug("Created %s engine launcher : %s" %
+            (engine_name, launcher)
+        )
         if launcher:
-            launch_info = launcher.prepare_launch(app_path, app_args, None, file_to_open)
-            app_path = launch_info.path
-            app_args = launch_info.args
+            launch_info = launcher.prepare_launch(app_path, app_args, file_to_open)
             os.environ.update(launch_info.environment)
+            tk_app.log_debug(
+                "Engine launcher prepared launch info:\n  path : %s"
+                "\n  args : %s\n  env  : %s" % (launch_info.path,
+                launch_info.args, launch_info.environment)
+            )
+
+            # There's nothing left to do at this point, simply return
+            # the resolved app_path and args values.
+            return (launch_info.path, launch_info.args)
+
     except AttributeError:
         # Assuming 'create_engine_launcher' wasn't found in sgtk.platform
         # Fallback to use default behavior
-        launcher = None
-    except Exception, e:
-        # Something unexpected happened. Make a note of it and fall
-        # back on default behavior
-        tk_app.log_info("Caught Exception :\n%s" % e)
-        tk_app.log_info(
-            "Unable to use SoftwareLauncher for engine %s to prepare "
-            "DCC launch. Using launch app logic instead." % engine_name
+        tk_app.log_debug("'create_engine_launcher' method not found in sgtk.platform")
+
+    tk_app.log_debug(
+        "Using classic launchapp logic to prepare launch of '%s %s'" %
+        (app_path, app_args)
+    )
+
+    # we have an engine we should start as part of this app launch
+    # pass down the file to open into the startup script via env var.
+    if file_to_open:
+        os.environ["TANK_FILE_TO_OPEN"] = file_to_open
+        tk_app.log_debug("Setting TANK_FILE_TO_OPEN to '%s'" % file_to_open)
+
+    # serialize the context into an env var
+    os.environ["TANK_CONTEXT"] = sgtk.context.serialize(context)
+    tk_app.log_debug("Setting TANK_CONTEXT to '%r'" % context)
+
+    # Set environment variables used by apps to prep Tank engine
+    os.environ["TANK_ENGINE"] = engine_name
+
+    # Prep any application specific things now that we know we don't
+    # have an engine-specific bootstrap to use.
+    if engine_name == "tk-maya":
+        _prepare_maya_launch()
+    elif engine_name == "tk-softimage":
+        _prepare_softimage_launch()
+    elif engine_name == "tk-motionbuilder":
+        app_args = _prepare_motionbuilder_launch(app_args)
+    elif engine_name == "tk-3dsmax":
+        app_args = _prepare_3dsmax_launch(app_args)
+    elif engine_name == "tk-3dsmaxplus":
+        app_args = _prepare_3dsmaxplus_launch(context, app_args, app_path)
+    elif engine_name == "tk-photoshop":
+        _prepare_photoshop_launch(context)
+    elif engine_name == "tk-houdini":
+        _prepare_houdini_launch(context)
+    elif engine_name == "tk-mari":
+        _prepare_mari_launch(engine_name, context)
+    elif engine_name in ["tk-flame", "tk-flare"]:
+        (app_path, app_args) = _prepare_flame_flare_launch(
+            engine_name, context, app_path, app_args,
         )
-        launcher = None
-
-    if launcher is None:
-        # we have an engine we should start as part of this app launch
-        # pass down the file to open into the startup script via env var.
-        if file_to_open:
-            os.environ["TANK_FILE_TO_OPEN"] = file_to_open
-            tk_app.log_debug("Setting TANK_FILE_TO_OPEN to '%s'" % file_to_open)
-
-        # serialize the context into an env var
-        os.environ["TANK_CONTEXT"] = sgtk.context.serialize(context)
-        tk_app.log_debug("Setting TANK_CONTEXT to '%r'" % context)
-
-        # Set environment variables used by apps to prep Tank engine
-        os.environ["TANK_ENGINE"] = engine_name
-
-        # Prep any application specific things now that we know we don't
-        # have an engine-specific bootstrap to use.
-        if engine_name == "tk-maya":
-            _prepare_maya_launch()
-        elif engine_name == "tk-softimage":
-            _prepare_softimage_launch()
-        elif engine_name == "tk-motionbuilder":
-            app_args = _prepare_motionbuilder_launch(app_args)
-        elif engine_name == "tk-3dsmax":
-            app_args = _prepare_3dsmax_launch(app_args)
-        elif engine_name == "tk-3dsmaxplus":
-            app_args = _prepare_3dsmaxplus_launch(context, app_args, app_path)
-        elif engine_name == "tk-photoshop":
-            _prepare_photoshop_launch(context)
-        elif engine_name == "tk-houdini":
-            _prepare_houdini_launch(context)
-        elif engine_name == "tk-mari":
-            _prepare_mari_launch(engine_name, context)
-        elif engine_name in ["tk-flame", "tk-flare"]:
-            (app_path, app_args) = _prepare_flame_flare_launch(
-                engine_name, context, app_path, app_args,
+    else:
+        # This should really be the first thing we try, but some of
+        # the engines (like tk-3dsmaxplus, as an example) have bootstrapping
+        # logic that doesn't properly stand alone and still requires
+        # their "prepare" method here in launchapp to be run. As engines
+        # are updated to handle all their own bootstrapping, they can be
+        # pulled out from above and moved into the except block below in
+        # the way that tk-nuke and tk-hiero have.
+        try:
+            (app_path, app_args) = _prepare_generic_launch(
+                tk_app, engine_name, context, app_path, app_args,
             )
-        else:
-            # This should really be the first thing we try, but some of
-            # the engines (like tk-3dsmaxplus, as an example) have bootstrapping
-            # logic that doesn't properly stand alone and still requires
-            # their "prepare" method here in launchapp to be run. As engines
-            # are updated to handle all their own bootstrapping, they can be
-            # pulled out from above and moved into the except block below in
-            # the way that tk-nuke and tk-hiero have.
-            try:
-                (app_path, app_args) = _prepare_generic_launch(
-                    tk_app, engine_name, context, app_path, app_args,
+        except TankBootstrapNotFoundError:
+            # Backwards compatibility here for earlier engine versions.
+            if engine_name == "tk-nuke":
+                app_args = _prepare_nuke_launch(file_to_open, app_args)
+            elif engine_name == "tk-hiero":
+                _prepare_hiero_launch()
+            else:
+                # We have neither an engine-specific nor launchapp-specific
+                # bootstrap for this engine, so we have to bail out here.
+                raise TankError(
+                    "No bootstrap routine found for %s. The engine will not be started." %
+                    (engine_name)
                 )
-            except TankBootstrapNotFoundError:
-                # Backwards compatibility here for earlier engine versions.
-                if engine_name == "tk-nuke":
-                    app_args = _prepare_nuke_launch(file_to_open, app_args)
-                elif engine_name == "tk-hiero":
-                    _prepare_hiero_launch()
-                else:
-                    # We have neither an engine-specific nor launchapp-specific
-                    # bootstrap for this engine, so we have to bail out here.
-                    raise TankError(
-                        "No bootstrap routine found for %s. The engine will not be started." %
-                        (engine_name)
-                    )
 
     # Return resolved app path and args
     return (app_path, app_args)
