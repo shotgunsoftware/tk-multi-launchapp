@@ -32,6 +32,44 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
     # Retrieve the TK Application instance from the current bundle
     tk_app = sgtk.platform.current_bundle()
 
+    try:
+        # Try to use the TK engine to perform the necessary preparations
+        # to launch the DCC. If launcher is None, then chances are the
+        # installed version of the specified engine isn't up-to-date.
+        launcher = sgtk.platform.create_engine_launcher(
+            tk_app.sgtk, context, engine_name
+        )
+        tk_app.log_debug("Created %s engine launcher : %s" %
+            (engine_name, launcher)
+        )
+        if launcher:
+            launch_info = launcher.prepare_launch(app_path, app_args, file_to_open)
+            os.environ.update(launch_info.environment)
+            tk_app.log_debug(
+                "Engine launcher prepared launch info:\n  path : %s"
+                "\n  args : %s\n  env  : %s" % (launch_info.path,
+                launch_info.args, launch_info.environment)
+            )
+
+            # There's nothing left to do at this point, simply return
+            # the resolved app_path and args values.
+            return (launch_info.path, launch_info.args)
+        else:
+            tk_app.log_error(
+                "Engine %s does not support preparing application launches." %
+                engine_name
+            )
+
+    except AttributeError:
+        # Assuming 'create_engine_launcher' wasn't found in sgtk.platform
+        # Fallback to use default behavior
+        tk_app.log_debug("'create_engine_launcher' method not found in sgtk.platform")
+
+    tk_app.log_debug(
+        "Using classic launchapp logic to prepare launch of '%s %s'" %
+        (app_path, app_args)
+    )
+
     # we have an engine we should start as part of this app launch
     # pass down the file to open into the startup script via env var.
     if file_to_open:
@@ -92,6 +130,8 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
                     "No bootstrap routine found for %s. The engine will not be started." %
                     (engine_name)
                 )
+
+    # Return resolved app path and args
     return (app_path, app_args)
 
 def _prepare_generic_launch(tk_app, engine_name, context, app_path, app_args):

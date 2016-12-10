@@ -102,15 +102,22 @@ class BaseLauncher(object):
             }
 
             def launch_version():
-                self._launch_callback(menu_name, app_engine, app_path, app_args, version)
+                self._launch_callback(
+                    menu_name, app_engine, app_path, app_args, version
+                )
 
             self._tk_app.log_debug(
                 "Registering command %s to launch %s with args %s for engine %s" %
                 (command_name, app_path, app_args, app_engine)
             )
-            self._tk_app.engine.register_command(command_name, launch_version, properties)
+            self._tk_app.engine.register_command(
+                command_name, launch_version, properties
+            )
 
-    def _launch_app(self, menu_name, app_engine, app_path, app_args, context, version=None, file_to_open=None):
+    def _launch_app(
+            self, menu_name, app_engine, app_path, app_args, context,
+            version=None, file_to_open=None
+        ):
         """
         Launches an application. No environment variable change is
         leaked to the outside world.
@@ -164,7 +171,8 @@ class BaseLauncher(object):
             dll_directory_cache = clear_dll_directory()
             try:
                 # Launch the application
-                self._tk_app.log_debug("Launching executable '%s' with args '%s'" %
+                self._tk_app.log_debug(
+                    "Launching executable '%s' with args '%s'" %
                     (app_path, app_args)
                 )
                 result = self._tk_app.execute_hook(
@@ -180,14 +188,14 @@ class BaseLauncher(object):
             if return_code != 0:
                 # some special logic here to decide how to display failure feedback
                 if app_engine == "tk-shotgun":
-                    # for the shotgun engine, use the log info in order to get the proper
-                    # html formatting
+                    # for the shotgun engine, use the log info in order to
+                    # get the proper html formatting
                     self._tk_app.log_info(
                         "<b>Failed to launch application!</b> "
                         "This is most likely because the path is not set correctly."
                         "The command that was used to attempt to launch is '%s'. "
-                        "<br><br><a href='%s' target=_new>Click here</a> to learn more about "
-                        "how to setup your app launch configuration." %
+                        "<br><br><a href='%s' target=_new>Click here</a> to learn "
+                        "more about how to setup your app launch configuration." %
                         (launch_cmd, self._tk_app.HELP_DOC_URL)
                     )
 
@@ -199,11 +207,11 @@ class BaseLauncher(object):
                 else:
                     # traditional non-ui environment without any html support.
                     self._tk_app.log_error(
-                        "Failed to launch application! This is most likely because the path "
-                        "is not set correctly. The command that was used to attempt to launch "
-                        "is '%s'. To learn more about how to set up your app launch "
-                        "configuration, see the following documentation: %s" %
-                        (launch_cmd, self._tk_app.HELP_DOC_URL)
+                        "Failed to launch application! This is most likely because "
+                        "the path is not set correctly. The command that was used "
+                        "to attempt to launch is '%s'. To learn more about how to "
+                        "set up your app launch configuration, see the following "
+                        "documentation: %s" % (launch_cmd, self._tk_app.HELP_DOC_URL)
                     )
 
             else:
@@ -259,7 +267,9 @@ class BaseLauncher(object):
         """
         # Verify a Project is defined in the context.
         if self._tk_app.context.project is None:
-            raise TankError("Your context does not have a project defined. Cannot continue.")
+            raise TankError(
+                "Your context does not have a project defined. Cannot continue."
+            )
 
         # Extract an entity type and id from the context.
         entity_type = self._tk_app.context.project["type"]
@@ -281,34 +291,43 @@ class BaseLauncher(object):
             )
 
         else:
-            # Do the folder creation. If there is a specific defer keyword, this takes
-            # precedence. Otherwise, use the engine name for the DCC application by default.
+            # Do the folder creation. If there is a specific defer keyword,
+            # this takes precedence. Otherwise, use the engine name for the
+            # DCC application by default.
             defer_keyword = self._tk_app.get_setting("defer_keyword") or app_engine
             try:
-                self._tk_app.log_info("Creating folders for %s %s. Defer keyword: '%s'" %
+                self._tk_app.log_info(
+                    "Creating folders for %s %s. Defer keyword: '%s'" %
                     (entity_type, entity_id, defer_keyword)
                 )
                 self._tk_app.sgtk.create_filesystem_structure(
                     entity_type, entity_id, engine=defer_keyword
                 )
             except sgtk.TankError, err:
-                raise TankError("Could not create folders on disk. Error reported: %s" % err)
+                raise TankError(
+                    "Could not create folders on disk. Error reported: %s" % err
+                )
 
         # Launch the DCC
-        self._launch_app(menu_name, app_engine, app_path, app_args, self._tk_app.context, version)
+        self._launch_app(
+            menu_name, app_engine, app_path, app_args, self._tk_app.context, version
+        )
 
     def register_launch_commands(self):
         """
-        Abstract method implemented by derived classes to envoke _register_launch_command()
+        Abstract method implemented by derived classes to
+        envoke _register_launch_command()
         """
         raise NotImplementedError
 
     def launch_from_path(self, path, version=None):
         """
-        Abstract method that can optionally be implemented by derived classes
+        Abstract method that can optionally be implemented by
+        derived classes
 
         :param path: File path DCC should open after launch.
-        :param version: (Optional) Specific version of DCC to launch.
+        :param version: (optional) Specific version of DCC
+                        to launch.
         """
         raise NotImplementedError
 
