@@ -319,8 +319,6 @@ class LaunchApplication(tank.platform.Application):
                 app_args = self.prepare_3dsmax_launch(app_args)
             elif engine_name == "tk-3dsmaxplus":
                 app_args = self.prepare_3dsmaxplus_launch(context, app_args, app_path)
-            elif engine_name == "tk-photoshop":
-                self.prepare_photoshop_launch(context)
             elif engine_name == "tk-houdini":
                 self.prepare_houdini_launch(context)
             elif engine_name == "tk-mari":
@@ -740,67 +738,6 @@ class LaunchApplication(tank.platform.Application):
         # add the location of our init.py script to the MARI_SCRIPT_PATH
         startup_folder = os.path.join(engine_path, "startup")
         tank.util.append_path_to_env_var("MARI_SCRIPT_PATH", startup_folder)
-        
-    def prepare_photoshop_launch(self, context):
-        """
-        Photoshop specific pre-launch environment setup.
-        """
-        engine_path = tank.platform.get_engine_path("tk-photoshop", self.tank, context)
-        if engine_path is None:
-            raise TankError("Path to photoshop engine (tk-photoshop) could not be found.")
-
-        # if the photoshop engine has the bootstrap logic with it, run it from there
-        startup_path = os.path.join(engine_path, "bootstrap")
-        env_setup = os.path.join(startup_path, "photoshop_environment_setup.py")
-        if os.path.exists(env_setup):
-            sys.path.append(startup_path)
-            try:
-                import photoshop_environment_setup
-                photoshop_environment_setup.setup(self, context)
-            except:
-                self.log_exception("Error executing engine bootstrap script.")
-                raise TankError("Error executing bootstrap script. Please see log for details.")
-
-            return
-
-        # no bootstrap logic with the engine, run the legacy version
-        extra_configs = self.get_setting("extra", {})
-
-        # Get the path to the python executable
-        python_setting = {"darwin": "mac_python_path", "win32": "windows_python_path"}[sys.platform]
-        python_path = extra_configs.get(python_setting)
-        if not python_path:
-            raise TankError("Your photoshop app launch config is missing the extra setting %s" % python_setting)
-
-        # get the path to extension manager
-        manager_setting = { "darwin": "mac_extension_manager_path",
-                            "win32": "windows_extension_manager_path" }[sys.platform]
-        manager_path = extra_configs.get(manager_setting)
-        if not manager_path:
-            raise TankError("Your photoshop app launch config is missing the extra setting %s!" % manager_setting)
-        os.environ["TANK_PHOTOSHOP_EXTENSION_MANAGER"] = manager_path
-
-        # make sure the extension is up to date
-        sys.path.append(os.path.join(engine_path, "bootstrap"))
-        try:
-            import photoshop_extension_manager
-            photoshop_extension_manager.update()
-        except Exception, e:
-            raise TankError("Could not run the Adobe Extension Manager. Please double check your "
-                            "Shotgun Pipeline Toolkit Photoshop Settings. Error Reported: %s" % e)
-
-        # Store data needed for bootstrapping Tank in env vars. Used in startup/menu.py
-        os.environ["TANK_PHOTOSHOP_PYTHON"] = python_path
-        os.environ["TANK_PHOTOSHOP_BOOTSTRAP"] = os.path.join(engine_path, "bootstrap", "engine_bootstrap.py")
-
-        # unused values, but the photoshop engine code still looks for these...
-        os.environ["TANK_PHOTOSHOP_ENGINE"] = "dummy_value"
-        os.environ["TANK_PHOTOSHOP_PROJECT_ROOT"] = "dummy_value"
-
-        # add our startup path to the photoshop init path
-        startup_path = os.path.abspath(os.path.join(self._get_app_specific_path("photoshop"), "startup"))
-        tank.util.append_path_to_env_var("PYTHONPATH", startup_path)
-
 
     def _get_app_specific_path(self, app_dir):
         """
