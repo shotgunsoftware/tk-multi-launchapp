@@ -52,8 +52,8 @@ class SoftwareEntityLauncher(BaseLauncher):
             # Download the thumbnail to use as the app's icon.
             app_icon = sw_entity["image"]
             if app_icon:
-                sg_icon = shotgun_data.ShotgunDataRetriever.download_thumbnail(
-                    app_icon, self._tk_app
+                sg_icon = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
+                    sw_entity["type"], sw_entity["id"], self._tk_app
                 )
                 app_icon = sg_icon
                 self._tk_app.log_debug("App icon from ShotgunDataRetriever : %s" % app_icon)
