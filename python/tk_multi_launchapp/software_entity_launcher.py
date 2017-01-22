@@ -64,6 +64,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                     local_thumb_path = None
 
             app_engine = sw_entity["sg_engine"]
+            app_path = sw_entity[app_path_field]
             if app_engine:
                 # Try to retrieve the path to the specified engine. If nothing is
                 # returned, then this engine hasn't been loaded in the current
@@ -80,7 +81,6 @@ class SoftwareEntityLauncher(BaseLauncher):
 
             app_display_name = sw_entity["code"]
             app_args = sw_entity[app_args_field] or ""
-            app_path = sw_entity[app_path_field]
             register_cmd_data.extend(
                 self._build_register_command_data(
                     app_display_name,
