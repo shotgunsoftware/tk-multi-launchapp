@@ -27,7 +27,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         """
         # Retrieve the Software entities from SG and record how many were found.
         sw_entities = self._get_sg_software_entities()
-        self._tk_app.log_info("Found (%d) Software entities." % len(sw_entities))
+        self._tk_app.log_debug("Found (%d) Software entities." % len(sw_entities))
         if not sw_entities:
             # No commands to register if no entities were found.
             return
