@@ -13,8 +13,6 @@ import sgtk
 
 from .base_launcher import BaseLauncher
 
-shotgun_data = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_data")
-
 class SoftwareEntityLauncher(BaseLauncher):
     """
     Launches a DCC application based on site Software entity entries.
@@ -50,13 +48,20 @@ class SoftwareEntityLauncher(BaseLauncher):
             app_versions = ver_strings
 
             # Download the thumbnail to use as the app's icon.
-            app_icon = sw_entity["image"]
-            if app_icon:
-                sg_icon = shotgun_data.ShotgunDataRetriever.download_thumbnail(
-                    app_icon, self._tk_app
-                )
-                app_icon = sg_icon
-                self._tk_app.log_debug("App icon from ShotgunDataRetriever : %s" % app_icon)
+            app_icon_url = sw_entity["image"]
+            if app_icon_url:
+                if self._tk_app.engine.has_ui:
+                    # import sgutils locally as this has dependencies on QT
+                    shotgun_data = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_data")
+                    # download thumbnail from shotgun
+                    self._tk_app.log_debug("Download app icon...")
+                    local_thumb_path = shotgun_data.ShotgunDataRetriever.download_thumbnail(
+                        app_icon_url,
+                        self._tk_app
+                    )
+                    self._tk_app.log_debug("...download complete: %s" % local_thumb_path)
+                else:
+                    local_thumb_path = None
 
             app_engine = sw_entity["sg_engine"]
             if app_engine:
@@ -76,9 +81,16 @@ class SoftwareEntityLauncher(BaseLauncher):
             app_display_name = sw_entity["code"]
             app_args = sw_entity[app_args_field] or ""
             app_path = sw_entity[app_path_field]
-            register_cmd_data.extend(self._build_register_command_data(
-                app_display_name, app_icon, app_engine, app_path, app_args, app_versions
-            ))
+            register_cmd_data.extend(
+                self._build_register_command_data(
+                    app_display_name,
+                    local_thumb_path,
+                    app_engine,
+                    app_path,
+                    app_args,
+                    app_versions
+                )
+            )
 
         registered_cmds = []
         for register_cmd in register_cmd_data:
@@ -86,8 +98,11 @@ class SoftwareEntityLauncher(BaseLauncher):
                 # Don't register the same command data more than once.
                 continue
             self._register_launch_command(
-                register_cmd["display_name"], register_cmd["icon"],
-                register_cmd["engine"], register_cmd["path"], register_cmd["args"],
+                register_cmd["display_name"],
+                register_cmd["icon"],
+                register_cmd["engine"],
+                register_cmd["path"],
+                register_cmd["args"],
                 register_cmd["version"]
             )
             registered_cmds.append(register_cmd)
