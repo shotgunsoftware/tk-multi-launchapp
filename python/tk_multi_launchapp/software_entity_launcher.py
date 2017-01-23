@@ -49,6 +49,9 @@ class SoftwareEntityLauncher(BaseLauncher):
 
             # Download the thumbnail to use as the app's icon.
             app_icon_url = sw_entity["image"]
+            # thumb will be none if it cannot be resolved for whatever reason
+            local_thumb_path = None
+            # now attempt to resolve a thumbnail path
             if app_icon_url:
                 if self._tk_app.engine.has_ui:
                     # import sgutils locally as this has dependencies on QT
@@ -60,8 +63,6 @@ class SoftwareEntityLauncher(BaseLauncher):
                         self._tk_app
                     )
                     self._tk_app.log_debug("...download complete: %s" % local_thumb_path)
-                else:
-                    local_thumb_path = None
 
             app_engine = sw_entity["sg_engine"]
             app_path = sw_entity[app_path_field]
