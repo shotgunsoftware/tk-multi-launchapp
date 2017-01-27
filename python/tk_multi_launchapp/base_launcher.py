@@ -296,7 +296,7 @@ class BaseLauncher(object):
             # DCC application by default.
             defer_keyword = self._tk_app.get_setting("defer_keyword") or app_engine
             try:
-                self._tk_app.log_info(
+                self._tk_app.log_debug(
                     "Creating folders for %s %s. Defer keyword: '%s'" %
                     (entity_type, entity_id, defer_keyword)
                 )

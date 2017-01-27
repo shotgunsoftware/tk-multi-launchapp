@@ -13,8 +13,6 @@ import sgtk
 
 from .base_launcher import BaseLauncher
 
-shotgun_data = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_data")
-
 class SoftwareEntityLauncher(BaseLauncher):
     """
     Launches a DCC application based on site Software entity entries.
@@ -27,7 +25,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         """
         # Retrieve the Software entities from SG and record how many were found.
         sw_entities = self._get_sg_software_entities()
-        self._tk_app.log_info("Found (%d) Software entities." % len(sw_entities))
+        self._tk_app.log_debug("Found (%d) Software entities." % len(sw_entities))
         if not sw_entities:
             # No commands to register if no entities were found.
             return
@@ -50,36 +48,39 @@ class SoftwareEntityLauncher(BaseLauncher):
             app_versions = ver_strings
 
             # Download the thumbnail to use as the app's icon.
-            app_icon = sw_entity["image"]
-            if app_icon:
-                sg_icon = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
-                    sw_entity["type"], sw_entity["id"], self._tk_app
-                )
+            app_icon_url = sw_entity["image"]
+            # thumb will be none if it cannot be resolved for whatever reason
+            local_thumb_path = None
+            # now attempt to resolve a thumbnail path
+            if app_icon_url:
+                if self._tk_app.engine.has_ui:
+                    # import sgutils locally as this has dependencies on QT
+                    shotgun_data = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_data")
+                    # download thumbnail from shotgun
+                    self._tk_app.log_debug("Download app icon...")
+                    try:
+                        # Download the thumbnail source file from Shotgun, which preserves
+                        # transparency and alpha values.
+                        local_thumb_path = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
+                            sw_entity["type"], sw_entity["id"], self._tk_app
+                        )
 
-                try:
-                    # Download the thumbnail source file from Shotgun, which preserves
-                    # transparency and alpha values.
-                    sg_icon = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
-                        sw_entity["type"], sw_entity["id"], self._tk_app
-                    )
-
-                except (TankError, AttributeError):
-                    # An old version of tk-framework-shotgunutils or tk-core is
-                    # likely in use. Try ShotgunDataRetriever.download_thumbnail() instead.
-                    self._tk_app.log_warning(
-                        "ShotgunDataRetriever is unable to download thumbnail source file. "
-                        "Attempting to download thumbnail instead. This issue may be "
-                        "resolved by updating local installations of tk-framework-shotgunutils "
-                        "and tk-core."
-                    )
-                    sg_icon = shotgun_data.ShotgunDataRetriever.download_thumbnail(
-                        sw_entity["image"], self._tk_app
-                    )
-
-                app_icon = sg_icon
-                self._tk_app.log_debug("App icon from ShotgunDataRetriever : %s" % app_icon)
+                    except (TankError, AttributeError):
+                        # An old version of tk-framework-shotgunutils or tk-core is
+                        # likely in use. Try ShotgunDataRetriever.download_thumbnail() instead.
+                        self._tk_app.log_warning(
+                            "ShotgunDataRetriever is unable to download thumbnail source file. "
+                            "Attempting to download thumbnail instead. This issue may be "
+                            "resolved by updating local installations of tk-framework-shotgunutils "
+                            "and tk-core."
+                        )
+                        local_thumb_path = shotgun_data.ShotgunDataRetriever.download_thumbnail(
+                            sw_entity["image"], self._tk_app
+                        )
+                    self._tk_app.log_debug("...download complete: %s" % local_thumb_path)
 
             app_engine = sw_entity["sg_engine"]
+            app_path = sw_entity[app_path_field]
             if app_engine:
                 # Try to retrieve the path to the specified engine. If nothing is
                 # returned, then this engine hasn't been loaded in the current
@@ -96,10 +97,16 @@ class SoftwareEntityLauncher(BaseLauncher):
 
             app_display_name = sw_entity["code"]
             app_args = sw_entity[app_args_field] or ""
-            app_path = sw_entity[app_path_field]
-            register_cmd_data.extend(self._build_register_command_data(
-                app_display_name, app_icon, app_engine, app_path, app_args, app_versions
-            ))
+            register_cmd_data.extend(
+                self._build_register_command_data(
+                    app_display_name,
+                    local_thumb_path,
+                    app_engine,
+                    app_path,
+                    app_args,
+                    app_versions
+                )
+            )
 
         registered_cmds = []
         for register_cmd in register_cmd_data:
@@ -107,8 +114,11 @@ class SoftwareEntityLauncher(BaseLauncher):
                 # Don't register the same command data more than once.
                 continue
             self._register_launch_command(
-                register_cmd["display_name"], register_cmd["icon"],
-                register_cmd["engine"], register_cmd["path"], register_cmd["args"],
+                register_cmd["display_name"],
+                register_cmd["icon"],
+                register_cmd["engine"],
+                register_cmd["path"],
+                register_cmd["args"],
                 register_cmd["version"]
             )
             registered_cmds.append(register_cmd)
