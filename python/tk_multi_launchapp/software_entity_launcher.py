@@ -58,25 +58,9 @@ class SoftwareEntityLauncher(BaseLauncher):
                     shotgun_data = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_data")
                     # download thumbnail from shotgun
                     self._tk_app.log_debug("Download app icon...")
-                    try:
-                        # Download the thumbnail source file from Shotgun, which preserves
-                        # transparency and alpha values.
-                        local_thumb_path = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
-                            sw_entity["type"], sw_entity["id"], self._tk_app
-                        )
-
-                    except (TankError, AttributeError):
-                        # An old version of tk-framework-shotgunutils or tk-core is
-                        # likely in use. Try ShotgunDataRetriever.download_thumbnail() instead.
-                        self._tk_app.log_warning(
-                            "ShotgunDataRetriever is unable to download thumbnail source file. "
-                            "Attempting to download thumbnail instead. This issue may be "
-                            "resolved by updating local installations of tk-framework-shotgunutils "
-                            "and tk-core."
-                        )
-                        local_thumb_path = shotgun_data.ShotgunDataRetriever.download_thumbnail(
-                            sw_entity["image"], self._tk_app
-                        )
+                    local_thumb_path = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
+                        sw_entity["type"], sw_entity["id"], self._tk_app
+                    )
                     self._tk_app.log_debug("...download complete: %s" % local_thumb_path)
 
             app_engine = sw_entity["sg_engine"]
