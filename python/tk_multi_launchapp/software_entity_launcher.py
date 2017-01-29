@@ -64,7 +64,6 @@ class SoftwareEntityLauncher(BaseLauncher):
                     self._tk_app.log_debug("...download complete: %s" % local_thumb_path)
 
             app_engine = sw_entity["sg_engine"]
-            app_path = sw_entity[app_path_field]
             if app_engine:
                 # Try to retrieve the path to the specified engine. If nothing is
                 # returned, then this engine hasn't been loaded in the current
@@ -79,18 +78,29 @@ class SoftwareEntityLauncher(BaseLauncher):
                     )
                     continue
 
+            app_path = sw_entity[app_path_field]
             app_display_name = sw_entity["code"]
             app_args = sw_entity[app_args_field] or ""
-            register_cmd_data.extend(
-                self._build_register_command_data(
-                    app_display_name,
-                    local_thumb_path,
-                    app_engine,
-                    app_path,
-                    app_args,
-                    app_versions
-                )
+            app_icon_url = sw_entity["image"]
+            command_data = self._build_register_command_data(
+                app_display_name, app_icon_url, app_engine, app_path, app_args, app_versions
             )
+            for register_command in command_data:
+                if register_command["icon"] and self._tk_app.engine.has_ui:
+                    # import sgutils locally as this has dependencies on QT
+                    shotgun_data = sgtk.platform.import_framework(
+                        "tk-framework-shotgunutils", "shotgun_data"
+                    )
+                    # download thumbnail from shotgun and cache for reuse.
+                    self._tk_app.log_debug("Download app icon...")
+                    local_thumb_path = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
+                        sw_entity["type"], sw_entity["id"], self._tk_app
+                    )
+                    self._tk_app.log_debug("...download complete: %s" % local_thumb_path)
+                    register_command["icon] = local_thumb_path
+
+                register_cmd_data.append(register_command)
+
 
         registered_cmds = []
         for register_cmd in register_cmd_data:
