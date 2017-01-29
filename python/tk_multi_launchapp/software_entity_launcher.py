@@ -66,10 +66,15 @@ class SoftwareEntityLauncher(BaseLauncher):
             app_display_name = sw_entity["code"]
             app_args = sw_entity[app_args_field] or ""
             app_icon_url = sw_entity["image"]
+
+            # Get the list of command data dictionaries from the information
+            # provided by this Software entity
             command_data = self._build_register_command_data(
                 app_display_name, app_icon_url, app_engine, app_path, app_args, app_versions
             )
             for register_command in command_data:
+                # If the Software entity icon is being used for the command, download and
+                # cache it if possible.
                 if (register_command["icon"] == app_icon_url) and self._tk_app.engine.has_ui:
                     # import sgutils locally as this has dependencies on QT
                     shotgun_data = sgtk.platform.import_framework(
@@ -84,7 +89,6 @@ class SoftwareEntityLauncher(BaseLauncher):
                     register_command["icon"] = local_thumb_path
 
                 register_cmd_data.append(register_command)
-
 
         registered_cmds = []
         for register_cmd in register_cmd_data:
