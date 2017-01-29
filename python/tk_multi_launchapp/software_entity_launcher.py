@@ -47,22 +47,6 @@ class SoftwareEntityLauncher(BaseLauncher):
             ver_strings = [v.strip() for v in app_versions.split(",") if v.strip()]
             app_versions = ver_strings
 
-            # Download the thumbnail to use as the app's icon.
-            app_icon_url = sw_entity["image"]
-            # thumb will be none if it cannot be resolved for whatever reason
-            local_thumb_path = None
-            # now attempt to resolve a thumbnail path
-            if app_icon_url:
-                if self._tk_app.engine.has_ui:
-                    # import sgutils locally as this has dependencies on QT
-                    shotgun_data = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_data")
-                    # download thumbnail from shotgun
-                    self._tk_app.log_debug("Download app icon...")
-                    local_thumb_path = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
-                        sw_entity["type"], sw_entity["id"], self._tk_app
-                    )
-                    self._tk_app.log_debug("...download complete: %s" % local_thumb_path)
-
             app_engine = sw_entity["sg_engine"]
             if app_engine:
                 # Try to retrieve the path to the specified engine. If nothing is
@@ -86,7 +70,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 app_display_name, app_icon_url, app_engine, app_path, app_args, app_versions
             )
             for register_command in command_data:
-                if register_command["icon"] and self._tk_app.engine.has_ui:
+                if (register_command["icon"] == app_icon_url) and self._tk_app.engine.has_ui:
                     # import sgutils locally as this has dependencies on QT
                     shotgun_data = sgtk.platform.import_framework(
                         "tk-framework-shotgunutils", "shotgun_data"
@@ -97,7 +81,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                         sw_entity["type"], sw_entity["id"], self._tk_app
                     )
                     self._tk_app.log_debug("...download complete: %s" % local_thumb_path)
-                    register_command["icon] = local_thumb_path
+                    register_command["icon"] = local_thumb_path
 
                 register_cmd_data.append(register_command)
 
