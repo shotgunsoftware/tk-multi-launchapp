@@ -58,9 +58,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                     shotgun_data = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_data")
                     # download thumbnail from shotgun
                     self._tk_app.log_debug("Download app icon...")
-                    local_thumb_path = shotgun_data.ShotgunDataRetriever.download_thumbnail(
-                        app_icon_url,
-                        self._tk_app
+                    local_thumb_path = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
+                        sw_entity["type"], sw_entity["id"], self._tk_app
                     )
                     self._tk_app.log_debug("...download complete: %s" % local_thumb_path)
 
