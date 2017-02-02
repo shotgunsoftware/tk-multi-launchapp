@@ -40,18 +40,24 @@ class SoftwareEntityLauncher(BaseLauncher):
         for sw_entity in sw_entities:
             self._tk_app.log_debug("Software Entity:\n%s" % pprint.pformat(sw_entity, indent=4))
 
+            # Set some local variables for the Software data used here.
+            app_path = sw_entity[app_path_field]
+            app_display_name = sw_entity["code"]
+            app_args = sw_entity[app_args_field] or ""
+            app_icon = sw_entity["image"]
+            app_versions = sw_entity["sg_versions"] or ""
+            app_engine = sw_entity["sg_engine"]
+
             # Parse the Software versions field to determine the specific list
             # of versions to load. Assume the list of versions is stored as
             # a comma-separated string in Shotgun.
-            app_versions = sw_entity["sg_versions"] or ""
             ver_strings = [v.strip() for v in app_versions.split(",") if v.strip()]
             app_versions = ver_strings
 
-            app_engine = sw_entity["sg_engine"]
+            # Try to retrieve the path to the specified engine. If nothing is
+            # returned, then this engine hasn't been loaded in the current
+            # environment, and there's not much more we can do.
             if app_engine:
-                # Try to retrieve the path to the specified engine. If nothing is
-                # returned, then this engine hasn't been loaded in the current
-                # environment, and there's not much more we can do.
                 app_engine_path = sgtk.platform.get_engine_path(
                     app_engine, self._tk_app.sgtk, self._tk_app.context
                 )
@@ -62,33 +68,26 @@ class SoftwareEntityLauncher(BaseLauncher):
                     )
                     continue
 
-            app_path = sw_entity[app_path_field]
-            app_display_name = sw_entity["code"]
-            app_args = sw_entity[app_args_field] or ""
-            app_icon_url = sw_entity["image"]
+            # If a thumbnail was registered for this Software entity, download it
+            # and/or use the locally cached file instead.
+            if app_icon and self._tk_app.engine.has_ui:
+                # import sgutils locally as this has dependencies on QT
+                shotgun_data = sgtk.platform.import_framework(
+                    "tk-framework-shotgunutils", "shotgun_data"
+                )
+                # download thumbnail from shotgun and cache for reuse.
+                self._tk_app.log_debug("Download app icon...")
+                local_thumb_path = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
+                    sw_entity["type"], sw_entity["id"], self._tk_app
+                )
+                self._tk_app.log_debug("...download complete: %s" % local_thumb_path)
+                app_icon = local_thumb_path
 
             # Get the list of command data dictionaries from the information
             # provided by this Software entity
-            command_data = self._build_register_command_data(
-                app_display_name, app_icon_url, app_engine, app_path, app_args, app_versions
+            register_cmd_data.extend(self._build_register_command_data(
+                app_display_name, app_icon, app_engine, app_path, app_args, app_versions
             )
-            for register_command in command_data:
-                # If the Software entity icon is being used for the command, download and
-                # cache it if possible.
-                if (register_command["icon"] == app_icon_url) and self._tk_app.engine.has_ui:
-                    # import sgutils locally as this has dependencies on QT
-                    shotgun_data = sgtk.platform.import_framework(
-                        "tk-framework-shotgunutils", "shotgun_data"
-                    )
-                    # download thumbnail from shotgun and cache for reuse.
-                    self._tk_app.log_debug("Download app icon...")
-                    local_thumb_path = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
-                        sw_entity["type"], sw_entity["id"], self._tk_app
-                    )
-                    self._tk_app.log_debug("...download complete: %s" % local_thumb_path)
-                    register_command["icon"] = local_thumb_path
-
-                register_cmd_data.append(register_command)
 
         registered_cmds = []
         for register_cmd in register_cmd_data:
@@ -135,7 +134,6 @@ class SoftwareEntityLauncher(BaseLauncher):
             "launch commands in your Project's configuration to use this "
             "functionality."
         )
-
 
     def _get_sg_software_entities(self):
         """
@@ -251,33 +249,48 @@ class SoftwareEntityLauncher(BaseLauncher):
         # List of command data to return
         commands = []
         if path:
+            # A custom application path has been specified in the Software data.
+            if not icon and engine:
+                # If no icon was specified, try to retrieve one from the engine launcher.
+                try:
+                    engine_launcher = sgtk.platform.create_engine_launcher(
+                        self._tk_app.sgtk, self._tk_app.context, engine
+                    )
+                    if engine_launcher:
+                        sw_versions = engine_launcher.scan_software(versions, display_name, icon)
+                        if sw_versions:
+                            icon = sw_versions[0].icon
+                except:
+                    self._tk_app.log_info(
+                        "Unable to retrieve icon from %s's engine launcher." % engine
+                    )
+
             if versions:
+                # Construct a command for each version.
                 for version in versions:
-                    # Register a command for each version for the path specified.
                     commands.append({
                         "display_name": display_name, "icon": icon,
                         "engine": engine, "path": path, "args": args,
                         "version": version,
                     })
             else:
-                # Register a launch command for the specified path
+                # Construct a single, version-less command.
                 commands.append({
                     "display_name": display_name, "icon": icon,
                     "engine": engine, "path": path, "args": args,
                     "version": None,
                 })
-        else:
+
+        elif engine:
+            # Attempt to find application path(s) from the engine launcher.
             try:
-                # Instantiate a SoftwareLauncher for the requested engine
-                # to see if it can determine a list of executable paths to
-                # register launch commands for.
-                launcher = sgtk.platform.create_engine_launcher(
+                engine_launcher = sgtk.platform.create_engine_launcher(
                     self._tk_app.sgtk, self._tk_app.context, engine
                 )
-                if launcher:
+                if engine_launcher:
                     # Get a list of SoftwareVersions for this engine and use that
                     # data to construct a launch command to register.
-                    sw_versions = launcher.scan_software(versions, display_name, icon)
+                    sw_versions = engine_launcher.scan_software(versions, display_name, icon)
                     for swv in sw_versions:
                         commands.append({
                             "display_name": swv.display_name, "icon": swv.icon,
@@ -294,5 +307,12 @@ class SoftwareEntityLauncher(BaseLauncher):
                     "Cannot determine executable paths for %s: %s" %
                     (engine, e)
                 )
+
+        else:
+            # No application path(s), no launch command(s) ....
+            self._tk_app.log_warning(
+                "No application path or Toolkit engine specified for Software %s. "
+                "Cannot create launch commands associated with this entity." % display_name
+            )
 
         return commands

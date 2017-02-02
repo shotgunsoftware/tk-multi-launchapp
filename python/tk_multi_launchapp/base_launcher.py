@@ -64,16 +64,10 @@ class BaseLauncher(object):
         icon = apply_version_to_setting(app_icon, version)
         menu_name = apply_version_to_setting(app_menu_name, version)
 
-        # Resolve the input path to the application to launch. Verify that
-        # it exists before creating a launch command.
+        # Resolve any env variables in the specified path to the application to launch.
         app_path = os.path.expandvars(
             apply_version_to_setting(app_path, version)
         )
-        if not os.path.exists(app_path):
-            self._tk_app.log_warning("%s application path [%s] does not exist!" %
-                (menu_name, app_path)
-            )
-            return
 
         # the command name mustn't contain spaces and funny chars, so sanitize it.
         # Also, should be nice for the shell engine.
