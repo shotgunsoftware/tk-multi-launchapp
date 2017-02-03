@@ -257,14 +257,14 @@ class SoftwareEntityLauncher(BaseLauncher):
             # retrieve the icon from the associated Toolkit engine launcher and use that instead.
             download_icon = True if icon else False
             if not icon and engine:
-                sw_versions = self._engine_launcher_software_versions(
+                software_versions = self._scan_for_software(
                     engine, display_name, icon, versions
                 )
-                if sw_versions:
+                if software_versions:
                     self._tk_app.log_debug("Using icon %s from SoftwareVersion for %s." %
-                        ((sw_versions[0].icon), display_name)
+                        ((software_versions[0].icon), display_name)
                     )
-                    icon = sw_versions[0].icon
+                    icon = software_versions[0].icon
                 else:
                     self._tk_app.log_debug("No SoftwareVersions found for Toolkit engine %s. "
                         "Cannot determine icon to display for %s." % (engine, display_name)
@@ -295,20 +295,20 @@ class SoftwareEntityLauncher(BaseLauncher):
             self._tk_app.log_debug("Using %s engine launcher to find application paths for %s." %
                 (engine, display_name)
             )
-            sw_versions = self._engine_launcher_software_versions(
+            software_versions = self._scan_for_software(
                 engine, display_name, icon, versions
             ) or []
-            for swv in sw_versions:
+            for software_version in software_versions:
                 # Construct a command for each SoftwareVersion found.
                 commands.append({
-                    "display_name": swv.display_name, "icon": swv.icon,
-                    "engine": engine, "path": swv.path, "args": args,
-                    "version": swv.version
+                    "display_name": software_version.display_name, "icon": software_version.icon,
+                    "engine": engine, "path": software_version.path, "args": args,
+                    "version": software_version.version
                 })
 
                 # If the resolved SoftwareVersion icon is empty or does not exist
                 # locally, use the Software icon instead.
-                if not swv.icon or not os.path.exists(swv.icon):
+                if not software_version.icon or not os.path.exists(software_version.icon):
                     download_icon_for_commands.append(command_data)
 
         else:
@@ -348,7 +348,7 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         return commands
 
-    def _engine_launcher_software_versions(self, engine, default_name, default_icon, versions=None):
+    def _scan_for_software(self, engine, default_name, default_icon, versions=None):
         """
         Use the "auto discovery" feature of an engine launcher to scan the local environment
         for all related application paths. This information will in turn be used to construct
@@ -367,7 +367,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         :returns: List of SoftwareVersions related to the specified engine that meet the input
                   requirements / restrictions.
         """
-        sw_versions = []
+        software_versions = []
         # First try to construct the engine launcher for the specified engine.
         try:
             self._tk_app.log_debug("Initializing engine launcher for %s." % engine)
@@ -390,7 +390,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         # Next try to scan for available applications for this engine.
         try:
             self._tk_app.log_debug("Scanning for Toolkit engine %s local applications." % engine)
-            sw_versions = engine_launcher.scan_software(versions, default_name, default_icon)
+            software_versions = engine_launcher.scan_software(versions, default_name, default_icon)
         except Exception, e:
             self._tk_app.log_warning(
                 "Caught unexpected error scanning for DCC applications corresponding "
@@ -398,4 +398,4 @@ class SoftwareEntityLauncher(BaseLauncher):
             )
             return None
 
-        return sw_versions
+        return software_versions
