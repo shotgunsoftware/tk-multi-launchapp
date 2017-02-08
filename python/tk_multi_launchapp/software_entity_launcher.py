@@ -11,7 +11,6 @@ import os
 import pprint
 
 import sgtk
-from sgtk.deploy import util
 
 from .base_launcher import BaseLauncher
 

@@ -13,6 +13,7 @@ import sys
 
 import sgtk
 from sgtk import TankError
+from sgtk.deploy import util
 
 from .util import apply_version_to_setting, get_clean_version_string
 from .util import clear_dll_directory, restore_dll_directory
