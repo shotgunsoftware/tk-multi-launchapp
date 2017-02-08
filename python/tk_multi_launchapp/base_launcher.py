@@ -45,7 +45,8 @@ class BaseLauncher(object):
             app_engine,
             app_path,
             app_args,
-            version=None
+            version=None,
+            properties=None,
         ):
         """
         Register a launch command with the current engine.
@@ -88,12 +89,15 @@ class BaseLauncher(object):
             "shotgun_version",
         ]
         if self._tk_app.engine.environment.get("name") not in skip_environments:
-            properties = {
+            if not properties:
+                properties = {}
+
+            properties.update({
                 "title": menu_name,
                 "short_name": command_name,
                 "description": "Launches and initializes an application environment.",
                 "icon": icon,
-            }
+            })
 
             def launch_version():
                 self._launch_callback(

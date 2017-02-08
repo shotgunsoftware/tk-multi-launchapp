@@ -11,6 +11,7 @@ import os
 import pprint
 
 import sgtk
+from sgtk.deploy import util
 
 from .base_launcher import BaseLauncher
 
@@ -88,7 +89,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                 register_cmd["engine"],
                 register_cmd["path"],
                 register_cmd["args"],
-                register_cmd["version"]
+                register_cmd["version"],
+                register_cmd.get("properties") or None
             )
 
     def launch_from_path(self, path, version=None):
@@ -271,17 +273,25 @@ class SoftwareEntityLauncher(BaseLauncher):
                     )
 
             if versions:
+                group_name = engine.split("-")[-1].capitalize() if engine else None
+                sorted_versions = self._sort_versions(versions)
+
                 # Construct a command for each version.
                 for version in versions:
+                    extra_properties = {
+                        "group": group_name,
+                        "group_default": (version == sorted_versions[0])
+                    } if group_name else None
+
                     commands.append({
                         "display_name": display_name, "icon": icon, "engine": engine,
-                        "path": path, "args": args, "version": version,
+                        "path": path, "args": args, "version": version, "properties": extra_properties
                     })
             else:
                 # Construct a single, version-less command.
                 commands.append({
                     "display_name": display_name, "icon": icon, "engine": engine,
-                    "path": path, "args": args, "version": None,
+                    "path": path, "args": args, "version": None, "properties": None,
                 })
 
             if download_icon:
@@ -298,12 +308,25 @@ class SoftwareEntityLauncher(BaseLauncher):
             software_versions = self._scan_for_software(
                 engine, display_name, icon, versions
             ) or []
+
+            # Sort the returned version "numbers"
+            group_name = engine.split("-")[-1].capitalize()
+            sorted_versions = self._sort_versions(
+                [software_version.version for software_version in software_versions]
+            )
+
             for software_version in software_versions:
+                # Construct the equivalent of Desktop "collapse rules"
+                extra_properties = {
+                    "group": group_name,
+                    "group_default": (software_version.version == sorted_versions[0])
+                }
+
                 # Construct a command for each SoftwareVersion found.
                 commands.append({
                     "display_name": software_version.display_name, "icon": software_version.icon,
                     "engine": engine, "path": software_version.path, "args": args,
-                    "version": software_version.version
+                    "version": software_version.version, "properties": extra_properties,
                 })
 
                 # If the resolved SoftwareVersion icon is empty or does not exist
@@ -399,3 +422,24 @@ class SoftwareEntityLauncher(BaseLauncher):
             return None
 
         return software_versions
+
+    def _sort_versions(self, versions):
+        """
+        Controls how version numbers are sorted. Implements the same methodology as Desktop.
+        Does not modify the input list of versions.
+
+        :param list versions: List of version "numbers" (may be strings)
+        :returns: List of sorted versions
+        """
+        # Do not sort the incoming versions in place.
+        sort_versions = [version for version in versions]
+
+        def version_cmp(left_version, right_version):
+            if util.is_version_newer(left_version, right_version):
+                return -1
+            if util.is_version_older(left_version, right_version):
+                return 1
+            return 0
+
+        sort_versions.sort(cmp=version_cmp)
+        return sort_versions
