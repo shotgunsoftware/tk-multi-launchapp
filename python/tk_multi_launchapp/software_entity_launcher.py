@@ -89,7 +89,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 register_cmd["path"],
                 register_cmd["args"],
                 register_cmd["version"],
-                register_cmd.get("properties") or None
+                register_cmd.get("properties")
             )
 
     def launch_from_path(self, path, version=None):
