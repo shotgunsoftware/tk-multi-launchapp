@@ -273,8 +273,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                     )
 
             if versions:
-                group_name = engine.split("-")[-1].capitalize() if engine else None
-                sorted_versions = self._sort_versions(versions)
+                group_name = self._get_group_name(engine)
+                sorted_versions = self._sort_group_versions(versions)
 
                 # Construct a command for each version.
                 for version in versions:
@@ -310,8 +310,8 @@ class SoftwareEntityLauncher(BaseLauncher):
             ) or []
 
             # Sort the returned version "numbers"
-            group_name = engine.split("-")[-1].capitalize()
-            sorted_versions = self._sort_versions(
+            group_name = self._get_group_name(engine)
+            sorted_versions = self._sort_group_versions(
                 [software_version.version for software_version in software_versions]
             )
 
@@ -423,23 +423,3 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         return software_versions
 
-    def _sort_versions(self, versions):
-        """
-        Controls how version numbers are sorted. Implements the same methodology as Desktop.
-        Does not modify the input list of versions.
-
-        :param list versions: List of version "numbers" (may be strings)
-        :returns: List of sorted versions
-        """
-        # Do not sort the incoming versions in place.
-        sort_versions = [version for version in versions]
-
-        def version_cmp(left_version, right_version):
-            if util.is_version_newer(left_version, right_version):
-                return -1
-            if util.is_version_older(left_version, right_version):
-                return 1
-            return 0
-
-        sort_versions.sort(cmp=version_cmp)
-        return sort_versions

@@ -74,10 +74,18 @@ class SingleConfigLauncher(BaseLauncher):
         # Initialize per version
         app_versions = self._tk_app.get_setting("versions") or []
         if app_versions:
+            group_name = self._get_group_name(self._app_engine)
+            sorted_versions = self._sort_group_versions(app_versions)
+
             for version in app_versions:
+                properties = {
+                    "group": group_name,
+                    "group_default": (version == sorted_versions[0])
+                } if group_name else None
+
                 self._register_launch_command(
                     self._app_menu_name, app_icon, self._app_engine,
-                    self._app_path, self._app_args, version
+                    self._app_path, self._app_args, version, properties,
                 )
         else:
             # No replacements defined, just register with the raw values

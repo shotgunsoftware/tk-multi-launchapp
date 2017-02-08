@@ -338,3 +338,35 @@ class BaseLauncher(object):
         :param version: (Optional) Specific version of DCC to launch.
         """
         raise NotImplementedError
+
+
+    def _get_group_name(self, engine):
+        """
+        Construct a group name from an engine name. This name will be used to group
+        like commands together when registering commands with the current engine.
+
+        :param str engine: Toolkit engine name that the launch commands are associated with.
+        :returns: String group name or None
+        """
+        return engine.split("-")[-1].capitalize() if engine else None
+
+    def _sort_group_versions(self, versions):
+        """
+        Controls how version numbers are sorted. Implements the same methodology as Desktop.
+        Does not modify the input list of versions.
+
+        :param list versions: List of version "numbers" (may be strings)
+        :returns: List of sorted versions
+        """
+        # Do not sort the incoming versions in place.
+        sort_versions = [version for version in versions]
+
+        def version_cmp(left_version, right_version):
+            if util.is_version_newer(left_version, right_version):
+                return -1
+            if util.is_version_older(left_version, right_version):
+                return 1
+            return 0
+
+        sort_versions.sort(cmp=version_cmp)
+        return sort_versions
