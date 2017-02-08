@@ -272,6 +272,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                     )
 
             if versions:
+                # Information used to construct the equivalent of Desktop "collapse rules"
                 group_name = self._get_group_name(engine)
                 sorted_versions = self._sort_group_versions(versions)
 
@@ -308,18 +309,17 @@ class SoftwareEntityLauncher(BaseLauncher):
                 engine, display_name, icon, versions
             ) or []
 
-            # Sort the returned version "numbers"
+            # Information used to construct the equivalent of Desktop "collapse rules"
             group_name = self._get_group_name(engine)
             sorted_versions = self._sort_group_versions(
                 [software_version.version for software_version in software_versions]
             )
 
             for software_version in software_versions:
-                # Construct the equivalent of Desktop "collapse rules"
                 properties = {
                     "group": group_name,
                     "group_default": (software_version.version == sorted_versions[0])
-                }
+                } if group_name else None
 
                 # Construct a command for each SoftwareVersion found.
                 commands.append({

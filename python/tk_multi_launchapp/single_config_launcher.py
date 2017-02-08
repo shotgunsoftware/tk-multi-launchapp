@@ -74,6 +74,7 @@ class SingleConfigLauncher(BaseLauncher):
         # Initialize per version
         app_versions = self._tk_app.get_setting("versions") or []
         if app_versions:
+            # Information used to construct the equivalent of Desktop "collapse rules"
             group_name = self._get_group_name(self._app_engine)
             sorted_versions = self._sort_group_versions(app_versions)
 
