@@ -277,20 +277,20 @@ class SoftwareEntityLauncher(BaseLauncher):
 
                 # Construct a command for each version.
                 for version in versions:
-                    extra_properties = {
+                    properties = {
                         "group": group_name,
                         "group_default": (version == sorted_versions[0])
                     } if group_name else None
 
                     commands.append({
                         "display_name": display_name, "icon": icon, "engine": engine,
-                        "path": path, "args": args, "version": version, "properties": extra_properties
+                        "path": path, "args": args, "version": version, "properties": properties
                     })
             else:
                 # Construct a single, version-less command.
                 commands.append({
                     "display_name": display_name, "icon": icon, "engine": engine,
-                    "path": path, "args": args, "version": None, "properties": None,
+                    "path": path, "args": args, "version": None,
                 })
 
             if download_icon:
@@ -316,7 +316,7 @@ class SoftwareEntityLauncher(BaseLauncher):
 
             for software_version in software_versions:
                 # Construct the equivalent of Desktop "collapse rules"
-                extra_properties = {
+                properties = {
                     "group": group_name,
                     "group_default": (software_version.version == sorted_versions[0])
                 }
@@ -325,7 +325,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 commands.append({
                     "display_name": software_version.display_name, "icon": software_version.icon,
                     "engine": engine, "path": software_version.path, "args": args,
-                    "version": software_version.version, "properties": extra_properties,
+                    "version": software_version.version, "properties": properties,
                 })
 
                 # If the resolved SoftwareVersion icon is empty or does not exist
@@ -421,4 +421,3 @@ class SoftwareEntityLauncher(BaseLauncher):
             return None
 
         return software_versions
-
