@@ -89,7 +89,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                 register_cmd["path"],
                 register_cmd["args"],
                 register_cmd["version"],
-                register_cmd.get("properties")
+                register_cmd["group"],
+                register_cmd["group_default"],
             )
 
     def launch_from_path(self, path, version=None):
@@ -272,26 +273,24 @@ class SoftwareEntityLauncher(BaseLauncher):
                     )
 
             if versions:
-                # Information used to construct the equivalent of Desktop "collapse rules"
-                group_name = self._get_group_name(engine)
-                sorted_versions = self._sort_group_versions(versions)
-
                 # Construct a command for each version.
                 for version in versions:
-                    properties = {
-                        "group": group_name,
-                        "group_default": (version == sorted_versions[0])
-                    } if group_name else None
-
                     commands.append({
-                        "display_name": display_name, "icon": icon, "engine": engine,
-                        "path": path, "args": args, "version": version, "properties": properties
+                        "display_name": display_name,
+                        "icon": icon,
+                        "engine": engine,
+                        "path": path,
+                        "args": args,
+                        "version": version,
                     })
             else:
                 # Construct a single, version-less command.
                 commands.append({
-                    "display_name": display_name, "icon": icon, "engine": engine,
-                    "path": path, "args": args, "version": None,
+                    "display_name": display_name,
+                    "icon": icon,
+                    "engine": engine,
+                    "path": path,
+                    "args": args,
                 })
 
             if download_icon:
@@ -309,23 +308,18 @@ class SoftwareEntityLauncher(BaseLauncher):
                 engine, display_name, icon, versions
             ) or []
 
-            # Information used to construct the equivalent of Desktop "collapse rules"
-            group_name = self._get_group_name(engine)
-            sorted_versions = self._sort_group_versions(
-                [software_version.version for software_version in software_versions]
-            )
-
             for software_version in software_versions:
-                properties = {
-                    "group": group_name,
-                    "group_default": (software_version.version == sorted_versions[0])
-                } if group_name else None
-
                 # Construct a command for each SoftwareVersion found.
                 commands.append({
-                    "display_name": software_version.display_name, "icon": software_version.icon,
-                    "engine": engine, "path": software_version.path, "args": args,
-                    "version": software_version.version, "properties": properties,
+                    "display_name": software_version.display_name,
+                    "icon": software_version.icon,
+                    "engine": engine,
+                    "path": software_version.path,
+                    "args": args,
+                    "version": software_version.version,
+                    "properties": properties,
+                    "group": software_version.group,
+                    "group_default": software_version.group_default,
                 })
 
                 # If the resolved SoftwareVersion icon is empty or does not exist

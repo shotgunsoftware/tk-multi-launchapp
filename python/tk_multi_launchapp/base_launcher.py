@@ -47,20 +47,27 @@ class BaseLauncher(object):
             app_path,
             app_args,
             version=None,
-            properties=None,
+            group=None,
+            group_default=True,
         ):
         """
         Register a launch command with the current engine.
 
-        :param app_menu_name: Menu name to display to launch this DCC. This is
-                              also used to construct the associated command name.
-        :param app_icon: Icon to display for this DCC
-        :param app_engine: The TK engine associated with the DCC to be launched
-        :param app_path: Full path name to the DCC. This may contain environment
-                         variables and/or the locally supported {version}, {v0},
-                         {v1}, ... variables
-        :param app_args: Args string to pass to the DCC at launch time
-        :param version: (Optional) Specific version of DCC to use.
+        :param str app_menu_name: Menu name to display to launch this DCC. This is also
+                                  used to construct the associated command name.
+        :param str app_icon: Icon to display for this DCC
+        :param str app_engine: The TK engine associated with the DCC to be launched
+        :param str app_path: Full path name to the DCC. This may contain environment
+                             variables and/or the locally supported {version}, {v0},
+                             {v1}, ... variables
+        :param str app_args: Args string to pass to the DCC at launch time
+        :param str version: (Optional) Specific version of DCC to use.
+        :param str group: (Optional) Group name this command belongs to. This value is
+                          interpreted by the engine the command is registered with.
+        :param bool group_default: (Optional) If this command is one of a group of commands, 
+                                   indicate whether to launch this command if the group is 
+                                   selected instead of an individual command.  Again, this
+                                   value is interpreted by the engine the command is registered with.
         """
         # do the {version} replacement if needed
         icon = apply_version_to_setting(app_icon, version)
@@ -90,15 +97,14 @@ class BaseLauncher(object):
             "shotgun_version",
         ]
         if self._tk_app.engine.environment.get("name") not in skip_environments:
-            if not properties:
-                properties = {}
-
-            properties.update({
+            properties = {
                 "title": menu_name,
                 "short_name": command_name,
                 "description": "Launches and initializes an application environment.",
                 "icon": icon,
-            })
+                "group": group,
+                "group_default": group_default
+            }
 
             def launch_version():
                 self._launch_callback(
@@ -340,34 +346,3 @@ class BaseLauncher(object):
         """
         raise NotImplementedError
 
-
-    def _get_group_name(self, engine):
-        """
-        Construct a group name from an engine name. This name will be used to group
-        like commands together when registering commands with the current engine.
-
-        :param str engine: Toolkit engine name that the launch commands are associated with.
-        :returns: String group name or None
-        """
-        return engine.split("-")[-1].capitalize() if engine else None
-
-    def _sort_group_versions(self, versions):
-        """
-        Controls how version numbers are sorted. Implements the same methodology as Desktop.
-        Does not modify the input list of versions.
-
-        :param list versions: List of version "numbers" (may be strings)
-        :returns: List of sorted versions
-        """
-        # Do not sort the incoming versions in place.
-        sort_versions = [version for version in versions]
-
-        def version_cmp(left_version, right_version):
-            if util.is_version_newer(left_version, right_version):
-                return -1
-            if util.is_version_older(left_version, right_version):
-                return 1
-            return 0
-
-        sort_versions.sort(cmp=version_cmp)
-        return sort_versions
