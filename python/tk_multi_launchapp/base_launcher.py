@@ -64,10 +64,10 @@ class BaseLauncher(object):
         :param str version: (Optional) Specific version of DCC to use.
         :param str group: (Optional) Group name this command belongs to. This value is
                           interpreted by the engine the command is registered with.
-        :param bool group_default: (Optional) If this command is one of a group of commands, 
-                                   indicate whether to launch this command if the group is 
-                                   selected instead of an individual command.  Again, this
-                                   value is interpreted by the engine the command is registered with.
+        :param bool group_default: (Optional) If this command is one of a group of commands,
+                                   indicate whether to launch this command if the group is
+                                   selected instead of an individual command. This value is
+                                   also interpreted by the engine the command is registered with.
         """
         # do the {version} replacement if needed
         icon = apply_version_to_setting(app_icon, version)
@@ -345,4 +345,32 @@ class BaseLauncher(object):
         :param version: (Optional) Specific version of DCC to launch.
         """
         raise NotImplementedError
+
+    def _sort_versions(self, versions):
+        """
+        Uses standard python modules to determine how to sort arbitrary version numbers. A version
+        number consists of a series of numbers, separated by either periods or strings of letters.
+        When comparing version numbers, the numeric components will be compared numerically, and
+        the alphabetic components lexically. For example:
+
+            1.1 < 1.2 < 1.3
+            1.2 < 1.2a < 1.2ab < 1.2b
+
+        This methodology is also used in Desktop. The input list of versions is not modified.
+
+        :param list versions: List of version "numbers" (may be strings)
+        :returns: List of sorted versions
+        """
+        # Do not sort the incoming versions in place.
+        sort_versions = [version for version in versions]
+
+        def version_cmp(left_version, right_version):
+            if util.is_version_newer(left_version, right_version):
+                return -1
+            if util.is_version_older(left_version, right_version):
+                return 1
+            return 0
+
+        sort_versions.sort(cmp=version_cmp)
+        return sort_versions
 

@@ -53,6 +53,8 @@ class SoftwareEntityLauncher(BaseLauncher):
             app_icon = sw_entity["image"]
             app_versions = sw_entity["sg_versions"] or ""
             app_engine = sw_entity["sg_engine"]
+            app_group = sw_entity["sg_group"]
+            is_group_default = sw_entity["sg_group_default"]
 
             # Parse the Software `versions` field to determine the specific list of versions to
             # load. Assume the list of versions is stored as a comma-separated string in Shotgun.
@@ -76,7 +78,7 @@ class SoftwareEntityLauncher(BaseLauncher):
             # Software entity
             register_cmd_data.extend(self._build_register_command_data(
                 app_display_name, app_icon, app_engine, app_path, app_args, app_versions,
-                sw_entity["type"], sw_entity["id"]
+                app_group, is_group_default, sw_entity["type"], sw_entity["id"]
             ))
 
         # Use the BaseLauncher._register_launch_command() to register command
@@ -205,6 +207,8 @@ class SoftwareEntityLauncher(BaseLauncher):
             "image",
             "sg_engine",
             "sg_versions",
+            "sg_group",
+            "sg_group_default",
         ]
 
         # Log the resolved filter.
@@ -220,8 +224,8 @@ class SoftwareEntityLauncher(BaseLauncher):
         return sw_entities
 
     def _build_register_command_data(
-            self, display_name, icon, engine, path, args, versions=None,
-            sg_software_type=None, sg_software_id=None
+            self, display_name, icon, engine, path, args, versions=None, group=None,
+            group_default=None, sg_software_type=None, sg_software_id=None
         ):
         """
         Determine the list of command data to register based on the input
@@ -234,6 +238,12 @@ class SoftwareEntityLauncher(BaseLauncher):
         :param str args: Args to pass to the DCC executable when launched.
         :param list versions: (optional) Specific versions (as strings) to
                               register launch commands for.
+        :param str group: (Optional) Group name this command belongs to. This value is
+                          interpreted by the engine the command is registered with.
+        :param bool group_default: (Optional) If this command is one of a group of commands,
+                                   indicate whether to launch this command if the group is
+                                   selected instead of an individual command. This value is
+                                   also interpreted by the engine the command is registered with.
         :param str sg_software_type: (optional) Software entity type to use when retrieving
                                      thumbnail source files to use as command icons. This param
                                      will be deprecated once the Software entity is adopted natively.
@@ -273,7 +283,11 @@ class SoftwareEntityLauncher(BaseLauncher):
                     )
 
             if versions:
-                # Construct a command for each version.
+                # Construct a command for each version. In this case, the Software entity
+                # "group_default" value is not valid because multiple launch commands may
+                # be generated from a single Software entity. Set the group default to the
+                # highest version in the list.
+                sorted_versions = self._sort_versions(versions)
                 for version in versions:
                     commands.append({
                         "display_name": display_name,
@@ -282,6 +296,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                         "path": path,
                         "args": args,
                         "version": version,
+                        "group": group,
+                        "group_default": (version == sorted_versions[0]),
                     })
             else:
                 # Construct a single, version-less command.
@@ -291,6 +307,9 @@ class SoftwareEntityLauncher(BaseLauncher):
                     "engine": engine,
                     "path": path,
                     "args": args,
+                    "version": None,
+                    "group": group,
+                    "group_default": group_default,
                 })
 
             if download_icon:
@@ -308,6 +327,13 @@ class SoftwareEntityLauncher(BaseLauncher):
                 engine, display_name, icon, versions
             ) or []
 
+            # This is another case where the Software entity "group_default" value is invalid
+            # because multiple launch commands may be generated from a single Software entity.
+            # Set the group default to the highest version in the list in this case as well.
+            sorted_versions = self._sort_versions(
+                [software_version.version for software_version in software_versions]
+            )
+
             for software_version in software_versions:
                 # Construct a command for each SoftwareVersion found.
                 commands.append({
@@ -317,9 +343,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                     "path": software_version.path,
                     "args": args,
                     "version": software_version.version,
-                    "properties": properties,
-                    "group": software_version.group,
-                    "group_default": software_version.group_default,
+                    "group": group,
+                    "group_default": (software_version.version == sorted_versions[0]),
                 })
 
                 # If the resolved SoftwareVersion icon is empty or does not exist
