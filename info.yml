@@ -86,8 +86,7 @@ configuration:
 
     group:
         type: str
-        description: "The name for a group this command should be considered a member of. This value
-                      is ultimately interpreted by the engine the command is registered with."
+        description: "The name for a group this command should be considered a member of."
         default_value: ""
 
     group_default:

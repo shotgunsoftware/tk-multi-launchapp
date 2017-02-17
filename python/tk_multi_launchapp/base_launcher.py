@@ -10,10 +10,10 @@
 
 import os
 import sys
+from distutils.version import LooseVersion
 
 import sgtk
 from sgtk import TankError
-from sgtk.deploy import util
 
 from .util import apply_version_to_setting, get_clean_version_string
 from .util import clear_dll_directory, restore_dll_directory
@@ -356,21 +356,16 @@ class BaseLauncher(object):
             1.1 < 1.2 < 1.3
             1.2 < 1.2a < 1.2ab < 1.2b
 
-        This methodology is also used in Desktop. The input list of versions is not modified.
+        The input list of versions is not modified.
 
         :param list versions: List of version "numbers" (may be strings)
         :returns: List of sorted versions
         """
-        # Do not sort the incoming versions in place.
-        sort_versions = [version for version in versions]
+        # Cast the incoming version strings as LooseVersion instances to sort using
+        # the LooseVersion.__cmp__ method.
+        sort_versions = [LooseVersion(version) for version in versions]
+        sort_versions.sort()
 
-        def version_cmp(left_version, right_version):
-            if util.is_version_newer(left_version, right_version):
-                return -1
-            if util.is_version_older(left_version, right_version):
-                return 1
-            return 0
-
-        sort_versions.sort(cmp=version_cmp)
-        return sort_versions
+        # Convert the LooseVersions back to strings on return.
+        return [str(version) for version in sort_versions]
 

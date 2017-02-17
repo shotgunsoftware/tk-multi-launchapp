@@ -288,6 +288,15 @@ class SoftwareEntityLauncher(BaseLauncher):
                 # be generated from a single Software entity. Set the group default to the
                 # highest version in the list.
                 sorted_versions = self._sort_versions(versions)
+                self._tk_app.log_warning(
+                    "Unable to apply 'group_default' value to list of DCC versions : %s" %
+                    versions
+                )
+                self._tk_app.log_warning(
+                    "Setting group '%s' default to highest version '%s' instead." %
+                    (group, sorted_versions[0])
+                )
+
                 for version in versions:
                     commands.append({
                         "display_name": display_name,
@@ -332,6 +341,14 @@ class SoftwareEntityLauncher(BaseLauncher):
             # Set the group default to the highest version in the list in this case as well.
             sorted_versions = self._sort_versions(
                 [software_version.version for software_version in software_versions]
+            )
+            self._tk_app.log_warning(
+                "Unable to apply 'group_default' value to list of DCC versions : %s" %
+                sorted_versions
+            )
+            self._tk_app.log_warning(
+                "Setting group '%s' default to highest version '%s' instead." %
+                (group, sorted_versions[0])
             )
 
             for software_version in software_versions:
