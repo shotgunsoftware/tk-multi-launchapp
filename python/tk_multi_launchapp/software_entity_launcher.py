@@ -289,12 +289,9 @@ class SoftwareEntityLauncher(BaseLauncher):
                 # highest version in the list.
                 sorted_versions = self._sort_versions(versions)
                 self._tk_app.log_warning(
-                    "Unable to apply 'group_default' value to list of DCC versions : %s" %
-                    versions
-                )
-                self._tk_app.log_warning(
+                    "Unable to apply group '%s' group_default value to list of DCC versions : %s. "
                     "Setting group '%s' default to highest version '%s' instead." %
-                    (group, sorted_versions[0])
+                    (group, sorted_versions, group, sorted_versions[0])
                 )
 
                 for version in versions:
@@ -334,40 +331,43 @@ class SoftwareEntityLauncher(BaseLauncher):
             )
             software_versions = self._scan_for_software(
                 engine, display_name, icon, versions
-            ) or []
-
-            # This is another case where the Software entity "group_default" value is invalid
-            # because multiple launch commands may be generated from a single Software entity.
-            # Set the group default to the highest version in the list in this case as well.
-            sorted_versions = self._sort_versions(
-                [software_version.version for software_version in software_versions]
-            )
-            self._tk_app.log_warning(
-                "Unable to apply 'group_default' value to list of DCC versions : %s" %
-                sorted_versions
-            )
-            self._tk_app.log_warning(
-                "Setting group '%s' default to highest version '%s' instead." %
-                (group, sorted_versions[0])
             )
 
-            for software_version in software_versions:
-                # Construct a command for each SoftwareVersion found.
-                commands.append({
-                    "display_name": software_version.display_name,
-                    "icon": software_version.icon,
-                    "engine": engine,
-                    "path": software_version.path,
-                    "args": args,
-                    "version": software_version.version,
-                    "group": group,
-                    "group_default": (software_version.version == sorted_versions[0]),
-                })
+            if software_versions:
+                # This is another case where the Software entity "group_default" value is invalid
+                # because multiple launch commands may be generated from a single Software entity.
+                # Set the group default to the highest version in the list in this case as well.
+                sorted_versions = self._sort_versions(
+                    [software_version.version for software_version in software_versions]
+                )
+                self._tk_app.log_warning(
+                    "Unable to apply group '%s' group_default value to list of DCC versions : %s. "
+                    "Setting group '%s' default to highest version '%s' instead." %
+                    (group, sorted_versions, group, sorted_versions[0])
+                )
 
-                # If the resolved SoftwareVersion icon is empty or does not exist
-                # locally, use the Software icon instead.
-                if not software_version.icon or not os.path.exists(software_version.icon):
-                    download_icon_for_commands.append(command_data)
+                for software_version in software_versions:
+                    # Construct a command for each SoftwareVersion found.
+                    commands.append({
+                        "display_name": software_version.display_name,
+                        "icon": software_version.icon,
+                        "engine": engine,
+                        "path": software_version.path,
+                        "args": args,
+                        "version": software_version.version,
+                        "group": group,
+                        "group_default": (software_version.version == sorted_versions[0]),
+                    })
+
+                    # If the resolved SoftwareVersion icon is empty or does not exist
+                    # locally, use the Software icon instead.
+                    if not software_version.icon or not os.path.exists(software_version.icon):
+                        download_icon_for_commands.append(command_data)
+            else:
+                self._tk_app.log_debug(
+                    "No SoftwareVersions found scanning for engine '%s' software versions '%s'" %
+                    (engine, (versions or "all"))
+                )
 
         else:
             # No application path(s), no launch command(s) ....

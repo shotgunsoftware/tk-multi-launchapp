@@ -348,10 +348,10 @@ class BaseLauncher(object):
 
     def _sort_versions(self, versions):
         """
-        Uses standard python modules to determine how to sort arbitrary version numbers. A version
-        number consists of a series of numbers, separated by either periods or strings of letters.
-        When comparing version numbers, the numeric components will be compared numerically, and
-        the alphabetic components lexically. For example:
+        Uses standard python modules to determine how to sort arbitrary version numbers.
+        A version number consists of a series of numbers, separated by either periods or
+        strings of letters. When comparing version numbers, the numeric components will
+        be compared numerically, and the alphabetic components lexically. For example:
 
             1.1 < 1.2 < 1.3
             1.2 < 1.2a < 1.2ab < 1.2b
@@ -359,12 +359,13 @@ class BaseLauncher(object):
         The input list of versions is not modified.
 
         :param list versions: List of version "numbers" (may be strings)
-        :returns: List of sorted versions
+        :returns: List of sorted versions in descending order. The highest version is
+                  at index 0.
         """
         # Cast the incoming version strings as LooseVersion instances to sort using
         # the LooseVersion.__cmp__ method.
         sort_versions = [LooseVersion(version) for version in versions]
-        sort_versions.sort()
+        sort_versions.sort(reverse=True)
 
         # Convert the LooseVersions back to strings on return.
         return [str(version) for version in sort_versions]

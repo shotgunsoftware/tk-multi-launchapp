@@ -81,12 +81,9 @@ class SingleConfigLauncher(BaseLauncher):
             # Set the group default to the highest version in the list instead.
             sorted_versions = self._sort_versions(app_versions)
             self._tk_app.log_warning(
-                "Unable to apply 'group_default' value to list of DCC versions : %s" %
-                app_versions
-            )
-            self._tk_app.log_warning(
+                "Unable to apply group '%s' group_default value to list of DCC versions : %s. "
                 "Setting group '%s' default to highest version '%s' instead." %
-                (self._app_group, sorted_versions[0])
+                (self._app_group, sorted_versions, self._app_group, sorted_versions[0])
             )
 
             for version in app_versions:
