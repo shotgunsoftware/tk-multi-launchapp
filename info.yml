@@ -84,6 +84,18 @@ configuration:
                       you can launch applications that do not have toolkit engines set up."
         default_value: ""
 
+    group:
+        type: str
+        description: "The name for a group this command should be considered a member of."
+        default_value: ""
+
+    group_default:
+        type: bool
+        description: "Boolean value indicating whether this command should represent the group as
+                      a whole. Setting this value to True indicates that this is the command to run and
+                      display in applications that show a single button for each named group."
+        default_value: False
+
     defer_keyword:
         type: str
         default_value: ""

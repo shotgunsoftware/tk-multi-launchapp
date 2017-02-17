@@ -30,6 +30,8 @@ class SingleConfigLauncher(BaseLauncher):
         self._app_args = self._tk_app.get_setting("%s_args" % self._platform_name, "")
         self._app_menu_name = self._tk_app.get_setting("menu_name")
         self._app_engine = self._tk_app.get_setting("engine")
+        self._app_group = self._tk_app.get_setting("group")
+        self._is_group_default = self._tk_app.get_setting("group_default")
 
     def register_launch_commands(self):
         """
@@ -74,16 +76,38 @@ class SingleConfigLauncher(BaseLauncher):
         # Initialize per version
         app_versions = self._tk_app.get_setting("versions") or []
         if app_versions:
+            # If a list of versions has been specified, the "group_default" configuration
+            # setting is invalid because it cannot be applied to each generated command.
+            # Set the group default to the highest version in the list instead.
+            sorted_versions = self._sort_versions(app_versions)
+            self._tk_app.log_warning(
+                "Unable to apply group '%s' group_default value to list of DCC versions : %s. "
+                "Setting group '%s' default to highest version '%s' instead." %
+                (self._app_group, sorted_versions, self._app_group, sorted_versions[0])
+            )
+
             for version in app_versions:
                 self._register_launch_command(
-                    self._app_menu_name, app_icon, self._app_engine,
-                    self._app_path, self._app_args, version
+                    self._app_menu_name,
+                    app_icon,
+                    self._app_engine,
+                    self._app_path,
+                    self._app_args,
+                    version,
+                    self._app_group,
+                    (version == sorted_versions[0])
                 )
         else:
             # No replacements defined, just register with the raw values
             self._register_launch_command(
-                self._app_menu_name, app_icon, self._app_engine,
-                self._app_path, self._app_args
+                self._app_menu_name,
+                app_icon,
+                self._app_engine,
+                self._app_path,
+                self._app_args,
+                None,
+                self._app_group,
+                self._is_group_default,
             )
 
     def launch_from_path(self, path, version=None):

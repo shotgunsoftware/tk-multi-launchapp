@@ -10,6 +10,7 @@
 
 import os
 import sys
+from distutils.version import LooseVersion
 
 import sgtk
 from sgtk import TankError
@@ -45,20 +46,28 @@ class BaseLauncher(object):
             app_engine,
             app_path,
             app_args,
-            version=None
+            version=None,
+            group=None,
+            group_default=True,
         ):
         """
         Register a launch command with the current engine.
 
-        :param app_menu_name: Menu name to display to launch this DCC. This is
-                              also used to construct the associated command name.
-        :param app_icon: Icon to display for this DCC
-        :param app_engine: The TK engine associated with the DCC to be launched
-        :param app_path: Full path name to the DCC. This may contain environment
-                         variables and/or the locally supported {version}, {v0},
-                         {v1}, ... variables
-        :param app_args: Args string to pass to the DCC at launch time
-        :param version: (Optional) Specific version of DCC to use.
+        :param str app_menu_name: Menu name to display to launch this DCC. This is also
+                                  used to construct the associated command name.
+        :param str app_icon: Icon to display for this DCC
+        :param str app_engine: The TK engine associated with the DCC to be launched
+        :param str app_path: Full path name to the DCC. This may contain environment
+                             variables and/or the locally supported {version}, {v0},
+                             {v1}, ... variables
+        :param str app_args: Args string to pass to the DCC at launch time
+        :param str version: (Optional) Specific version of DCC to use.
+        :param str group: (Optional) Group name this command belongs to. This value is
+                          interpreted by the engine the command is registered with.
+        :param bool group_default: (Optional) If this command is one of a group of commands,
+                                   indicate whether to launch this command if the group is
+                                   selected instead of an individual command. This value is
+                                   also interpreted by the engine the command is registered with.
         """
         # do the {version} replacement if needed
         icon = apply_version_to_setting(app_icon, version)
@@ -93,6 +102,8 @@ class BaseLauncher(object):
                 "short_name": command_name,
                 "description": "Launches and initializes an application environment.",
                 "icon": icon,
+                "group": group,
+                "group_default": group_default
             }
 
             def launch_version():
@@ -334,3 +345,28 @@ class BaseLauncher(object):
         :param version: (Optional) Specific version of DCC to launch.
         """
         raise NotImplementedError
+
+    def _sort_versions(self, versions):
+        """
+        Uses standard python modules to determine how to sort arbitrary version numbers.
+        A version number consists of a series of numbers, separated by either periods or
+        strings of letters. When comparing version numbers, the numeric components will
+        be compared numerically, and the alphabetic components lexically. For example:
+
+            1.1 < 1.2 < 1.3
+            1.2 < 1.2a < 1.2ab < 1.2b
+
+        The input list of versions is not modified.
+
+        :param list versions: List of version "numbers" (may be strings)
+        :returns: List of sorted versions in descending order. The highest version is
+                  at index 0.
+        """
+        # Cast the incoming version strings as LooseVersion instances to sort using
+        # the LooseVersion.__cmp__ method.
+        sort_versions = [LooseVersion(version) for version in versions]
+        sort_versions.sort(reverse=True)
+
+        # Convert the LooseVersions back to strings on return.
+        return [str(version) for version in sort_versions]
+
