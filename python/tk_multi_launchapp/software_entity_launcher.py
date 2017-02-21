@@ -317,7 +317,7 @@ class SoftwareEntityLauncher(BaseLauncher):
             # group default. In this case make the highest version the group default.
             self._tk_app.log_debug(
                 "Multiple matches for the group default. Will use the highest version "
-                "number as the default." % sorted_versions[0]
+                "number as the default."
             )
 
         for software_version in software_versions:
@@ -373,7 +373,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 # group default. In this case make the highest version the group default.
                 self._tk_app.log_debug(
                     "Multiple matches for the group default. Will use the highest version "
-                    "number as the default." % sorted_versions[0]
+                    "number as the default."
                 )
 
             for version in dcc_versions:
