@@ -27,6 +27,8 @@ class SoftwareEntityLauncher(BaseLauncher):
       both ignored. The versions field in shotgun can however be used to
       *limit* the software versions returned by the automatic scan.
 
+      The engine field needs to be set for any automatic entry.
+
       Please note that in the case of this automatic mode, one Software entity
       in Shotgun may result in multiple app commands being registered.
 
@@ -51,10 +53,6 @@ class SoftwareEntityLauncher(BaseLauncher):
       with the highest version number will be marked as the group
       default.
 
-    - The engine field is used to determine which toolkit engine instance to
-      call in order to handle the enumeration of software versions and
-      is always required. Entries without an engine entry set are skipped.
-
     """
 
     def register_launch_commands(self):
@@ -74,22 +72,17 @@ class SoftwareEntityLauncher(BaseLauncher):
                 pprint.pformat(sw_entity, indent=4)
             )
 
-            # validate engine value
-            # when running toolkit, don't support software entries which are missing
-            # an engine value
-            engine_str = sw_entity["sg_engine"]
-            if engine_str is None:
-                self._tk_app.log_debug("No engine set. Skipping this software entity.")
-                continue
-
             # Parse the Software `versions` field to determine the specific list of versions to
             # load. Assume the list of versions is stored as a comma-separated string in Shotgun.
             dcc_versions_str = sw_entity["sg_versions"] or ""
             dcc_versions = [v.strip() for v in dcc_versions_str.split(",") if v.strip()]
 
-            # get the group setting
+            # get the group settings
             app_group = sw_entity["sg_group"]
             is_group_default = sw_entity["sg_group_default"]
+
+            # get associated engine (can be none)
+            engine_str = sw_entity["sg_engine"]
 
             # determine if we are in 'automatic' mode or manual
             if sw_entity.get("sg_windows_path") is None and \
@@ -98,6 +91,12 @@ class SoftwareEntityLauncher(BaseLauncher):
 
                 # all paths are none - we are in automatic mode
                 self._tk_app.log_debug("All path fields are None. Automatic mode.")
+
+                # make sure we have an engine defined when running in automatic mode
+                # the engine implements the software discovery logic and is therefore required
+                if engine_str is None:
+                    self._tk_app.log_debug("No engine set. Skipping this software entity.")
+                    continue
 
                 # defer to the automatic DCC scan to enumerate and register DCCs
                 self._scan_for_software_and_register(
@@ -348,9 +347,8 @@ class SoftwareEntityLauncher(BaseLauncher):
         Parse manual software definition given by input params and register
         one or more commands.
 
-
-
-        :param str engine_str: Engine instance to assoicate launching with
+        :param str engine_str: Engine instance to associate launching with or
+            None for an engine-less launch workflow.
         :param list dcc_versions: List of dcc versions to constrain the
             search to or None or [] if no constraint.
         :param str group: String to group registered commands by
@@ -361,7 +359,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         :param path: Path to launch. If dcc_versions
             contains more than one item, this should contain a {version} token.
         :param args: Launch arguments.
-        :param icon_path: Path to an icon thumbnail on disk or none if no thumb found.
+        :param icon_path: Path to an icon thumbnail on disk.
         """
         if dcc_versions:
             # Construct a command for each version.
