@@ -53,6 +53,8 @@ class BaseLauncher(object):
         """
         Register a launch command with the current engine.
 
+        Also handles replacement of {version} tokens.
+
         :param str app_menu_name: Menu name to display to launch this DCC. This is also
                                   used to construct the associated command name.
         :param str app_icon: Icon to display for this DCC

@@ -95,7 +95,7 @@ class SingleConfigLauncher(BaseLauncher):
                     self._app_args,
                     version,
                     self._app_group,
-                    (version == sorted_versions[0])
+                    (version == sorted_versions[0])  # group_default
                 )
         else:
             # No replacements defined, just register with the raw values

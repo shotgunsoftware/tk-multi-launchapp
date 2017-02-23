@@ -17,7 +17,44 @@ from .base_launcher import BaseLauncher
 class SoftwareEntityLauncher(BaseLauncher):
     """
     Launches a DCC application based on site Software entity entries.
+
+    The following logic applies to the software entries in Shotgun:
+
+    - If all three path fields for a software entity are set to None,
+      the record is considered an "automatic" record and the launch app
+      will automatically scan for suitable entries. When automatic mode
+      is used, the software icon and software name defined in Shotgun are
+      both ignored. The versions field in shotgun can however be used to
+      *limit* the software versions returned by the automatic scan.
+
+      The engine field needs to be set for any automatic entry.
+
+      Please note that in the case of this automatic mode, one Software entity
+      in Shotgun may result in multiple app commands being registered.
+
+    - If a path (for any os platform) is set, the manual mode kicks in:
+
+      - The icon will be downloaded from shotgun
+      - The name defined in Shotgun will be used
+      - The paths defined in Shotgun will be used.
+        If the path for the current os is blank, the
+        software entity will be skipped.
+      - You can specify versions in the versions field
+        for each version you specify, one launch entry will
+        be generated. If you do this, you should also include
+        the {version} token in the name field and the path fields
+        and toolkit will automatically substitute it for each
+        version number. (if you leave versions blank, one launch
+        entry will be created and no substitutions will happen).
+
+    - Groups and group defaults will be applied to both the manual
+      and automatic entries. If an entry marked as a group default
+      ends up registering more than one launch command, the command
+      with the highest version number will be marked as the group
+      default.
+
     """
+
     def register_launch_commands(self):
         """
         Determine what launch command(s) to register with the current TK engine.
@@ -26,74 +63,86 @@ class SoftwareEntityLauncher(BaseLauncher):
         """
         # Retrieve the Software entities from SG and record how many were found.
         sw_entities = self._get_sg_software_entities()
-        self._tk_app.log_debug("Found (%d) Software entities to generate launch commands for." %
-            len(sw_entities)
-        )
-        if not sw_entities:
-            # No commands to register if no entities were found.
-            return
 
-        # Resolve the app path and args field names for the current platform
-        app_path_field = "sg_%s_path" % self._platform_name
-        app_args_field = "sg_%s_args" % self._platform_name
-
-        # Collect a list of dictionaries that contain the information required
-        # to register a command with the current engine to launch a DCC.
-        register_cmd_data = []
         for sw_entity in sw_entities:
+
+            self._tk_app.log_debug("-" * 20)
             self._tk_app.log_debug(
                 "Parsing Software entity for launch commands:\n%s" %
                 pprint.pformat(sw_entity, indent=4)
             )
 
-            # Set some local variables for the Software data used here.
-            app_path = sw_entity[app_path_field]
-            app_display_name = sw_entity["code"]
-            app_args = sw_entity[app_args_field] or ""
-            app_icon = sw_entity["image"]
-            app_versions = sw_entity["sg_versions"] or ""
-            app_engine = sw_entity["sg_engine"]
+            # Parse the Software `versions` field to determine the specific list of versions to
+            # load. Assume the list of versions is stored as a comma-separated string in Shotgun.
+            dcc_versions_str = sw_entity["sg_versions"] or ""
+            dcc_versions = [v.strip() for v in dcc_versions_str.split(",") if v.strip()]
+
+            # get the group settings
             app_group = sw_entity["sg_group"]
             is_group_default = sw_entity["sg_group_default"]
 
-            # Parse the Software `versions` field to determine the specific list of versions to
-            # load. Assume the list of versions is stored as a comma-separated string in Shotgun.
-            ver_strings = [v.strip() for v in app_versions.split(",") if v.strip()]
-            app_versions = ver_strings
+            # get associated engine (can be none)
+            engine_str = sw_entity["sg_engine"]
 
-            # Try to retrieve the path to the specified engine. If nothing is returned, then this
-            # engine hasn't been loaded in the current environment and there's not much more to do.
-            if app_engine:
-                app_engine_path = sgtk.platform.get_engine_path(
-                    app_engine, self._tk_app.sgtk, self._tk_app.context
+            # determine if we are in 'automatic' mode or manual
+            if sw_entity.get("sg_windows_path") is None and \
+                    sw_entity.get("sg_mac_path") is None and \
+                    sw_entity.get("sg_linux_path") is None:
+
+                # all paths are none - we are in automatic mode
+                self._tk_app.log_debug("All path fields are None. Automatic mode.")
+
+                # make sure we have an engine defined when running in automatic mode
+                # the engine implements the software discovery logic and is therefore required
+                if engine_str is None:
+                    self._tk_app.log_debug("No engine set. Skipping this software entity.")
+                    continue
+
+                # defer to the automatic DCC scan to enumerate and register DCCs
+                self._scan_for_software_and_register(
+                    engine_str,
+                    dcc_versions,
+                    app_group,
+                    is_group_default
                 )
-                if not app_engine_path:
-                    self._tk_app.log_warning(
-                        "Software engine %s is not loaded in the current environment. "
-                        "Setting Software %s 'engine' to None." % (app_engine, app_display_name)
+
+            else:
+                # one or more path fields are not none. This means manual mode.
+                self._tk_app.log_debug("One or more path fields are not None. Manual mode.")
+
+                # Resolve the app path and args field names for the current platform
+                app_path_field = "sg_%s_path" % self._platform_name
+                app_args_field = "sg_%s_args" % self._platform_name
+
+                if sw_entity[app_path_field] is None:
+                    # manual mode but nothing to do for our os
+                    self._tk_app.log_debug(
+                        "No path defined for current platform (field %s) - skipping." % app_path_field
                     )
-                    app_engine = None
+                    continue
 
-            # Get the list of command data dictionaries from the information provided by this
-            # Software entity
-            register_cmd_data.extend(self._build_register_command_data(
-                app_display_name, app_icon, app_engine, app_path, app_args, app_versions,
-                app_group, is_group_default, sw_entity["type"], sw_entity["id"]
-            ))
+                app_path = sw_entity[app_path_field]
+                app_display_name = sw_entity["code"]
+                app_args = sw_entity[app_args_field] or ""
 
-        # Use the BaseLauncher._register_launch_command() to register command
-        # data with the current engine.
-        for register_cmd in register_cmd_data:
-            self._register_launch_command(
-                register_cmd["display_name"],
-                register_cmd["icon"],
-                register_cmd["engine"],
-                register_cmd["path"],
-                register_cmd["args"],
-                register_cmd["version"],
-                register_cmd["group"],
-                register_cmd["group_default"],
-            )
+                # get icon
+                icon_path = self._extract_thumbnail(
+                    sw_entity["type"],
+                    sw_entity["id"],
+                    sw_entity["image"]
+                )
+
+                # manual mode!
+                self._manual_register(
+                    engine_str,
+                    dcc_versions,
+                    app_group,
+                    is_group_default,
+                    app_display_name,
+                    app_path,
+                    app_args,
+                    icon_path
+                )
 
     def launch_from_path(self, path, version=None):
         """
@@ -130,6 +179,8 @@ class SoftwareEntityLauncher(BaseLauncher):
         """
         Retrieve a list of Software entities from Shotgun that
         are active for the current project and user.
+
+        :returns: A list of shotgun software entity dictionaries
         """
         # Determine the information to retrieve from Shotgun
         # @todo: The 'sg_software_entity' setting can be removed once the
@@ -198,17 +249,19 @@ class SoftwareEntityLauncher(BaseLauncher):
         # @todo: When the Software entity becomes native, these field names
         #        will need to be updated.
         # Expand Software field names that rely on the current platform
-        app_path_field = "sg_%s_path" % self._platform_name
-        app_args_field = "sg_%s_args" % self._platform_name
         sw_fields = [
-            app_path_field,
-            app_args_field,
             "code",
             "image",
             "sg_engine",
             "sg_versions",
             "sg_group",
             "sg_group_default",
+            "sg_linux_path",
+            "sg_mac_path",
+            "sg_windows_path",
+            "sg_linux_args",
+            "sg_mac_args",
+            "sg_windows_args",
         ]
 
         # Log the resolved filter.
@@ -218,206 +271,194 @@ class SoftwareEntityLauncher(BaseLauncher):
         sw_entities = self._tk_app.shotgun.find(sw_entity, sw_filters, sw_fields)
         if not sw_entities:
             # No Entities found matching filters, nothing to do.
-            self._tk_app.log_info("No Shotgun %s entities found matching filters : %s" %
-                (sw_entity, pprint.pformat(sw_filters, indent=4))
+            self._tk_app.log_info(
+                "No matching Shotgun Software entities found."
             )
+        else:
+            self._tk_app.log_debug(
+                "Got software data from Shotgun:\n%s" % pprint.pformat(sw_entities)
+            )
+
         return sw_entities
 
-    def _build_register_command_data(
-            self, display_name, icon, engine, path, args, versions=None, group=None,
-            group_default=None, sg_software_type=None, sg_software_id=None
+    def _scan_for_software_and_register(self, engine_str, dcc_versions, group, is_group_default):
+        """
+        Scan for installed software and register commands for all entries detected.
+
+        This will call toolkit core and request that the given engine performs a
+        software scan, returning versions, constrained by the dcc_versions parameter.
+
+        Each version returned is registered as a command. If is_group_default is set
+        to True and multiple versions are detected, the one with the highest version
+        number will be the one that gets registered as the default.
+
+        :param str engine_str: Engine instance to request software scanning for
+        :param list dcc_versions: List of dcc versions to constrain the
+            search to or None or [] if no constraint.
+        :param str group: String to group registered commands by
+        :param bool is_group_default: If true, make the highest version match found
+            by the scan the default.
+        """
+        # No application path was specified, triggering "auto discovery" mode. Attempt to
+        # find relevant application path(s) from the engine launcher.
+        self._tk_app.log_debug("Attempting to auto discover software for %s." % engine_str)
+        software_versions = self._scan_for_software(engine_str, dcc_versions)
+
+        self._tk_app.log_debug("Scan detected %d software versions" % len(software_versions))
+
+        # sort the entries so that the highest version appears first
+        sorted_versions = self._sort_versions(
+            [software_version.version for software_version in software_versions]
+        )
+
+        if len(sorted_versions) > 1 and is_group_default:
+            # there is more than one match and we have requested that this is the
+            # group default. In this case make the highest version the group default.
+            self._tk_app.log_debug(
+                "Multiple matches for the group default. Will use the highest version "
+                "number as the default."
+            )
+
+        for software_version in software_versions:
+
+            # figure out if this is the group default
+            if is_group_default and (software_version.version == sorted_versions[0]):
+                group_default = True
+            else:
+                group_default = False
+
+            # perform the registration
+            self._register_launch_command(
+                software_version.display_name,
+                software_version.icon,
+                engine_str,
+                software_version.path,
+                "",  # app_args
+                software_version.version,
+                group,
+                group_default,
+            )
+
+    def _manual_register(
+            self, engine_str, dcc_versions, group, is_group_default,
+            display_name, path, args, icon_path
         ):
         """
-        Determine the list of command data to register based on the input
-        path and versions information.
+        Parse manual software definition given by input params and register
+        one or more commands.
 
-        :param str display_name: Label for the registered command.
-        :param str icon: Path to icon to load for the registered command.
-        :param str engine: Name of the Toolkit engine this command will run
-        :param str path: Path to the DCC executable to register a launch command for.
-        :param str args: Args to pass to the DCC executable when launched.
-        :param list versions: (optional) Specific versions (as strings) to
-                              register launch commands for.
-        :param str group: (Optional) Group name this command belongs to. This value is
-                          interpreted by the engine the command is registered with.
-        :param bool group_default: (Optional) If this command is one of a group of commands,
-                                   indicate whether to launch this command if the group is
-                                   selected instead of an individual command. This value is
-                                   also interpreted by the engine the command is registered with.
-        :param str sg_software_type: (optional) Software entity type to use when retrieving
-                                     thumbnail source files to use as command icons. This param
-                                     will be deprecated once the Software entity is adopted natively.
-        :param str sg_software_id: (optional) Software entity id to download thumbnail source file
-                                   from. The downloaded thumbnail will be used as an icon for the
-                                   relevant comands. This will not be used if all command icons are
-                                   retrieved from the corresponding Toolkit engine instead.
-
-        :returns: List of dictionaries containing required information to register
-                  a command with the current engine.
+        :param str engine_str: Engine instance to associate launching with or
+            None for an engine-less launch workflow.
+        :param list dcc_versions: List of dcc versions to constrain the
+            search to or None or [] if no constraint.
+        :param str group: String to group registered commands by
+        :param bool is_group_default: If true, make the highest version match found
+            by the scan the default.
+        :param display_name: The name to give to launch command(s). If dcc_versions
+            contains more than one item, this should contain a {version} token.
+        :param path: Path to launch. If dcc_versions
+            contains more than one item, this should contain a {version} token.
+        :param args: Launch arguments.
+        :param icon_path: Path to an icon thumbnail on disk.
         """
-        # Keep track of the list of launch commands that should use the Software source
-        # thumbnail downloaded from Shotgun. If all of the commands use icons from the engine
-        # instead, then nothing needs to be downloaded, saving considerable time.
-        # commands use icons from the engine instead.
-        download_icon_for_commands = []
+        if dcc_versions:
+            # Construct a command for each version.
+            # Sort entries by version number
+            sorted_versions = self._sort_versions(dcc_versions)
 
-        # List of command data to return
-        commands = []
-        if path:
-            # A custom application path has been specified in the Software data. If an icon
-            # has also been specified, it will need to be downloaded. Otherwise, attempt to
-            # retrieve the icon from the associated Toolkit engine launcher and use that instead.
-            download_icon = True if icon else False
-            if not icon and engine:
-                software_versions = self._scan_for_software(
-                    engine, display_name, icon, versions
-                )
-                if software_versions:
-                    self._tk_app.log_debug("Using icon %s from SoftwareVersion for %s." %
-                        ((software_versions[0].icon), display_name)
-                    )
-                    icon = software_versions[0].icon
-                else:
-                    self._tk_app.log_debug("No SoftwareVersions found for Toolkit engine %s. "
-                        "Cannot determine icon to display for %s." % (engine, display_name)
-                    )
-
-            if versions:
-                # Construct a command for each version. In this case, the Software entity
-                # "group_default" value is not valid because multiple launch commands may
-                # be generated from a single Software entity. Set the group default to the
-                # highest version in the list.
-                sorted_versions = self._sort_versions(versions)
-                self._tk_app.log_warning(
-                    "Unable to apply group '%s' group_default value to list of DCC versions : %s. "
-                    "Setting group '%s' default to highest version '%s' instead." %
-                    (group, sorted_versions, group, sorted_versions[0])
-                )
-
-                for version in versions:
-                    commands.append({
-                        "display_name": display_name,
-                        "icon": icon,
-                        "engine": engine,
-                        "path": path,
-                        "args": args,
-                        "version": version,
-                        "group": group,
-                        "group_default": (version == sorted_versions[0]),
-                    })
-            else:
-                # Construct a single, version-less command.
-                commands.append({
-                    "display_name": display_name,
-                    "icon": icon,
-                    "engine": engine,
-                    "path": path,
-                    "args": args,
-                    "version": None,
-                    "group": group,
-                    "group_default": group_default,
-                })
-
-            if download_icon:
-                # The icon field for these commands will need to be updated with the cached file
-                # downloaded from Shotgun.
-                download_icon_for_commands.extend(commands)
-
-        elif engine:
-            # No application path was specified, triggering "auto discovery" mode. Attempt to
-            # find relevant application path(s) from the engine launcher.
-            self._tk_app.log_debug("Using %s engine launcher to find application paths for %s." %
-                (engine, display_name)
-            )
-            software_versions = self._scan_for_software(
-                engine, display_name, icon, versions
-            )
-
-            if software_versions:
-                # This is another case where the Software entity "group_default" value is invalid
-                # because multiple launch commands may be generated from a single Software entity.
-                # Set the group default to the highest version in the list in this case as well.
-                sorted_versions = self._sort_versions(
-                    [software_version.version for software_version in software_versions]
-                )
-                self._tk_app.log_warning(
-                    "Unable to apply group '%s' group_default value to list of DCC versions : %s. "
-                    "Setting group '%s' default to highest version '%s' instead." %
-                    (group, sorted_versions, group, sorted_versions[0])
-                )
-
-                for software_version in software_versions:
-                    # Construct a command for each SoftwareVersion found.
-                    commands.append({
-                        "display_name": software_version.display_name,
-                        "icon": software_version.icon,
-                        "engine": engine,
-                        "path": software_version.path,
-                        "args": args,
-                        "version": software_version.version,
-                        "group": group,
-                        "group_default": (software_version.version == sorted_versions[0]),
-                    })
-
-                    # If the resolved SoftwareVersion icon is empty or does not exist
-                    # locally, use the Software icon instead.
-                    if not software_version.icon or not os.path.exists(software_version.icon):
-                        download_icon_for_commands.append(command_data)
-            else:
+            if len(sorted_versions) > 1 and is_group_default:
+                # there is more than one match and we have requested that this is the
+                # group default. In this case make the highest version the group default.
                 self._tk_app.log_debug(
-                    "No SoftwareVersions found scanning for engine '%s' software versions '%s'" %
-                    (engine, (versions or "all"))
+                    "Multiple matches for the group default. Will use the highest version "
+                    "number as the default."
+                )
+
+            for version in dcc_versions:
+
+                # figure out if this is the group default
+                if is_group_default and (version == sorted_versions[0]):
+                    group_default = True
+                else:
+                    group_default = False
+
+                # perform the registration
+                self._register_launch_command(
+                    display_name,
+                    icon_path,
+                    engine_str,
+                    path,
+                    args,
+                    version,
+                    group,
+                    group_default,
                 )
 
         else:
-            # No application path(s), no launch command(s) ....
-            self._tk_app.log_warning(
-                "No application path or Toolkit engine specified for Software %s. "
-                "Cannot create launch commands associated with this entity." % display_name
+            # Construct a single, version-less command.
+            self._register_launch_command(
+                display_name,
+                icon_path,
+                engine_str,
+                path,
+                args,
+                None,  # version
+                group,
+                is_group_default,
             )
 
-        # Check if there are icons to download and whether we're in an appropriate
-        # environment to do so.
-        if download_icon_for_commands and self._tk_app.engine.has_ui:
-            if sg_software_type and sg_software_id:
-                # Import sgutils after ui has been confirmed because it has dependencies on Qt.
-                shotgun_data = sgtk.platform.import_framework(
-                    "tk-framework-shotgunutils", "shotgun_data"
-                )
+    def _extract_thumbnail(self, entity_type, entity_id, sg_thumb_url):
+        """
+        Extracts the large size thumbnail from the given Shotgun entity.
+        If no thumbnail can be found in Shotgun, a default one is returned.
 
-                # Download the Software thumbnail source from Shotgun and cache for reuse.
-                self._tk_app.log_debug("Downloading app icon for %s from %s %s ..." %
-                    (display_name, sg_software_type, sg_software_id)
-                )
-                local_icon = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
-                    sg_software_type, sg_software_id, self._tk_app
-                )
-                self._tk_app.log_debug("... download complete: %s" % local_icon)
+        :param entity_type: The corresponding Shotgun entity type
+        :param entity_id: The corresponding entity id
+        :param sg_thumb_url: The thumbnail url for the given record
+        :returns: path to local image
+        """
+        self._tk_app.log_debug(
+            "Attempting to extract high res thumbnail from %s %s" % (entity_type, entity_id)
+        )
 
-                # Update the launch commands with the local icon value.
-                [cmd.update({"icon": local_icon}) for cmd in download_icon_for_commands]
+        if sg_thumb_url is None:
+            self._tk_app.log_debug("No thumbnail is set in Shotgun. Falling back on default.")
+            # use the launch app icon
+            return os.path.join(self._tk_app.disk_location, "icon_256.png")
 
-            else:
-                self._tk_app.log_warning(
-                    "Missing entity information to download source thumbnails. Expecting "
-                    "valid values for entity type (got %s) and id (got %s). Related icons "
-                    "may not display correctly." % (sg_software_type, sg_software_id)
-                )
+        if not self._tk_app.engine.has_ui:
+            self._tk_app.log_debug("Runtime environment does not have Qt. Skipping extraction.")
+            # use the launch app icon
+            return os.path.join(self._tk_app.disk_location, "icon_256.png")
 
-        return commands
+        # all good to go - download the target icon
 
-    def _scan_for_software(self, engine, default_name, default_icon, versions=None):
+        # Import sgutils after ui has been confirmed because it has dependencies on Qt.
+        shotgun_data = sgtk.platform.import_framework(
+            "tk-framework-shotgunutils", "shotgun_data"
+        )
+
+        # Download the Software thumbnail source from Shotgun and cache for reuse.
+        self._tk_app.log_debug("Downloading app icon from %s %s ..." % (entity_type, entity_id))
+
+        icon_path = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
+            entity_type,
+            entity_id,
+            self._tk_app
+        )
+        self._tk_app.log_debug("...download complete: %s" % icon_path)
+
+        return icon_path
+
+
+    def _scan_for_software(self, engine, versions):
         """
         Use the "auto discovery" feature of an engine launcher to scan the local environment
         for all related application paths. This information will in turn be used to construct
         launch commands for the current engine.
 
         :param str engine: Name of the Toolkit engine to construct a launcher for.
-        :param str default_name: Passed to the engine launcher as a 'display_name' to use if one
-                                 cannot be determined locally.
-        :param str default_icon: Passed to the engine launcher as an 'icon' to use if one cannot
-                                 be determined locally.
-        :param list versons: (optional) Specific versions (as strings) to filter the auto
+        :param list versions: Specific versions (as strings) to filter the auto
                              discovery results by. If specified, launch commands will only be
                              registered for applications that match one of the versions in the
                              list, regardless of which applications were actually discovered.
@@ -425,7 +466,6 @@ class SoftwareEntityLauncher(BaseLauncher):
         :returns: List of SoftwareVersions related to the specified engine that meet the input
                   requirements / restrictions.
         """
-        software_versions = []
         # First try to construct the engine launcher for the specified engine.
         try:
             self._tk_app.log_debug("Initializing engine launcher for %s." % engine)
@@ -437,23 +477,23 @@ class SoftwareEntityLauncher(BaseLauncher):
                     "Toolkit engine %s does not support scanning for local DCC "
                     "applications." % engine
                 )
-                return None
-        except:
+                return []
+        except Exception, e:
             self._tk_app.log_info(
                 "Unable to construct engine launcher for %s. Cannot determine "
-                "corresponding DCC application information." % engine
+                "corresponding DCC application information:\n%s" % (engine, e)
             )
-            return None
+            return []
 
         # Next try to scan for available applications for this engine.
         try:
             self._tk_app.log_debug("Scanning for Toolkit engine %s local applications." % engine)
-            software_versions = engine_launcher.scan_software(versions, default_name, default_icon)
+            software_versions = engine_launcher.scan_software(versions)
         except Exception, e:
             self._tk_app.log_warning(
                 "Caught unexpected error scanning for DCC applications corresponding "
-                "to Toolkit engine %s :\n%s" % (engine, e)
+                "to Toolkit engine %s:\n%s" % (engine, e)
             )
-            return None
+            return []
 
         return software_versions
