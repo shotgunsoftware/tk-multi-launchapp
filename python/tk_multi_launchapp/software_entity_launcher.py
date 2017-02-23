@@ -412,23 +412,26 @@ class SoftwareEntityLauncher(BaseLauncher):
     def _extract_thumbnail(self, entity_type, entity_id, sg_thumb_url):
         """
         Extracts the large size thumbnail from the given Shotgun entity.
+        If no thumbnail can be found in Shotgun, a default one is returned.
 
         :param entity_type: The corresponding Shotgun entity type
         :param entity_id: The corresponding entity id
         :param sg_thumb_url: The thumbnail url for the given record
-        :returns: path to cached local image or None
+        :returns: path to local image
         """
         self._tk_app.log_debug(
             "Attempting to extract high res thumbnail from %s %s" % (entity_type, entity_id)
         )
 
         if sg_thumb_url is None:
-            self._tk_app.log_debug("No thumbnail is set.")
-            return None
+            self._tk_app.log_debug("No thumbnail is set in Shotgun. Falling back on default.")
+            # use the launch app icon
+            return os.path.join(self._tk_app.disk_location, "icon_256.png")
 
         if not self._tk_app.engine.has_ui:
             self._tk_app.log_debug("Runtime environment does not have Qt. Skipping extraction.")
-            return None
+            # use the launch app icon
+            return os.path.join(self._tk_app.disk_location, "icon_256.png")
 
         # all good to go - download the target icon
 
