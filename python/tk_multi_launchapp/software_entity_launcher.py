@@ -486,7 +486,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         try:
             self._tk_app.log_debug("Initializing engine launcher for %s." % engine)
             engine_launcher = sgtk.platform.create_engine_launcher(
-                self._tk_app.sgtk, self._tk_app.context, engine
+                self._tk_app.sgtk, self._tk_app.context, engine, versions, products
             )
             if not engine_launcher:
                 self._tk_app.log_info(
@@ -504,7 +504,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         # Next try to scan for available applications for this engine.
         try:
             self._tk_app.log_debug("Scanning for Toolkit engine %s local applications." % engine)
-            software_versions = engine_launcher.scan_software(versions, products)
+            software_versions = engine_launcher.scan_software()
         except Exception, e:
             self._tk_app.log_warning(
                 "Caught unexpected error scanning for DCC applications corresponding "
