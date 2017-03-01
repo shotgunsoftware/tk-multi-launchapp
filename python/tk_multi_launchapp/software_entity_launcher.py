@@ -344,7 +344,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 software_version.icon,
                 engine_str,
                 software_version.path,
-                "",  # app_args
+                " ".join(software_version.arguments or []),
                 software_version.version,
                 group,
                 group_default,
