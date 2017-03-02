@@ -464,23 +464,23 @@ class SoftwareEntityLauncher(BaseLauncher):
 
     def _scan_for_software(self, engine, versions, products):
         """
-        Use the "auto discovery" feature of an engine launcher to scan the local environment
-        for all related application paths. This information will in turn be used to construct
-        launch commands for the current engine.
+        Use the "auto discovery" feature of an engine launcher to scan the local
+        environment for all related application paths. This information will in
+        turn be used to construct launch commands for the current engine.
 
         :param str engine: Name of the Toolkit engine to construct a launcher for.
         :param list versions: Specific versions (as strings) to filter the auto
-                             discovery results by. If specified, launch commands will only be
-                             registered for executables that match one of the versions in the
-                             list, regardless of which executables were actually discovered.
+            discovery results by. If specified, launch commands will only be
+            registered for executables that match one of the versions in the
+            list, regardless of which executables were actually discovered.
         :param list products: Specific products (as strings) to filter the auto
-                             discovery results by. If specified, launch commands will only be
-                             registered for executables that match one of the products in the
-                             list, regardless of which exectuables were actually discovered.
-                             ex: Houdini FX, Houdini Apprentice, etc.
+            discovery results by. If specified, launch commands will only be
+            registered for executables that match one of the products in the
+            list, regardless of which exectuables were actually discovered.
+            ex: Houdini FX, Houdini Apprentice, etc.
 
         :returns: List of SoftwareVersions related to the specified engine that meet the input
-                  requirements / restrictions.
+            requirements / restrictions.
         """
         # First try to construct the engine launcher for the specified engine.
         try:
@@ -504,7 +504,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         # Next try to scan for available applications for this engine.
         try:
             self._tk_app.log_debug("Scanning for Toolkit engine %s local applications." % engine)
-            software_versions = engine_launcher.scan_software()
+            software_versions = engine_launcher.get_supported_software()
         except Exception, e:
             self._tk_app.log_warning(
                 "Caught unexpected error scanning for DCC applications corresponding "
