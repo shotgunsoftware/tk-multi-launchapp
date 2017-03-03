@@ -9,10 +9,12 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 import os
 import pprint
+import traceback
 
 import sgtk
 
 from .base_launcher import BaseLauncher
+
 
 class SoftwareEntityLauncher(BaseLauncher):
     """
@@ -344,16 +346,16 @@ class SoftwareEntityLauncher(BaseLauncher):
                 software_version.icon,
                 engine_str,
                 software_version.path,
-                "",  # app_args
+                " ".join(software_version.arguments or []),
                 software_version.version,
                 group,
                 group_default,
             )
 
     def _manual_register(
-            self, engine_str, dcc_versions, group, is_group_default,
-            display_name, path, args, icon_path
-        ):
+        self, engine_str, dcc_versions, group, is_group_default,
+        display_name, path, args, icon_path
+    ):
         """
         Parse manual software definition given by input params and register
         one or more commands.
@@ -461,7 +463,6 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         return icon_path
 
-
     def _scan_for_software(self, engine, versions, products):
         """
         Use the "auto discovery" feature of an engine launcher to scan the local
@@ -508,7 +509,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         except Exception, e:
             self._tk_app.log_warning(
                 "Caught unexpected error scanning for DCC applications corresponding "
-                "to Toolkit engine %s:\n%s" % (engine, e)
+                "to Toolkit engine %s:\n%s\n%s" % (engine, e, traceback.format_exc())
             )
             return []
 

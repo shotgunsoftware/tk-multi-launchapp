@@ -14,6 +14,7 @@ import sys
 import sgtk
 from sgtk import TankError
 
+
 def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_open=None):
     """
     Prepares the environment to launch a DCC application in for the
@@ -32,23 +33,24 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
     # Retrieve the TK Application instance from the current bundle
     tk_app = sgtk.platform.current_bundle()
 
-    try:
-        # Try to use the TK engine to perform the necessary preparations
+    # Make sure this version of core supports the create_engine_launcher method, this was introduced
+    # very recently, but we don't want to lock bugfixes to the legacy launch system behind a core upgrade.
+    if hasattr(sgtk.platform, "create_engine_launcher"):
+        # Use the TK engine to perform the necessary preparations
         # to launch the DCC. If launcher is None, then chances are the
         # installed version of the specified engine isn't up-to-date.
         launcher = sgtk.platform.create_engine_launcher(
             tk_app.sgtk, context, engine_name
         )
-        tk_app.log_debug("Created %s engine launcher : %s" %
-            (engine_name, launcher)
-        )
         if launcher:
+            tk_app.log_debug("Created %s engine launcher : %s" % (engine_name, launcher))
             launch_info = launcher.prepare_launch(app_path, app_args, file_to_open)
             os.environ.update(launch_info.environment)
             tk_app.log_debug(
                 "Engine launcher prepared launch info:\n  path : %s"
-                "\n  args : %s\n  env  : %s" % (launch_info.path,
-                launch_info.args, launch_info.environment)
+                "\n  args : %s\n  env  : %s" % (
+                    launch_info.path, launch_info.args, launch_info.environment
+                )
             )
 
             # There's nothing left to do at this point, simply return
@@ -59,10 +61,7 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
                 "Engine %s does not support preparing application launches." %
                 engine_name
             )
-
-    except AttributeError:
-        # Assuming 'create_engine_launcher' wasn't found in sgtk.platform
-        # Fallback to use default behavior
+    else:
         tk_app.log_debug("'create_engine_launcher' method not found in sgtk.platform")
 
     tk_app.log_debug(
@@ -134,6 +133,7 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
     # Return resolved app path and args
     return (app_path, app_args)
 
+
 def _prepare_generic_launch(tk_app, engine_name, context, app_path, app_args):
     """
     Generic engine launcher.
@@ -202,6 +202,7 @@ def _prepare_generic_launch(tk_app, engine_name, context, app_path, app_args):
 
     return (app_path, new_args)
 
+
 def _prepare_nuke_launch(file_to_open, app_args):
     """
     Nuke specific pre-launch environment setup.
@@ -226,12 +227,14 @@ def _prepare_nuke_launch(file_to_open, app_args):
 
     return app_args
 
+
 def _prepare_hiero_launch():
     """
     Hiero specific pre-launch environment setup.
     """
     startup_path = _get_app_startup_path("hiero")
     sgtk.util.append_path_to_env_var("HIERO_PLUGIN_PATH", startup_path)
+
 
 def _prepare_maya_launch():
     """
@@ -240,6 +243,7 @@ def _prepare_maya_launch():
     # Make sure Maya can find the Tank menu
     startup_path = _get_app_startup_path("maya")
     sgtk.util.append_path_to_env_var("PYTHONPATH", startup_path)
+
 
 def _prepare_softimage_launch():
     """
@@ -267,6 +271,7 @@ def _prepare_softimage_launch():
         sgtk.util.append_path_to_env_var("LD_LIBRARY_PATH", lib_path)
         sgtk.util.append_path_to_env_var("PYTHONPATH", lib_path)
 
+
 def _prepare_motionbuilder_launch(app_args):
     """
     Motionbuilder specific pre-launch environment setup.
@@ -284,6 +289,7 @@ def _prepare_motionbuilder_launch(app_args):
         app_args = new_args
 
     return app_args
+
 
 def _prepare_3dsmax_launch(app_args):
     """
@@ -305,6 +311,7 @@ def _prepare_3dsmax_launch(app_args):
         app_args = new_args
 
     return app_args
+
 
 def _prepare_3dsmaxplus_launch(context, app_args, app_path):
     """
@@ -345,6 +352,7 @@ def _prepare_3dsmaxplus_launch(context, app_args, app_path):
 
     return app_args
 
+
 def _prepare_houdini_launch(context):
     """
     Houdini specific pre-launch environment setup.
@@ -366,6 +374,7 @@ def _prepare_houdini_launch(context):
     except:
         tk_app.log_exception("Error executing engine bootstrap script.")
         raise TankError("Error executing bootstrap script. Please see log for details.")
+
 
 def _prepare_flame_flare_launch(engine_name, context, app_path, app_args):
     """
@@ -416,6 +425,7 @@ def _prepare_flame_flare_launch(engine_name, context, app_path, app_args):
 
     return (app_path, new_args)
 
+
 def _prepare_mari_launch(engine_name, context):
     """
     Mari specific pre-launch environment setup.
@@ -435,6 +445,7 @@ def _prepare_mari_launch(engine_name, context):
     # add the location of our init.py script to the MARI_SCRIPT_PATH
     startup_folder = os.path.join(engine_path, "startup")
     sgtk.util.append_path_to_env_var("MARI_SCRIPT_PATH", startup_folder)
+
 
 def _prepare_photoshop_launch(context):
     """
@@ -515,6 +526,7 @@ def _prepare_photoshop_launch(context):
     startup_path = _get_app_startup_path("photoshop")
     sgtk.util.append_path_to_env_var("PYTHONPATH", startup_path)
 
+
 def _get_app_specific_path(app_dir):
     """
     Returns the path for application specific files for a given application.
@@ -526,6 +538,7 @@ def _get_app_specific_path(app_dir):
     # to determine the bundle's disk location.
     tk_app = sgtk.platform.current_bundle()
     return os.path.join(tk_app.disk_location, "app_specific", app_dir)
+
 
 def _get_app_startup_path(app_name):
     """
