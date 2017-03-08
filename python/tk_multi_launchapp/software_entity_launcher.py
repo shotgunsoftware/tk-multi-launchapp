@@ -346,7 +346,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 software_version.icon,
                 engine_str,
                 software_version.path,
-                " ".join(software_version.arguments or []),
+                " ".join(software_version.args or []),
                 software_version.version,
                 group,
                 group_default,
@@ -505,7 +505,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         # Next try to scan for available applications for this engine.
         try:
             self._tk_app.log_debug("Scanning for Toolkit engine %s local applications." % engine)
-            software_versions = engine_launcher.get_supported_software()
+            software_versions = engine_launcher.scan_software()
         except Exception, e:
             self._tk_app.log_warning(
                 "Caught unexpected error scanning for DCC applications corresponding "
