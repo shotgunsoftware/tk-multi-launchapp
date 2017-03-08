@@ -9,10 +9,12 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 import os
 import pprint
+import traceback
 
 import sgtk
 
 from .base_launcher import BaseLauncher
+
 
 class SoftwareEntityLauncher(BaseLauncher):
     """
@@ -77,6 +79,12 @@ class SoftwareEntityLauncher(BaseLauncher):
             dcc_versions_str = sw_entity["sg_versions"] or ""
             dcc_versions = [v.strip() for v in dcc_versions_str.split(",") if v.strip()]
 
+            # Parse the Software `products` field to determine the specific list
+            # of product variations to load. Assume the list of products is
+            # stored as a comma-separated string in Shotgun.
+            dcc_products_str = sw_entity["sg_products"] or ""
+            dcc_products = [p.strip() for p in dcc_products_str.split(",") if p.strip()]
+
             # get the group settings
             app_group = sw_entity["sg_group"]
             is_group_default = sw_entity["sg_group_default"]
@@ -102,6 +110,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 self._scan_for_software_and_register(
                     engine_str,
                     dcc_versions,
+                    dcc_products,
                     app_group,
                     is_group_default
                 )
@@ -254,6 +263,7 @@ class SoftwareEntityLauncher(BaseLauncher):
             "image",
             "sg_engine",
             "sg_versions",
+            "sg_products",
             "sg_group",
             "sg_group_default",
             "sg_linux_path",
@@ -281,12 +291,13 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         return sw_entities
 
-    def _scan_for_software_and_register(self, engine_str, dcc_versions, group, is_group_default):
+    def _scan_for_software_and_register(self, engine_str, dcc_versions, dcc_products, group, is_group_default):
         """
         Scan for installed software and register commands for all entries detected.
 
         This will call toolkit core and request that the given engine performs a
-        software scan, returning versions, constrained by the dcc_versions parameter.
+        software scan, returning versions, constrained by the dcc_versions and
+        dcc_products parameters.
 
         Each version returned is registered as a command. If is_group_default is set
         to True and multiple versions are detected, the one with the highest version
@@ -295,6 +306,8 @@ class SoftwareEntityLauncher(BaseLauncher):
         :param str engine_str: Engine instance to request software scanning for
         :param list dcc_versions: List of dcc versions to constrain the
             search to or None or [] if no constraint.
+        :param list dcc_products: List of dcc products to constrain the
+            search to or None or [] if no constraint.
         :param str group: String to group registered commands by
         :param bool is_group_default: If true, make the highest version match found
             by the scan the default.
@@ -302,7 +315,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         # No application path was specified, triggering "auto discovery" mode. Attempt to
         # find relevant application path(s) from the engine launcher.
         self._tk_app.log_debug("Attempting to auto discover software for %s." % engine_str)
-        software_versions = self._scan_for_software(engine_str, dcc_versions)
+        software_versions = self._scan_for_software(engine_str, dcc_versions, dcc_products)
 
         self._tk_app.log_debug("Scan detected %d software versions" % len(software_versions))
 
@@ -333,16 +346,16 @@ class SoftwareEntityLauncher(BaseLauncher):
                 software_version.icon,
                 engine_str,
                 software_version.path,
-                "",  # app_args
+                " ".join(software_version.args or []),
                 software_version.version,
                 group,
                 group_default,
             )
 
     def _manual_register(
-            self, engine_str, dcc_versions, group, is_group_default,
-            display_name, path, args, icon_path
-        ):
+        self, engine_str, dcc_versions, group, is_group_default,
+        display_name, path, args, icon_path
+    ):
         """
         Parse manual software definition given by input params and register
         one or more commands.
@@ -450,27 +463,31 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         return icon_path
 
-
-    def _scan_for_software(self, engine, versions):
+    def _scan_for_software(self, engine, versions, products):
         """
-        Use the "auto discovery" feature of an engine launcher to scan the local environment
-        for all related application paths. This information will in turn be used to construct
-        launch commands for the current engine.
+        Use the "auto discovery" feature of an engine launcher to scan the local
+        environment for all related application paths. This information will in
+        turn be used to construct launch commands for the current engine.
 
         :param str engine: Name of the Toolkit engine to construct a launcher for.
         :param list versions: Specific versions (as strings) to filter the auto
-                             discovery results by. If specified, launch commands will only be
-                             registered for applications that match one of the versions in the
-                             list, regardless of which applications were actually discovered.
+            discovery results by. If specified, launch commands will only be
+            registered for executables that match one of the versions in the
+            list, regardless of which executables were actually discovered.
+        :param list products: Specific products (as strings) to filter the auto
+            discovery results by. If specified, launch commands will only be
+            registered for executables that match one of the products in the
+            list, regardless of which exectuables were actually discovered.
+            ex: Houdini FX, Houdini Apprentice, etc.
 
         :returns: List of SoftwareVersions related to the specified engine that meet the input
-                  requirements / restrictions.
+            requirements / restrictions.
         """
         # First try to construct the engine launcher for the specified engine.
         try:
             self._tk_app.log_debug("Initializing engine launcher for %s." % engine)
             engine_launcher = sgtk.platform.create_engine_launcher(
-                self._tk_app.sgtk, self._tk_app.context, engine
+                self._tk_app.sgtk, self._tk_app.context, engine, versions, products
             )
             if not engine_launcher:
                 self._tk_app.log_info(
@@ -488,11 +505,11 @@ class SoftwareEntityLauncher(BaseLauncher):
         # Next try to scan for available applications for this engine.
         try:
             self._tk_app.log_debug("Scanning for Toolkit engine %s local applications." % engine)
-            software_versions = engine_launcher.scan_software(versions)
+            software_versions = engine_launcher.scan_software()
         except Exception, e:
             self._tk_app.log_warning(
                 "Caught unexpected error scanning for DCC applications corresponding "
-                "to Toolkit engine %s:\n%s" % (engine, e)
+                "to Toolkit engine %s:\n%s\n%s" % (engine, e, traceback.format_exc())
             )
             return []
 

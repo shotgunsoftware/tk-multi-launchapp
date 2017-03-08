@@ -50,8 +50,11 @@ class AppLaunch(tank.Hook):
             # on the mac, the executable paths are normally pointing
             # to the application bundle and not to the binary file
             # embedded in the bundle, meaning that we should use the
-            # built-in mac open command to execute it
-            cmd = "open -n \"%s\"" % (app_path)
+            # built-in mac open command to execute it. The -n flag tells the OS
+            # to launch a new instance even if one is already running. The -a
+            # flag specifies that the path is an application and supports both
+            # the app bundle form or the full executable form.
+            cmd = "open -n -a \"%s\"" % (app_path)
             if app_args:
                 cmd += " --args \"%s\"" % app_args.replace("\"", "\\\"")
         
