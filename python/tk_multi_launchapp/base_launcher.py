@@ -88,8 +88,8 @@ class BaseLauncher(object):
             command_name = command_name[:-3]
 
         # Apply some rules to reduce redundancy in the group/display names.
-        (group_name, menu_display_name) = self._get_group_and_menu_display_name(
-                group, menu_name, version)
+        (group_display, menu_display) = self._get_group_and_menu_display(
+            group, menu_name, version)
 
         # special case! @todo: fix this.
         # this is to allow this app to be loaded for sg entities of
@@ -104,17 +104,17 @@ class BaseLauncher(object):
         ]
         if self._tk_app.engine.environment.get("name") not in skip_environments:
             properties = {
-                "title": menu_display_name,
+                "title": menu_display,
                 "short_name": command_name,
                 "description": "Launches and initializes an application environment.",
                 "icon": icon,
-                "group": group_name,
+                "group": group_display,
                 "group_default": group_default
             }
 
             def launch_version():
                 self._launch_callback(
-                    menu_display_name, app_engine, app_path, app_args, version
+                    menu_display, app_engine, app_path, app_args, version
                 )
 
             self._tk_app.log_debug(
@@ -376,7 +376,7 @@ class BaseLauncher(object):
         # Convert the LooseVersions back to strings on return.
         return [str(version) for version in sort_versions]
 
-    def _get_group_and_menu_display_name(self, group_name, display_name, version):
+    def _get_group_and_menu_display(self, group_name, display_name, version):
         """
         Apply some rules to reduce redundancy in the group/display names.
         """
@@ -385,9 +385,9 @@ class BaseLauncher(object):
             # we have a group and the group name matches the display name. only
             # display the version in the menu item.
             display_name = version
-        elif group_name:
+        elif group_name and display_name.startswith(group_name):
             # for all other grouping situations, simply remove the group name
             # from the head of the display name.
-            display_name = display_name.replace(group_name, "").lstrip()
+            display_name = display_name[len(group_name):]
 
         return (group_name, display_name)

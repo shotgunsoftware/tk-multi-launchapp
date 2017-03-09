@@ -340,10 +340,10 @@ class SoftwareEntityLauncher(BaseLauncher):
             else:
                 group_default = False
 
-            if not group:
-                group_name = software_version.product
-            else:
-                group_name = group
+            # Use the product name if no group is defined in the Software
+            # entity entry. This allows for smart grouping default display in
+            # engine UIs.
+            group_name = group or software_version.product
 
             # perform the registration
             self._register_launch_command(
