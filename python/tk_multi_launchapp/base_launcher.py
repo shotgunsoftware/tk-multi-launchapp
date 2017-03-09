@@ -87,9 +87,10 @@ class BaseLauncher(object):
         if command_name.endswith("..."):
             command_name = command_name[:-3]
 
-        # Apply some rules to reduce redundancy in the group/display names.
-        (group_display, menu_display) = self._get_group_and_menu_display(
-            group, menu_name)
+        if group and menu_name.startswith(group):
+            # for all other grouping situations, simply remove the group name
+            # from the head of the display name.
+            menu_name = menu_name[len(group):]
 
         # special case! @todo: fix this.
         # this is to allow this app to be loaded for sg entities of
@@ -104,17 +105,17 @@ class BaseLauncher(object):
         ]
         if self._tk_app.engine.environment.get("name") not in skip_environments:
             properties = {
-                "title": menu_display,
+                "title": menu_name,
                 "short_name": command_name,
                 "description": "Launches and initializes an application environment.",
                 "icon": icon,
-                "group": group_display,
+                "group": group,
                 "group_default": group_default
             }
 
             def launch_version():
                 self._launch_callback(
-                    menu_display, app_engine, app_path, app_args, version
+                    menu_name, app_engine, app_path, app_args, version
                 )
 
             self._tk_app.log_debug(
@@ -376,23 +377,3 @@ class BaseLauncher(object):
         # Convert the LooseVersions back to strings on return.
         return [str(version) for version in sort_versions]
 
-    def _get_group_and_menu_display(self, group_name, display_name):
-        """
-        Apply some rules to reduce redundancy in the group/display names.
-
-        :param str group_name: The group display name as defined by either the
-            SW entity or SW version product name.
-        :param str display_name: The display name which typically includes the
-            product name and version
-
-        Truncate the display name if it includes the group name.
-
-        :returns: tuple of the form (group_name, display_name)
-        """
-
-        if group_name and display_name.startswith(group_name):
-            # for all other grouping situations, simply remove the group name
-            # from the head of the display name.
-            display_name = display_name[len(group_name):]
-
-        return (group_name, display_name)
