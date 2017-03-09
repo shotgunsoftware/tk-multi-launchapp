@@ -340,17 +340,20 @@ class SoftwareEntityLauncher(BaseLauncher):
             else:
                 group_default = False
 
-            display_name = self._get_display_name(software_version, group)
+            if not group:
+                group_name = software_version.product
+            else:
+                group_name = group
 
             # perform the registration
             self._register_launch_command(
-                display_name,
+                software_version.display_name,
                 software_version.icon,
                 engine_str,
                 software_version.path,
                 " ".join(software_version.args or []),
                 software_version.version,
-                group,
+                group_name,
                 group_default,
             )
 
@@ -516,22 +519,3 @@ class SoftwareEntityLauncher(BaseLauncher):
             return []
 
         return software_versions
-
-    def _get_display_name(self, sw_version, group_name):
-        """
-        Returns the display name for the given software version to be displayed
-        in the given group.
-
-        :param sw_version: The :class:`SoftwareVersion` to be displayed.
-        :param group_name: The group the :class:`SoftwareVersion` will be
-            displayed in.
-        :return:
-        """
-
-        if group_name == sw_version.product:
-            # group name matches the product. only display the version
-            return sw_version.version
-        elif sw_version.display_name.startswith(group_name):
-            # for all other situations, simply remove the group name from the
-            # head of the sw version display name.
-            return sw_version.display_name.replace(group_name, "").lstrip()
