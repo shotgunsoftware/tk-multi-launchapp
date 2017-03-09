@@ -89,7 +89,7 @@ class BaseLauncher(object):
 
         # Apply some rules to reduce redundancy in the group/display names.
         (group_display, menu_display) = self._get_group_and_menu_display(
-            group, menu_name, version)
+            group, menu_name)
 
         # special case! @todo: fix this.
         # this is to allow this app to be loaded for sg entities of
@@ -376,16 +376,21 @@ class BaseLauncher(object):
         # Convert the LooseVersions back to strings on return.
         return [str(version) for version in sort_versions]
 
-    def _get_group_and_menu_display(self, group_name, display_name, version):
+    def _get_group_and_menu_display(self, group_name, display_name):
         """
         Apply some rules to reduce redundancy in the group/display names.
+
+        :param str group_name: The group display name as defined by either the
+            SW entity or SW version product name.
+        :param str display_name: The display name which typically includes the
+            product name and version
+
+        Truncate the display name if it includes the group name.
+
+        :returns: tuple of the form (group_name, display_name)
         """
 
-        if group_name and group_name == display_name:
-            # we have a group and the group name matches the display name. only
-            # display the version in the menu item.
-            display_name = version
-        elif group_name and display_name.startswith(group_name):
+        if group_name and display_name.startswith(group_name):
             # for all other grouping situations, simply remove the group name
             # from the head of the display name.
             display_name = display_name[len(group_name):]
