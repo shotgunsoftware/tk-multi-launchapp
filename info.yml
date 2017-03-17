@@ -29,9 +29,15 @@ configuration:
                    the correct operating system separator when used."
       default_value: "{target_engine}/icon_256.png"
 
+    app_descriptor:
+      type: dict
+      description: "A dictionary that defines a versioned_path descriptor for finding the app location"
+      allows_empty: True
+
     # Path information for multiple platforms
     windows_path:
         type: str
+        default_value: ""
         description: The path to the application executable on Windows.
     
     windows_args:
@@ -41,6 +47,7 @@ configuration:
     
     linux_path:
         type: str
+        default_value: ""
         description: The path to the application executable on Linux.
     
     linux_args:
@@ -50,6 +57,7 @@ configuration:
     
     mac_path:
         type: str
+        default_value: ""
         description: The path to the application executable on Mac OS X.
     
     mac_args:
