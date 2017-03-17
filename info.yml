@@ -29,6 +29,14 @@ configuration:
                      launch commands for available DCCs.
         default_value: false
 
+    register_all_software:
+        type: bool
+        description: When true, and when use_software_entity is true, no filtering
+                     of Software entities by project or user restrictions will be
+                     performed. All software launchers will be registered as engine
+                     commands.
+        default_value: false
+
     menu_name:
         type: str
         description: Name to appear on the Shotgun menu.
