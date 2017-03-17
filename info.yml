@@ -14,9 +14,33 @@
 # expected fields in the configuration file for this app
 configuration:
 
+    # NOTE: The 'sg_software_entity' setting is only temporary and 
+    #       should be removed once the Software entity becomes native
+    #       in Shotgun
+    sg_software_entity:
+        type: str
+        description: Shotgun CustomNonProjectEntity designated as the 
+                     Software entity until it becomes native.
+        default_value: CustomNonProjectEntity23
+
+    use_software_entity:
+        type: bool
+        description: Whether to use Shotgun Software Entities to register 
+                     launch commands for available DCCs.
+        default_value: false
+
+    register_all_software:
+        type: bool
+        description: When true, and when use_software_entity is true, no filtering
+                     of Software entities by project or user restrictions will be
+                     performed. All software launchers will be registered as engine
+                     commands.
+        default_value: false
+
     menu_name:
         type: str
         description: Name to appear on the Shotgun menu.
+        default_value: ""
 
     icon:
       type: str
@@ -33,6 +57,7 @@ configuration:
     windows_path:
         type: str
         description: The path to the application executable on Windows.
+        default_value: ""
     
     windows_args:
         type: str
@@ -42,6 +67,7 @@ configuration:
     linux_path:
         type: str
         description: The path to the application executable on Linux.
+        default_value: ""
     
     linux_args:
         type: str
@@ -51,6 +77,7 @@ configuration:
     mac_path:
         type: str
         description: The path to the application executable on Mac OS X.
+        default_value: ""
     
     mac_args:
         type: str
@@ -63,6 +90,19 @@ configuration:
                       name prefixed with tk, e.g. tk-maya, tk-nuke, tk-photoshop etc. If you set 
                       this to an empty string, no toolkit engine will be started, meaning that 
                       you can launch applications that do not have toolkit engines set up."
+        default_value: ""
+
+    group:
+        type: str
+        description: "The name for a group this command should be considered a member of."
+        default_value: ""
+
+    group_default:
+        type: bool
+        description: "Boolean value indicating whether this command should represent the group as
+                      a whole. Setting this value to True indicates that this is the command to run and
+                      display in applications that show a single button for each named group."
+        default_value: False
 
     defer_keyword:
         type: str
@@ -108,6 +148,7 @@ configuration:
         type: dict
         description: "Shotgun engine specific extra values. These are defined per Shotgun engine.
                      Please look in the app documentation for more details."
+        default_value: {}
 
     hook_app_launch:
         type: hook
@@ -136,8 +177,11 @@ description: "Launch Applications and initialize the Shotgun Pipeline Toolkit."
 
 # Required minimum versions for this item to run
 requires_shotgun_version:
-requires_core_version: "v0.14.0"
+requires_core_version: "v0.18.54"
 requires_engine_version:
 
 # the engines that this app can operate in:
 supported_engines: 
+
+frameworks:
+    - {"name": "tk-framework-shotgunutils", "version": "v5.x.x"}
