@@ -191,7 +191,7 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         :returns: A list of shotgun software entity dictionaries
         """
-        register_all_software = self._tk_app.get_setting("register_all_software") or False
+        scan_all_projects = self._tk_app.get_setting("scan_all_projects") or False
 
         # Determine the information to retrieve from Shotgun
         # @todo: The 'sg_software_entity' setting can be removed once the
@@ -209,7 +209,7 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         # If we've been asked to register all software, then we don't want to
         # filter anything out based on user or project restrictions.
-        if not register_all_software:
+        if not scan_all_projects:
             # Next handle Project restrictions. Always include Software entities
             # that have no Project restrictions.
             project_filters = [["sg_projects", "is", None]]
@@ -230,34 +230,34 @@ class SoftwareEntityLauncher(BaseLauncher):
                 # Software entities that do not have any Project restrictions.
                 sw_filters.extend(project_filters)
 
-            # Now Group and User restrictions. Always retrieve Software entities
-            # that have no Group or User restrictions.
-            current_user = self._tk_app.context.user
-            user_group_filters = [
-                ["sg_user_restrictions", "is", None],
-                ["sg_group_restrictions", "is", None],
-            ]
-            if current_user:
-                # If a current User is defined, then retrieve Software
-                # entities that either have A) no Group AND no User
-                # restrictions OR B) current User is included in Group
-                # OR User restrictions.
-                sw_filters.append({
-                    "filter_operator": "or",
-                    "filters": [
-                        {"filter_operator": "and",
-                         "filters": user_group_filters},
-                        {"filter_operator": "or",
-                         "filters": [
-                            ["sg_user_restrictions", "in", current_user],
-                            ["sg_group_restrictions.Group.users", "in", current_user],
-                         ]},
-                    ]
-                })
-            else:
-                # If no User is defined, then only retrieve Software
-                # entities that do not have any Group or User restrictions.
-                sw_filters.extend(user_group_filters)
+        # Now Group and User restrictions. Always retrieve Software entities
+        # that have no Group or User restrictions.
+        current_user = self._tk_app.context.user
+        user_group_filters = [
+            ["sg_user_restrictions", "is", None],
+            ["sg_group_restrictions", "is", None],
+        ]
+        if current_user:
+            # If a current User is defined, then retrieve Software
+            # entities that either have A) no Group AND no User
+            # restrictions OR B) current User is included in Group
+            # OR User restrictions.
+            sw_filters.append({
+                "filter_operator": "or",
+                "filters": [
+                    {"filter_operator": "and",
+                     "filters": user_group_filters},
+                    {"filter_operator": "or",
+                     "filters": [
+                        ["sg_user_restrictions", "in", current_user],
+                        ["sg_group_restrictions.Group.users", "in", current_user],
+                     ]},
+                ]
+            })
+        else:
+            # If no User is defined, then only retrieve Software
+            # entities that do not have any Group or User restrictions.
+            sw_filters.extend(user_group_filters)
 
         # The list of fields we need to retrieve in order to launch the app(s)
         # @todo: When the Software entity becomes native, these field names
