@@ -14,15 +14,6 @@
 # expected fields in the configuration file for this app
 configuration:
 
-    # NOTE: The 'sg_software_entity' setting is only temporary and 
-    #       should be removed once the Software entity becomes native
-    #       in Shotgun
-    sg_software_entity:
-        type: str
-        description: Shotgun CustomNonProjectEntity designated as the 
-                     Software entity until it becomes native.
-        default_value: CustomNonProjectEntity23
-
     use_software_entity:
         type: bool
         description: Whether to use Shotgun Software Entities to register 
