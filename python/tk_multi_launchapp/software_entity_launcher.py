@@ -76,26 +76,26 @@ class SoftwareEntityLauncher(BaseLauncher):
 
             # Parse the Software `versions` field to determine the specific list of versions to
             # load. Assume the list of versions is stored as a comma-separated string in Shotgun.
-            dcc_versions_str = sw_entity["sg_versions"] or ""
+            dcc_versions_str = sw_entity["version_names"] or ""
             dcc_versions = [v.strip() for v in dcc_versions_str.split(",") if v.strip()]
 
             # Parse the Software `products` field to determine the specific list
             # of product variations to load. Assume the list of products is
             # stored as a comma-separated string in Shotgun.
-            dcc_products_str = sw_entity["sg_products"] or ""
+            dcc_products_str = sw_entity["products"] or ""
             dcc_products = [p.strip() for p in dcc_products_str.split(",") if p.strip()]
 
             # get the group settings
-            app_group = sw_entity["sg_group"]
-            is_group_default = sw_entity["sg_group_default"]
+            app_group = sw_entity["group_name"]
+            is_group_default = sw_entity["group_default"]
 
             # get associated engine (can be none)
-            engine_str = sw_entity["sg_engine"]
+            engine_str = sw_entity["engine"]
 
             # determine if we are in 'automatic' mode or manual
-            if sw_entity.get("sg_windows_path") is None and \
-                    sw_entity.get("sg_mac_path") is None and \
-                    sw_entity.get("sg_linux_path") is None:
+            if sw_entity.get("windows_path") is None and \
+                    sw_entity.get("mac_path") is None and \
+                    sw_entity.get("linux_path") is None:
 
                 # all paths are none - we are in automatic mode
                 self._tk_app.log_debug("All path fields are None. Automatic mode.")
@@ -120,8 +120,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                 self._tk_app.log_debug("One or more path fields are not None. Manual mode.")
 
                 # Resolve the app path and args field names for the current platform
-                app_path_field = "sg_%s_path" % self._platform_name
-                app_args_field = "sg_%s_args" % self._platform_name
+                app_path_field = "%s_path" % self._platform_name
+                app_args_field = "%s_args" % self._platform_name
 
                 if sw_entity[app_path_field] is None:
                     # manual mode but nothing to do for our os
@@ -194,8 +194,6 @@ class SoftwareEntityLauncher(BaseLauncher):
         # Determine the information to retrieve from Shotgun
         # @todo: The 'sg_software_entity' setting can be removed once the
         #        Software entity becomes native.
-        sw_entity = self._tk_app.get_setting("sg_software_entity") or "Software"
-
         # Use filters to retrieve Software entities that match specified
         # Project, HumanUser, and Group restrictions. The filter specification
         # is broken up to allow for empty Project and or HumanUser values in
@@ -207,14 +205,14 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         # Next handle Project restrictions. Always include Software entities
         # that have no Project restrictions.
-        project_filters = [["sg_projects", "is", None]]
+        project_filters = [["projects", "is", None]]
         current_project = self._tk_app.context.project
         if current_project:
             # If a Project is defined in the current context, retrieve
             # Software entities that have either no Project restrictions OR
             # include the context Project as a restriction.
             project_filters.append(
-                ["sg_projects", "in", current_project],
+                ["projects", "in", current_project],
             )
             sw_filters.append({
                 "filter_operator": "or",
@@ -228,10 +226,9 @@ class SoftwareEntityLauncher(BaseLauncher):
         # Now Group and User restrictions. Always retrieve Software entities
         # that have no Group or User restrictions.
         current_user = self._tk_app.context.user
-        user_group_filters = [
-            ["sg_user_restrictions", "is", None],
-            ["sg_group_restrictions", "is", None],
-        ]
+
+        # No user restriction filter.
+        user_group_filter = ["user_restrictions", "is", None]
         if current_user:
             # If a current User is defined, then retrieve Software
             # entities that either have A) no Group AND no User
@@ -240,19 +237,18 @@ class SoftwareEntityLauncher(BaseLauncher):
             sw_filters.append({
                 "filter_operator": "or",
                 "filters": [
-                    {"filter_operator": "and",
-                     "filters": user_group_filters},
+                    user_group_filter,
                     {"filter_operator": "or",
                      "filters": [
-                        ["sg_user_restrictions", "in", current_user],
-                        ["sg_group_restrictions.Group.users", "in", current_user],
+                         ["user_restrictions", "in", current_user],
+                         ["user_restrictions.Group.users", "in", current_user]
                      ]},
                 ]
             })
         else:
             # If no User is defined, then only retrieve Software
             # entities that do not have any Group or User restrictions.
-            sw_filters.extend(user_group_filters)
+            sw_filters.append(user_group_filter)
 
         # The list of fields we need to retrieve in order to launch the app(s)
         # @todo: When the Software entity becomes native, these field names
@@ -261,24 +257,25 @@ class SoftwareEntityLauncher(BaseLauncher):
         sw_fields = [
             "code",
             "image",
-            "sg_engine",
-            "sg_versions",
-            "sg_products",
-            "sg_group",
-            "sg_group_default",
-            "sg_linux_path",
-            "sg_mac_path",
-            "sg_windows_path",
-            "sg_linux_args",
-            "sg_mac_args",
-            "sg_windows_args",
+            "engine",
+            "version_names",
+            "products",
+            "group_name",
+            "group_default",
+            "linux_path",
+            "mac_path",
+            "windows_path",
+            "linux_args",
+            "mac_args",
+            "windows_args",
         ]
 
         # Log the resolved filter.
-        self._tk_app.log_debug("Searching for %s entities matching filters:\n%s" %
-            (sw_entity, pprint.pformat(sw_filters, indent=4))
+        self._tk_app.log_debug(
+            "Searching for Software entities matching filters:\n%s" %
+            (pprint.pformat(sw_filters, indent=4),)
         )
-        sw_entities = self._tk_app.shotgun.find(sw_entity, sw_filters, sw_fields)
+        sw_entities = self._tk_app.shotgun.find("Software", sw_filters, sw_fields)
         if not sw_entities:
             # No Entities found matching filters, nothing to do.
             self._tk_app.log_info(
