@@ -192,8 +192,6 @@ class SoftwareEntityLauncher(BaseLauncher):
         :returns: A list of shotgun software entity dictionaries
         """
         # Determine the information to retrieve from Shotgun
-        # @todo: The 'sg_software_entity' setting can be removed once the
-        #        Software entity becomes native.
         # Use filters to retrieve Software entities that match specified
         # Project, HumanUser, and Group restrictions. The filter specification
         # is broken up to allow for empty Project and or HumanUser values in
