@@ -208,14 +208,14 @@ class SoftwareEntityLauncher(BaseLauncher):
         if not scan_all_projects:
             # Next handle Project restrictions. Always include Software entities
             # that have no Project restrictions.
-            project_filters = [["sg_projects", "is", None]]
+            project_filters = [["projects", "is", None]]
             current_project = self._tk_app.context.project
             if current_project:
                 # If a Project is defined in the current context, retrieve
                 # Software entities that have either no Project restrictions OR
                 # include the context Project as a restriction.
                 project_filters.append(
-                    ["sg_projects", "in", current_project],
+                    ["projects", "in", current_project],
                 )
                 sw_filters.append({
                     "filter_operator": "or",
