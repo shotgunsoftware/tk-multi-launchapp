@@ -105,7 +105,8 @@ class BaseLauncher(object):
                 "description": "Launches and initializes an application environment.",
                 "icon": icon,
                 "group": group,
-                "group_default": group_default
+                "group_default": group_default,
+                "engine_name": app_engine,
             }
 
             def launch_version():
