@@ -189,8 +189,19 @@ class SoftwareEntityLauncher(BaseLauncher):
         Retrieve a list of Software entities from Shotgun that
         are active for the current project and user.
 
+        If the shotgun connection does not support software entities,
+        an empty list is returned.
+
         :returns: A list of shotgun software entity dictionaries
         """
+
+        # check that software entity is supported
+        if self.__get_server_version() < (7, 2, 0):
+            self._tk_app.log_warning(
+                "Your version of Shotgun does not support Software entity based launching."
+            )
+            return []
+
         scan_all_projects = self._tk_app.get_setting("scan_all_projects") or False
 
         # Determine the information to retrieve from Shotgun
@@ -519,3 +530,15 @@ class SoftwareEntityLauncher(BaseLauncher):
             return []
 
         return software_versions
+
+    def __get_sg_server_version(self):
+        """
+        Retrieves the shotgun server version
+        from the currently connected Shotgun.
+
+        :returns: Tuple of (major, minor, patch) versions.
+        """
+        sg_major_ver = self._tk_app.shotgun.server_info["version"][0]
+        sg_minor_ver = self._tk_app.shotgun.server_info["version"][1]
+        sg_patch_ver = self._tk_app.shotgun.server_info["version"][2]
+        return sg_major_ver, sg_minor_ver, sg_patch_ver
