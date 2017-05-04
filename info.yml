@@ -174,4 +174,4 @@ requires_engine_version:
 supported_engines: 
 
 frameworks:
-    - {"name": "tk-framework-shotgunutils", "version": "v5.x.x"}
+    - {"name": "tk-framework-shotgunutils", "version": "v5.x.x", "minimum_version": "v5.1.0"}
