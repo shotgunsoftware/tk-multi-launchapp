@@ -196,7 +196,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         """
 
         # check that software entity is supported
-        if self.__get_server_version() < (7, 2, 0):
+        if self.__get_sg_server_version() < (7, 2, 0):
             self._tk_app.log_warning(
                 "Your version of Shotgun does not support Software entity based launching."
             )
