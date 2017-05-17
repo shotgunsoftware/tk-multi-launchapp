@@ -292,7 +292,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         sw_entities = self._tk_app.shotgun.find("Software", sw_filters, sw_fields)
         if not sw_entities:
             # No Entities found matching filters, nothing to do.
-            self._tk_app.log_info(
+            self._tk_app.log_debug(
                 "No matching Shotgun Software entities found."
             )
         else:
@@ -506,13 +506,13 @@ class SoftwareEntityLauncher(BaseLauncher):
                 self._tk_app.sgtk, self._tk_app.context, engine, versions, products
             )
             if not engine_launcher:
-                self._tk_app.log_info(
+                self._tk_app.log_debug(
                     "Toolkit engine %s does not support scanning for local DCC "
                     "applications." % engine
                 )
                 return []
         except Exception, e:
-            self._tk_app.log_info(
+            self._tk_app.log_debug(
                 "Unable to construct engine launcher for %s. Cannot determine "
                 "corresponding DCC application information:\n%s" % (engine, e)
             )
