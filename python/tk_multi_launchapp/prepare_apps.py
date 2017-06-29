@@ -57,8 +57,8 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
             # the resolved app_path and args values.
             return (launch_info.path, launch_info.args)
         else:
-            tk_app.log_error(
-                "Engine %s does not support preparing application launches." %
+            tk_app.log_debug(
+                "Engine %s does not implement an application launch interface." %
                 engine_name
             )
     else:
