@@ -79,6 +79,39 @@ def apply_version_to_setting(raw_string, version=None):
         return _translate_version_tokens(raw_string, version)
     return raw_string
 
+def clear_qt_library_paths():
+    """
+    On Linux when in KDE, we see issues with Qt's library paths in
+    combination with DCCs that themselves bundle Qt. We clear the
+    paths here.
+
+    :returns: The list of library paths as previously set, or None
+        if no change was made to the library paths.
+    :rtype: list or None
+    """
+    lib_paths = None
+    if sys.platform == "linux2":
+        try:
+            from sgtk.platform.qt import QtGui
+            lib_paths = QtGui.QApplication.libraryPaths()
+            QtGui.QApplication.setLibraryPaths([])
+        except Exception:
+            # We don't want this to cause any problems higher up. If
+            # we can't import QtGui or the paths don't set for some
+            # reason then we can just return None and be on our way.
+            pass
+    return lib_paths
+
+def restore_qt_library_paths(lib_paths):
+    """
+    Restores Qt library paths to the list of paths provided.
+
+    :param list lib_paths: The list of string paths to set Qt's library
+        paths to.
+    """
+    from sgtk.platform.qt import QtGui
+    QtGui.QApplication.setLibraryPaths(lib_paths)
+
 def clear_dll_directory():
     """
     Push current Dll Directory. There are two cases that

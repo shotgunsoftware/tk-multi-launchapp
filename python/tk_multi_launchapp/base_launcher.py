@@ -16,7 +16,12 @@ import sgtk
 from sgtk import TankError
 
 from .util import apply_version_to_setting, get_clean_version_string
-from .util import clear_dll_directory, restore_dll_directory
+from .util import (
+    clear_dll_directory,
+    restore_dll_directory,
+    clear_qt_library_paths,
+    restore_qt_library_paths,
+)
 from .prepare_apps import prepare_launch_for_engine
 
 class BaseLauncher(object):
@@ -177,6 +182,13 @@ class BaseLauncher(object):
             # sure that apps depending on not having a DLL path are set
             # to work properly
             dll_directory_cache = clear_dll_directory()
+
+            # Clear Qt's library paths. This will only happen on Linux, and
+            # we will reset the paths after the subprocess has been spawned.
+            # This resolves a launch issue for DCCs that bundle their own Qt
+            # on Linux running in KDE, as reported by the Flame team.
+            qt_lib_paths = clear_qt_library_paths()
+
             try:
                 # Launch the application
                 self._tk_app.log_debug(
@@ -191,6 +203,15 @@ class BaseLauncher(object):
                 return_code = result.get("return_code")
             finally:
                 restore_dll_directory(dll_directory_cache)
+
+                # If we got back a None it just means that we didn't do
+                # anything to the library paths, which means we don't need
+                # to restore anything here.
+                if qt_lib_paths is not None:
+                    self._tk_app.log_debug("Restoring Qt library paths to %s" % qt_lib_paths)
+                    restore_qt_library_paths(qt_lib_paths)
+                else:
+                    self._tk_app.log_debug("Qt library paths were not cleared, nothing to restore.")
 
             self._tk_app.log_debug("Hook tried to launch '%s'" % launch_cmd)
             if return_code != 0:
