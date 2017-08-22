@@ -346,8 +346,9 @@ class SoftwareEntityLauncher(BaseLauncher):
         for software_version in software_versions:
             # run before launch hook
             self._tk_app.log_debug("Running before register command hook...")
-            software_version, engine_str = self._tk_app.execute_hook(
+            engine_str = self._tk_app.execute_hook_method(
                 "hook_before_register_command",
+                "determine_engine_instance_name",
                 software_version=software_version,
                 engine_instance_name=engine_str,
             )

@@ -23,11 +23,12 @@ HookBaseClass = sgtk.get_hook_baseclass()
 class BeforeRegisterCommand(HookBaseClass):
     """
     Hook to intercept SoftwareLauncher and engine instance name data prior to
-    launcher command registration.
+    launcher command registration and alter the engine instance name should that
+    be required.
     """
-    def execute(self, software_version, engine_instance_name):
+    def determine_engine_instance_name(self, software_version, engine_instance_name):
         """
-        Executed when the hook is run prior to launcher command registration.
+        Called when the hook is run prior to launcher command registration.
 
         :param software_version: The software version instance constructed when
             the scan software routine was run.
@@ -35,13 +36,9 @@ class BeforeRegisterCommand(HookBaseClass):
         :param str engine_instance_name: The name of the engine instance that will
             be used when SGTK is bootstrapped during launch.
 
-        :returns: A tuple containing a :class:`sgtk.platform.SoftwareVersion`
-            instance followed by the engine instance name. These two items will
-            be used when the launcher command is registered.
-        :rtype: tuple
+        :returns: The desired engine instance name.
+        :rtype: str
         """
-        # The default implementation simply returns what it was given. Should
-        # there be the need to tweak any data in the SoftwareVersion, a new
-        # instance will need to be built using sgtk.platform.SoftwareVersion.
-        return(software_version, engine_instance_name)
+        # The default implementation simply returns what it was given.
+        return engine_instance_name
 
