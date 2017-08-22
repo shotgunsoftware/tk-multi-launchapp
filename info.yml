@@ -158,6 +158,14 @@ configuration:
                      to add additional pipeline paths, APIs or other things to the setup, or 
                      specify additional scripts etc to run."
 
+    hook_before_register_command:
+        type: hook
+        default_value: before_register_command
+        description: "This hook is called just before launcher command registration occurs.
+                      it can be used to alter the engine instance name associated with the
+                      launcher should that be required. This hook's methods are only called
+                      when Software entity launchers are being used."
+
 # the Shotgun fields that this app needs in order to operate correctly
 requires_shotgun_fields:
 
