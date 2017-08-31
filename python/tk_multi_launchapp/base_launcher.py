@@ -109,9 +109,14 @@ class BaseLauncher(object):
                 "engine_name": app_engine,
             }
 
-            def launch_version():
+            def launch_version(*args, **kwargs):
                 self._launch_callback(
-                    menu_name, app_engine, app_path, app_args, version
+                    menu_name,
+                    app_engine,
+                    app_path,
+                    app_args,
+                    version,
+                    *args, **kwargs
                 )
 
             self._tk_app.log_debug(
@@ -260,7 +265,7 @@ class BaseLauncher(object):
             self._tk_app.sgtk, ctx, "Toolkit_App_Startup", desc, meta
         )
 
-    def _launch_callback(self, menu_name, app_engine, app_path, app_args, version=None):
+    def _launch_callback(self, menu_name, app_engine, app_path, app_args, version=None, file_to_open=None):
         """
         Default method to launch DCC application command based on the current context.
 
@@ -318,7 +323,13 @@ class BaseLauncher(object):
 
         # Launch the DCC
         self._launch_app(
-            menu_name, app_engine, app_path, app_args, self._tk_app.context, version
+            menu_name,
+            app_engine,
+            app_path,
+            app_args,
+            self._tk_app.context,
+            version,
+            file_to_open,
         )
 
     def register_launch_commands(self):
