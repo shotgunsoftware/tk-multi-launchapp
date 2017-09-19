@@ -377,7 +377,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                         self._tk_app.context,
                     )
                 except sgtk.platform.TankMissingEngineError:
-                    self._tk_app.log_warning(
+                    self._tk_app.log_debug(
                         "The engine instance requested by before_register_command (%s) "
                         "does not exist in the current environment. The launcher will "
                         "not be registered as a result." % launch_engine_str
