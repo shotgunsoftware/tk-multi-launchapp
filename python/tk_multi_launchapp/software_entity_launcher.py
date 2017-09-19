@@ -353,6 +353,37 @@ class SoftwareEntityLauncher(BaseLauncher):
                 engine_instance_name=engine_str,
             )
 
+            # If the engine name was transformed by the hook, then we need to
+            # make sure that the new engine instance that's requested exists
+            # in the environment. If it doesn't, then we don't register the
+            # launcher command. The reason we do this here is because the same
+            # verification will have occurred during the scan phase of
+            # registration for the engine instance name defined in the associated
+            # Software entity, but that occurs before the launch engine instance
+            # is determined by the hook. We need to check for the same possible
+            # issue here since the requested engine instance has changed.
+            if launch_engine_str != engine_str:
+                self._tk_app.log_debug(
+                    "The before_register_command hook changed the engine instance "
+                    "to be %s." % launch_engine_str
+                )
+
+                try:
+                    # We don't need the returned env and descriptor. We only
+                    # care whether it raises or not.
+                    sgtk.platform.engine.get_env_and_descriptor_for_engine(
+                        launch_engine_str,
+                        self._tk_app.sgtk,
+                        self._tk_app.context,
+                    )
+                except sgtk.platform.TankMissingEngineError:
+                    self._tk_app.log_warning(
+                        "The engine instance requested by before_register_command (%s) "
+                        "does not exist in the current environment. The launcher will "
+                        "not be registered as a result." % launch_engine_str
+                    )
+                    continue
+
             # figure out if this is the group default
             if is_group_default and (software_version.version == sorted_versions[0]):
                 group_default = True
