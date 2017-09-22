@@ -384,6 +384,16 @@ class SoftwareEntityLauncher(BaseLauncher):
                     )
                     continue
 
+            # We need to check to see if the engine instance associated with
+            # the launch command is something we've been configured to skip.
+            if launch_engine_str in self._tk_app.get_setting("skip_engine_instances"):
+                self._tk_app.log_debug(
+                    "The %s engine instance has been configured to be skipped by way "
+                    "of the skip_engine_instances app setting. The launcher command "
+                    "for %r will not be registered." % (launch_engine_str, software_version)
+                )
+                continue
+
             # figure out if this is the group default
             if is_group_default and (software_version.version == sorted_versions[0]):
                 group_default = True
