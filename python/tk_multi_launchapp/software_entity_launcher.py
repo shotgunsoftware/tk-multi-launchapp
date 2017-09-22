@@ -363,9 +363,9 @@ class SoftwareEntityLauncher(BaseLauncher):
             # is determined by the hook. We need to check for the same possible
             # issue here since the requested engine instance has changed.
             if launch_engine_str != engine_str:
-                self._tk_app.log_debug(
+                self._tk_app.logger.debug(
                     "The before_register_command hook changed the engine instance "
-                    "to be %s." % launch_engine_str
+                    "to be %s.", launch_engine_str
                 )
 
                 try:
@@ -377,12 +377,22 @@ class SoftwareEntityLauncher(BaseLauncher):
                         self._tk_app.context,
                     )
                 except sgtk.platform.TankMissingEngineError:
-                    self._tk_app.log_debug(
+                    self._tk_app.logger.debug(
                         "The engine instance requested by before_register_command (%s) "
                         "does not exist in the current environment. The launcher will "
-                        "not be registered as a result." % launch_engine_str
+                        "not be registered as a result.", launch_engine_str
                     )
                     continue
+
+            # We need to check to see if the engine instance associated with
+            # the launch command is something we've been configured to skip.
+            if launch_engine_str in self._tk_app.get_setting("skip_engine_instances"):
+                self._tk_app.logger.debug(
+                    "The %s engine instance has been configured to be skipped by way "
+                    "of the skip_engine_instances app setting. The launcher command "
+                    "for %r will not be registered.", launch_engine_str, software_version
+                )
+                continue
 
             # figure out if this is the group default
             if is_group_default and (software_version.version == sorted_versions[0]):

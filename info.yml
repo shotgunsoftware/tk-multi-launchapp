@@ -134,6 +134,23 @@ configuration:
                      These pieces of the version string are available in the other settings via the
                      {v0}, {v1}, {v2}, ... replacement tokens."
 
+    skip_engine_instances:
+        type: list
+        allows_empty: True
+        values:
+          type: str
+        default_value: []
+        description: "A list of string names of engine instances to skip registering Software
+                     launcher commands for. For example, a value of ['tk-nukestudio'] for this
+                     setting would stop any Software entity launcher commands being registered
+                     with the engine that reference the 'tk-nukestudio' engine instance in that
+                     environment. This can be used to allow for an engine instance to be configured
+                     for a given environment without a launcher existing for it. This is useful
+                     in the case of Nuke Studio, where we want to allow for context changes into
+                     certain environments, but we only want the application to be launchable from
+                     a project environment. This setting only has an impact on Software entity
+                     launchers."
+
     extra:
         type: dict
         description: "Shotgun engine specific extra values. These are defined per Shotgun engine.
