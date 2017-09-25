@@ -188,7 +188,6 @@ class BaseLauncher(object):
                     "Launching executable '%s' with args '%s'" %
                     (app_path, app_args)
                 )
-
                 result = self._tk_app.execute_hook(
                     "hook_app_launch", app_path=app_path,
                     app_args=app_args, version=version_string
@@ -229,9 +228,6 @@ class BaseLauncher(object):
                     )
 
             else:
-                # Emit an application launched metric
-                self._log_launched_application_metric(menu_name, app_engine, context, launch_cmd)
-
                 # Write an event log entry
                 self._register_event_log(menu_name, app_engine, context, launch_cmd)
 
@@ -244,43 +240,6 @@ class BaseLauncher(object):
             del sys.path[:]
             sys.path.extend(sys_path_clone)
 
-    def _get_metadata(self, app_engine, command_executed):
-        """
-
-        :return:
-        """
-        return {
-            "core": self._tk_app.sgtk.version,
-            "engine": "%s %s" % (self._tk_app.engine.name, self._tk_app.engine.version),
-            "app": "%s %s" % (self._tk_app.name, self._tk_app.version),
-            "launched_engine": app_engine,
-            "command": command_executed,
-            "platform": sys.platform
-        }
-
-    def _log_launched_application_metric(self, menu_name, app_engine, ctx, command_executed):
-        # Dedicated try/except block we wouldn't want a metric-related exception
-        # to prevent execution of the remaining code.
-        try:
-            from sgtk.util.metrics import EventMetric as EventMetric
-
-            properties =  self._tk_app._get_metrics_properties()
-            meta = self._get_metadata(app_engine, command_executed)
-            meta.update({
-                "context": str(ctx),
-                "menu_name": menu_name
-            })
-            properties.update({
-                "meta": meta
-            })
-            EventMetric.log(
-                EventMetric.GROUP_TOOLKIT,
-                "Launched Software",
-                properties=properties,
-            )
-        except Exception as e:
-            pass
-
     def _register_event_log(self, menu_name, app_engine, ctx, command_executed):
         """
         Writes an event log entry to the shotgun event log, informing
@@ -292,7 +251,13 @@ class BaseLauncher(object):
         :param command_executed: Command (including args) that was used to
                                  launch the DCC.
         """
-        meta = self._get_metadata(app_engine, command_executed)
+        meta = {}
+        meta["core"] = self._tk_app.sgtk.version
+        meta["engine"] = "%s %s" % (self._tk_app.engine.name, self._tk_app.engine.version)
+        meta["app"] = "%s %s" % (self._tk_app.name, self._tk_app.version)
+        meta["launched_engine"] = app_engine
+        meta["command"] = command_executed
+        meta["platform"] = sys.platform
         if ctx.task:
             meta["task"] = ctx.task["id"]
         desc = "%s %s: %s" % (self._tk_app.name, self._tk_app.version, menu_name)
