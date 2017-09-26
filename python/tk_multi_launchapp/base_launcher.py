@@ -230,9 +230,6 @@ class BaseLauncher(object):
             else:
                 # Emit a launched software metric
                 try:
-
-                    self._tk_app.log_info("NICOLAS: dfasdfasdfasdf")
-
                     # Dedicated try/except block: we wouldn't want a metric-related
                     # exception to prevent execution of the remaining code.
                     engine = sgtk.platform.current_engine()
