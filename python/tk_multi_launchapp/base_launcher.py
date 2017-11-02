@@ -228,6 +228,16 @@ class BaseLauncher(object):
                     )
 
             else:
+                # Emit a launched software metric
+                try:
+                    # Dedicated try/except block: we wouldn't want a metric-related
+                    # exception to prevent execution of the remaining code.
+                    engine = sgtk.platform.current_engine()
+                    engine.log_metric("Launched Software")
+
+                except Exception as e:
+                    pass
+
                 # Write an event log entry
                 self._register_event_log(menu_name, app_engine, context, launch_cmd)
 
