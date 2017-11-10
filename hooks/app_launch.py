@@ -15,6 +15,7 @@ This hook is executed to launch the applications.
 """
 
 import os
+import re
 import sys
 import tank
 
@@ -35,21 +36,23 @@ class AppLaunch(tank.Hook):
         :returns: (dict) The two valid keys are 'command' (str) and 'return_code' (int).
         """
         system = sys.platform
-        flame_launcher = "tk-flame/python/startup/app_launcher.py"
+
+        # NOTE: When working with Software entity launchers, we don't have the
+        # advantage of an engine name registered with the app instance. Instead,
+        # we can rely on the fact that we know that the app_launch.py script
+        # bundled with tk-flame will be included in the app_args string, which
+        # means we know that "tk-flame" will be in that path. As such, we can
+        # check for that to know whether this is a Flame launch.
+        flame_launch = (
+            self.parent.get_setting("engine") in ["tk-flame", "tk-flare"] or
+            re.search(r"tk-flame/.*/python/startup/app_launcher.py", app_args)
+        )
 
         if system == "linux2":
             # on linux, we just run the executable directly
             cmd = "%s %s &" % (app_path, app_args)
         
-        elif self.parent.get_setting("engine") in ["tk-flame", "tk-flare"] or flame_launcher in app_args:
-            # NOTE: When working with Software entity launchers, we don't
-            # have the advantage of an engine name registered with the app
-            # instance. Instead, we can rely on the fact that we know that
-            # the app_launch.py script bundled with tk-flame will be included
-            # in the app_args string, which means we know that "tk-flame"
-            # will be in that path. As such, we can check for that to know
-            # whether this is a Flame launch.
-            #
+        elif flame_launch:
             # flame and flare works in a different way from other DCCs
             # on both linux and mac, they run unix-style command line
             # and on the mac the more standardized "open" command cannot
