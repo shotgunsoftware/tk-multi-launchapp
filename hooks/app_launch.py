@@ -15,7 +15,6 @@ This hook is executed to launch the applications.
 """
 
 import os
-import re
 import sys
 import tank
 
@@ -38,14 +37,14 @@ class AppLaunch(tank.Hook):
         system = sys.platform
 
         # NOTE: When working with Software entity launchers, we don't have the
-        # advantage of an engine name registered with the app instance. Instead,
-        # we can rely on the fact that we know that the app_launch.py script
-        # bundled with tk-flame will be included in the app_args string, which
-        # means we know that "tk-flame" will be in that path. As such, we can
-        # check for that to know whether this is a Flame launch.
+        # advantage of an engine name configured with the app instance. We can
+        # check against that first for manual launchers. Failing that, we can
+        # check the engine name env variable set by the flame engine during
+        # startup.
+        flame_engine_instance_names = ["tk-flame", "tk-flare"]
         flame_launch = (
-            self.parent.get_setting("engine") in ["tk-flame", "tk-flare"] or
-            re.search(r"tk-flame/.*/python/startup/app_launcher.py", app_args)
+            self.parent.get_setting("engine") in flame_engine_instance_names or
+            os.environ.get("TOOLKIT_ENGINE_NAME") == "tk-flame"
         )
 
         if system == "linux2":
