@@ -49,6 +49,7 @@ class BaseLauncher(object):
             version=None,
             group=None,
             group_default=True,
+            deny_permissions=None,
         ):
         """
         Register a launch command with the current engine.
@@ -70,6 +71,8 @@ class BaseLauncher(object):
                                    indicate whether to launch this command if the group is
                                    selected instead of an individual command. This value is
                                    also interpreted by the engine the command is registered with.
+        :param list deny_permissions: (Optional) List of permission groups to exclude this
+                                      menu item for (e.g. ``["Artist"]``)
         """
         # do the {version} replacement if needed
         icon = apply_version_to_setting(app_icon, version)
@@ -107,6 +110,7 @@ class BaseLauncher(object):
                 "group": group,
                 "group_default": group_default,
                 "engine_name": app_engine,
+                "deny_permissions": deny_permissions,
             }
 
             def launch_version(*args, **kwargs):

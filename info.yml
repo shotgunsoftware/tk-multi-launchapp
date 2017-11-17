@@ -94,6 +94,14 @@ configuration:
                       display in applications that show a single button for each named group."
         default_value: False
 
+    deny_permissions:
+        type: list
+        allows_empty: True
+        values:
+            type: str
+        default_value: []
+        description: "List of permission groups to exclude this application launcher for (e.g. ['Artist'])."
+
     defer_keyword:
         type: str
         default_value: ""

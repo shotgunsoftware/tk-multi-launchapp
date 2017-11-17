@@ -32,6 +32,7 @@ class SingleConfigLauncher(BaseLauncher):
         self._app_engine = self._tk_app.get_setting("engine")
         self._app_group = self._tk_app.get_setting("group")
         self._is_group_default = self._tk_app.get_setting("group_default")
+        self._deny_permissions = self._tk_app.get_setting("deny_permissions")
 
     def register_launch_commands(self):
         """
@@ -95,7 +96,8 @@ class SingleConfigLauncher(BaseLauncher):
                     self._app_args,
                     version,
                     self._app_group,
-                    (version == sorted_versions[0])  # group_default
+                    (version == sorted_versions[0]),  # group_default
+                    self._deny_permissions,
                 )
         else:
             # No replacements defined, just register with the raw values
@@ -108,6 +110,7 @@ class SingleConfigLauncher(BaseLauncher):
                 None,
                 self._app_group,
                 self._is_group_default,
+                self._deny_permissions,
             )
 
     def launch_from_path(self, path, version=None):
