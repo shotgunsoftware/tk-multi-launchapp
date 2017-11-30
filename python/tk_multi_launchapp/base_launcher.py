@@ -172,8 +172,11 @@ class BaseLauncher(object):
             # run before launch hook
             self._tk_app.log_debug("Running before app launch hook...")
             self._tk_app.execute_hook(
-                "hook_before_app_launch", app_path=app_path,
-                app_args=app_args, version=version_string
+                "hook_before_app_launch",
+                app_path=app_path,
+                app_args=app_args,
+                version=version_string,
+                engine_name=app_engine,
             )
 
             # Ticket 26741: Avoid having odd DLL loading issues on windows
@@ -189,8 +192,11 @@ class BaseLauncher(object):
                     (app_path, app_args)
                 )
                 result = self._tk_app.execute_hook(
-                    "hook_app_launch", app_path=app_path,
-                    app_args=app_args, version=version_string
+                    "hook_app_launch",
+                    app_path=app_path,
+                    app_args=app_args,
+                    version=version_string,
+                    engine_name=app_engine,
                 )
                 launch_cmd = result.get("command")
                 return_code = result.get("return_code")
