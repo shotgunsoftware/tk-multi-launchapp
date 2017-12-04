@@ -15,6 +15,7 @@ This hook is executed to launch the applications.
 """
 
 import os
+import re
 import sys
 import tank
 
@@ -39,15 +40,21 @@ class AppLaunch(tank.Hook):
 
         system = sys.platform
 
+        # see if this is a flame launch with toolkit
+        flame_launch = re.search(r"tk-flame/.*/python/startup/app_launcher.py", app_args)
+
         if system == "linux2":
             # on linux, we just run the executable directly
             cmd = "%s %s &" % (app_path, app_args)
         
-        elif engine_name == "tk-flame":
+        elif flame_launch:
             # flame and flare work in a different way from other DCCs
             # on both linux and mac, they run unix-style command line
             # and on the mac the more standardized "open" command cannot
-            # be utilized.
+            # be utilized. NOTE: this is only done when the app launcher python
+            # script is supplied at startup. When doing a regular, zero config
+            # launch (no toolkit/app_launcher.py script) then the regular
+            # OS-specific launch style is used.
             cmd = "%s %s &" % (app_path, app_args)
             
         elif system == "darwin":
