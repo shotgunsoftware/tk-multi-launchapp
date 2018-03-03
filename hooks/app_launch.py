@@ -37,24 +37,35 @@ class AppLaunch(tank.Hook):
 
         :returns: (dict) The two valid keys are 'command' (str) and 'return_code' (int).
         """
-
         system = sys.platform
 
-        # see if this is a flame launch with toolkit
-        flame_launch = re.search(r"tk-flame/.*/python/startup/app_launcher.py", app_args)
+        # We need to know whether we're launching one of the Flame family of
+        # products. To do that, we have a few things to check:
+        #
+        # 1. If the launcher has an engine setting, we can look at that.
+        # 2. If the tk-flame engine's app_launcher script is part of the args.
+        # 3. If "flame" or "flare" is in the app path, and it's using the
+        #    startApplication executable.
+        #
+        # Those three heuristics cover the use cases we have to be aware of:
+        #
+        # 1. A non-software entity launchers using tk-flame or tk-flare.
+        # 2. A software entity launcher using the "classic" toolkit integration.
+        # 3. A zero config launch that's using a new enough engine that the
+        #    software entity launcher is built using the startApplication
+        #    executable instead of the .app on OS X.
+        #
+        is_flame_family = (
+            self.parent.get_setting("engine") in ["tk-flame", "tk-flare"] or \
+            re.search(r"tk-flame/.*python/startup/app_launcher.py", app_args) or \
+            (re.search(r"fla[mr]e", app_path) and app_path.endswith("startApplication"))
+        )
 
         if system == "linux2":
             # on linux, we just run the executable directly
             cmd = "%s %s &" % (app_path, app_args)
-        
-        elif flame_launch:
-            # flame and flare work in a different way from other DCCs
-            # on both linux and mac, they run unix-style command line
-            # and on the mac the more standardized "open" command cannot
-            # be utilized. NOTE: this is only done when the app launcher python
-            # script is supplied at startup. When doing a regular, zero config
-            # launch (no toolkit/app_launcher.py script) then the regular
-            # OS-specific launch style is used.
+
+        elif is_flame_family:
             cmd = "%s %s &" % (app_path, app_args)
             
         elif system == "darwin":
