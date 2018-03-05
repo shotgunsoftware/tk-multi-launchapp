@@ -39,46 +39,28 @@ class AppLaunch(tank.Hook):
         """
         system = sys.platform
 
-        # We need to know whether we're launching one of the Flame family of
-        # products. To do that, we have a few things to check:
-        #
-        # 1. If the launcher has an engine setting, we can look at that.
-        # 2. If the tk-flame engine's app_launcher script is part of the args.
-        # 3. If "flame" or "flare" is in the app path, and it's using the
-        #    startApplication executable.
-        #
-        # Those three heuristics cover the use cases we have to be aware of:
-        #
-        # 1. A non-software entity launchers using tk-flame or tk-flare.
-        # 2. A software entity launcher using the "classic" toolkit integration.
-        # 3. A zero config launch that's using a new enough engine that the
-        #    software entity launcher is built using the startApplication
-        #    executable instead of the .app on OS X.
-        #
-        is_flame_family = (
-            self.parent.get_setting("engine") in ["tk-flame", "tk-flare"] or \
-            re.search(r"tk-flame/.*python/startup/app_launcher.py", app_args) or \
-            (re.search(r"fla[mr]e", app_path) and app_path.endswith("startApplication"))
-        )
-
         if system == "linux2":
             # on linux, we just run the executable directly
             cmd = "%s %s &" % (app_path, app_args)
-
-        elif is_flame_family:
-            cmd = "%s %s &" % (app_path, app_args)
             
         elif system == "darwin":
-            # on the mac, the executable paths are normally pointing
-            # to the application bundle and not to the binary file
-            # embedded in the bundle, meaning that we should use the
-            # built-in mac open command to execute it. The -n flag tells the OS
-            # to launch a new instance even if one is already running. The -a
-            # flag specifies that the path is an application and supports both
-            # the app bundle form or the full executable form.
-            cmd = "open -n -a \"%s\"" % (app_path)
-            if app_args:
-                cmd += " --args \"%s\"" % app_args.replace("\"", "\\\"")
+            # If we're on OS X, then we have two possibilities: we can be asked
+            # to launch an application bundle using the "open" command, or we
+            # might have been given an executable that we need to treat like
+            # any other Unix-style command. The best way we have to know whether
+            # we're in one situation or the other is to check the app path we're
+            # being asked to launch; if it's a .app, we use the "open" command,
+            # and if it's not then we treat it like a typical, Unix executable.
+            if app_path.endswith(".app"):
+                # The -n flag tells the OS to launch a new instance even if one is 
+                # already running. The -a flag specifies that the path is an
+                # application and supports both the app bundle form or the full
+                # executable form.
+                cmd = "open -n -a \"%s\"" % (app_path)
+                if app_args:
+                    cmd += " --args \"%s\"" % app_args.replace("\"", "\\\"")
+            else:
+                cmd = "%s %s &" % (app_path, app_args)
         
         elif system == "win32":
             # on windows, we run the start command in order to avoid
