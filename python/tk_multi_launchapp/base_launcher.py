@@ -73,7 +73,7 @@ class BaseLauncher(object):
                                    selected instead of an individual command. This value is
                                    also interpreted by the engine the command is registered with.
         :param int software_entity_id: If set, this is the entity id of the software entity that
-            is associated with this launch command.
+                                       is associated with this launch command.
         """
         # do the {version} replacement if needed
         icon = apply_version_to_setting(app_icon, version)

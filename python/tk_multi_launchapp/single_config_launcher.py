@@ -96,6 +96,8 @@ class SingleConfigLauncher(BaseLauncher):
                     version,
                     self._app_group,
                     (version == sorted_versions[0])  # group_default
+                    # We don't pass in a software entity id, since app is coming from
+                    # the configuration.
                 )
         else:
             # No replacements defined, just register with the raw values
@@ -108,6 +110,8 @@ class SingleConfigLauncher(BaseLauncher):
                 None,
                 self._app_group,
                 self._is_group_default,
+                # We don't pass in a software entity id, since app is coming from
+                # the configuration.
             )
 
     def launch_from_path(self, path, version=None):
