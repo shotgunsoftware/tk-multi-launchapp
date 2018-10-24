@@ -112,7 +112,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                     dcc_versions,
                     dcc_products,
                     app_group,
-                    is_group_default
+                    is_group_default,
+                    sw_entity["id"]
                 )
 
             else:
@@ -150,7 +151,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                     app_display_name,
                     app_path,
                     app_args,
-                    icon_path
+                    icon_path,
+                    sw_entity["id"]
                 )
 
     def launch_from_path(self, path, version=None):
@@ -302,7 +304,9 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         return sw_entities
 
-    def _scan_for_software_and_register(self, engine_str, dcc_versions, dcc_products, group, is_group_default):
+    def _scan_for_software_and_register(
+        self, engine_str, dcc_versions, dcc_products, group, is_group_default, software_entity_id
+    ):
         """
         Scan for installed software and register commands for all entries detected.
 
@@ -415,11 +419,12 @@ class SoftwareEntityLauncher(BaseLauncher):
                 software_version.version,
                 group_name,
                 group_default,
+                software_entity_id
             )
 
     def _manual_register(
         self, engine_str, dcc_versions, group, is_group_default,
-        display_name, path, args, icon_path
+        display_name, path, args, icon_path, software_entity_id
     ):
         """
         Parse manual software definition given by input params and register
@@ -470,6 +475,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                     version,
                     group,
                     group_default,
+                    software_entity_id
                 )
 
         else:
@@ -483,6 +489,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 None,  # version
                 group,
                 is_group_default,
+                software_entity_id
             )
 
     def _extract_thumbnail(self, entity_type, entity_id, sg_thumb_url):
