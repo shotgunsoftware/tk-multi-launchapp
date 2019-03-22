@@ -122,6 +122,7 @@ class BaseLauncher(object):
                     app_path,
                     app_args,
                     version,
+                    software_entity_id,
                     *args, **kwargs
                 )
 
@@ -135,7 +136,7 @@ class BaseLauncher(object):
 
     def _launch_app(
         self, menu_name, app_engine, app_path, app_args, context,
-        version=None, file_to_open=None
+        version=None, software_entity_id=None, file_to_open=None
     ):
         """
         Launches an application. No environment variable change is
@@ -151,6 +152,9 @@ class BaseLauncher(object):
         :param context: Toolkit context to open the app in.
         :param version: (Optional) Version of the app to launch. Specifying
                         None means no {version} substitutions will take place.
+        :param software_entity_id: (Optional) If set, this is the entity id of
+                                   the software entity that is associated with
+                                   this launch command.
         :param file_to_open: (Optional) File to open when the app launches.
         """
         try:
@@ -183,6 +187,7 @@ class BaseLauncher(object):
                 app_args=app_args,
                 version=version_string,
                 engine_name=app_engine,
+                software_entity_id=software_entity_id
             )
 
             # Ticket 26741: Avoid having odd DLL loading issues on windows
@@ -203,6 +208,7 @@ class BaseLauncher(object):
                     app_args=app_args,
                     version=version_string,
                     engine_name=app_engine,
+                    software_entity_id=software_entity_id
                 )
                 launch_cmd = result.get("command")
                 return_code = result.get("return_code")
@@ -287,7 +293,8 @@ class BaseLauncher(object):
             self._tk_app.sgtk, ctx, "Toolkit_App_Startup", desc, meta
         )
 
-    def _launch_callback(self, menu_name, app_engine, app_path, app_args, version=None, file_to_open=None):
+    def _launch_callback(self, menu_name, app_engine, app_path, app_args, version=None,
+                         software_entity_id=None, file_to_open=None):
         """
         Default method to launch DCC application command based on the current context.
 
@@ -299,6 +306,9 @@ class BaseLauncher(object):
         :param app_args: Args string to pass to the DCC at launch time.
         :param version: (Optional) Specific version of DCC to launch. Used to
                         parse {version}, {v0}, {v1}, ... information from.
+        :param software_entity_id: (Optional) If set, this is the entity id of
+                                   the software entity that is associated with
+                                   this launch command.
         """
         # Verify a Project is defined in the context.
         if self._tk_app.context.project is None:
@@ -351,7 +361,8 @@ class BaseLauncher(object):
             app_args,
             self._tk_app.context,
             version,
-            file_to_open,
+            software_entity_id,
+            file_to_open
         )
 
     def register_launch_commands(self):

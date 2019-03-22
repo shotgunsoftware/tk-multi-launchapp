@@ -23,7 +23,8 @@ class BeforeAppLaunch(tank.Hook):
     Hook to set up the system prior to app launch.
     """
     
-    def execute(self, app_path, app_args, version, engine_name, **kwargs):
+    def execute(self, app_path, app_args, version, engine_name,
+                software_entity_id=None, **kwargs):
         """
         The execute functon of the hook will be called prior to starting the required application        
         
@@ -33,6 +34,8 @@ class BeforeAppLaunch(tank.Hook):
             "versions" settings of the Launcher instance, otherwise None
         :param engine_name (str) The name of the engine associated with the
             software about to be launched.
+        :param software_entity_id: (int) If set, this is the entity id of the
+            software entity that is associated with this launch command.
 
         """
 
