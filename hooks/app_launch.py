@@ -58,7 +58,7 @@ class AppLaunch(tank.Hook):
                 # executable form.
                 cmd = "open -n -a \"%s\"" % (app_path)
                 if app_args:
-                    cmd += " --args \"%s\"" % app_args.replace("\"", "\\\"")
+                    cmd += " --args %s" % app_args
             else:
                 cmd = "%s %s &" % (app_path, app_args)
         
