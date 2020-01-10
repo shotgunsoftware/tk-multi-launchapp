@@ -10,6 +10,7 @@
 
 import sys
 import re
+import sgtk
 
 
 def _translate_version_tokens(raw_string, version):
