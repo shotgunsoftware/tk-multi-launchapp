@@ -96,7 +96,7 @@ def clear_dll_directory():
        we need to keep the desktop dll directory.
     """
     dll_directory = None
-    if sys.platform == "win32":
+    if sgtk.util.is_windows():
         # This 'try' block will fail silently if user is using
         # a different python interpreter then Desktop, in which
         # case it will be fine since the Desktop will have set
@@ -124,7 +124,7 @@ def restore_dll_directory(dll_directory):
 
     :param dll_directory: The previously pushed DLL directory
     """
-    if sys.platform == "win32":
+    if sgtk.util.is_windows():
         # This may fail silently, which is the correct behavior.
         # Refer to the comments in _clear_dll_directory() for
         # additional information.

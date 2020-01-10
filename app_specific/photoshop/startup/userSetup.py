@@ -17,6 +17,7 @@ import sys
 
 
 def msgbox(msg):
+    # Can't use sgtk.util.is_* here, are it might be called when toolkit is not available...
     if sys.platform == "win32":
         import ctypes
 

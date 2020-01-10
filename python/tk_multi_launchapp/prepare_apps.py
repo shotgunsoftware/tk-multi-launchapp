@@ -266,7 +266,7 @@ def _prepare_softimage_launch():
     # we think will work so lets _append_ them to the LD_LIBRARY_PATH & PYTHONPATH before
     # launching Softimage.  Note, these can be overriden by specifying a location earlier
     # in the LD_LIBRARY_PATH & PYTHONPATH if needed
-    if sys.platform == "linux2":
+    if sgtk.util.is_linux():
         # Note: we can't reliably check the version as the path on linux
         # is typically just 'xsi'.  This may become a problem if we start
         # to support 2014 and beyond...
@@ -491,9 +491,9 @@ def _prepare_photoshop_launch(context):
     extra_configs = tk_app.get_setting("extra", {})
 
     # Get the path to the python executable
-    python_setting = {"darwin": "mac_python_path", "win32": "windows_python_path"}[
-        sys.platform
-    ]
+    python_setting = (
+        "mac_python_path" if sgtk.util.is_macos() else "windows_python_path"
+    )
     python_path = extra_configs.get(python_setting)
     if not python_path:
         raise TankError(
@@ -502,10 +502,11 @@ def _prepare_photoshop_launch(context):
         )
 
     # get the path to extension manager
-    manager_setting = {
-        "darwin": "mac_extension_manager_path",
-        "win32": "windows_extension_manager_path",
-    }[sys.platform]
+    manager_setting = (
+        "mac_extension_manager_path"
+        if sgtk.util.is_macos()
+        else "windows_extension_manager_path"
+    )
     manager_path = extra_configs.get(manager_setting)
     if not manager_path:
         raise TankError(
