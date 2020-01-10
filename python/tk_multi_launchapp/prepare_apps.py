@@ -15,7 +15,9 @@ import sgtk
 from sgtk import TankError
 
 
-def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_open=None):
+def prepare_launch_for_engine(
+    engine_name, app_path, app_args, context, file_to_open=None
+):
     """
     Prepares the environment to launch a DCC application in for the
     specified TK engine name.
@@ -43,14 +45,15 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
             tk_app.sgtk, context, engine_name
         )
         if launcher:
-            tk_app.log_debug("Created %s engine launcher : %s" % (engine_name, launcher))
+            tk_app.log_debug(
+                "Created %s engine launcher : %s" % (engine_name, launcher)
+            )
             launch_info = launcher.prepare_launch(app_path, app_args, file_to_open)
             os.environ.update(launch_info.environment)
             tk_app.log_debug(
                 "Engine launcher prepared launch info:\n  path : %s"
-                "\n  args : %s\n  env  : %s" % (
-                    launch_info.path, launch_info.args, launch_info.environment
-                )
+                "\n  args : %s\n  env  : %s"
+                % (launch_info.path, launch_info.args, launch_info.environment)
             )
 
             # There's nothing left to do at this point, simply return
@@ -58,15 +61,15 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
             return (launch_info.path, launch_info.args)
         else:
             tk_app.log_debug(
-                "Engine %s does not implement an application launch interface." %
-                engine_name
+                "Engine %s does not implement an application launch interface."
+                % engine_name
             )
     else:
         tk_app.log_debug("'create_engine_launcher' method not found in sgtk.platform")
 
     tk_app.log_debug(
-        "Using classic launchapp logic to prepare launch of '%s %s'" %
-        (app_path, app_args)
+        "Using classic launchapp logic to prepare launch of '%s %s'"
+        % (app_path, app_args)
     )
 
     # we have an engine we should start as part of this app launch
@@ -102,7 +105,7 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
         _prepare_mari_launch(engine_name, context)
     elif engine_name in ["tk-flame", "tk-flare"]:
         (app_path, app_args) = _prepare_flame_flare_launch(
-            engine_name, context, app_path, app_args,
+            engine_name, context, app_path, app_args
         )
     else:
         # This should really be the first thing we try, but some of
@@ -114,7 +117,7 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
         # the way that tk-nuke and tk-hiero have.
         try:
             (app_path, app_args) = _prepare_generic_launch(
-                tk_app, engine_name, context, app_path, app_args,
+                tk_app, engine_name, context, app_path, app_args
             )
         except TankBootstrapNotFoundError:
             # Backwards compatibility here for earlier engine versions.
@@ -126,8 +129,8 @@ def prepare_launch_for_engine(engine_name, app_path, app_args, context, file_to_
                 # We have neither an engine-specific nor launchapp-specific
                 # bootstrap for this engine, so we have to bail out here.
                 raise TankError(
-                    "No bootstrap routine found for %s. The engine will not be started." %
-                    (engine_name)
+                    "No bootstrap routine found for %s. The engine will not be started."
+                    % (engine_name)
                 )
 
     # Return resolved app path and args
@@ -157,15 +160,16 @@ def _prepare_generic_launch(tk_app, engine_name, context, app_path, app_args):
     if engine_path is None:
         raise TankError(
             "Could not find the path to the '%s' engine. It may not be configured "
-            "in the environment for the current context ('%s')." % (engine_name, str(context))
+            "in the environment for the current context ('%s')."
+            % (engine_name, str(context))
         )
 
     # find bootstrap file located in the engine and load that up
     startup_path = os.path.join(engine_path, "python", "startup", "bootstrap.py")
     if not os.path.exists(startup_path):
         raise TankBootstrapNotFoundError(
-            "Could not find the bootstrap for the '%s' engine at '%s'" %
-            (engine_name, startup_path)
+            "Could not find the bootstrap for the '%s' engine at '%s'"
+            % (engine_name, startup_path)
         )
 
     python_path = os.path.dirname(startup_path)
@@ -174,6 +178,7 @@ def _prepare_generic_launch(tk_app, engine_name, context, app_path, app_args):
     sys.path.insert(0, python_path)
     try:
         import bootstrap
+
         extra_args = tk_app.get_setting("extra", {})
 
         # bootstrap should take kwargs in order to protect from changes in
@@ -250,9 +255,11 @@ def _prepare_softimage_launch():
     Softimage specific pre-launch environment setup.
     """
     # add the startup plug-in to the XSI_PLUGINS path:
-    xsi_plugins = os.path.abspath(os.path.join(
-        _get_app_specific_path("softimage"), "startup", "Application", "Plugins"
-    ))
+    xsi_plugins = os.path.abspath(
+        os.path.join(
+            _get_app_specific_path("softimage"), "startup", "Application", "Plugins"
+        )
+    )
     sgtk.util.append_path_to_env_var("XSI_PLUGINS", xsi_plugins)
 
     # On Linux, Softimage 2013 is missing libssl and sqlite3 libraries.  We have some that
@@ -265,9 +272,9 @@ def _prepare_softimage_launch():
         # to support 2014 and beyond...
         #
         # if "Softimage_2013" in app_path:
-        lib_path = os.path.abspath(os.path.join(
-            _get_app_specific_path("softimage"), "linux", "lib"
-        ))
+        lib_path = os.path.abspath(
+            os.path.join(_get_app_specific_path("softimage"), "linux", "lib")
+        )
         sgtk.util.append_path_to_env_var("LD_LIBRARY_PATH", lib_path)
         sgtk.util.append_path_to_env_var("PYTHONPATH", lib_path)
 
@@ -280,7 +287,7 @@ def _prepare_motionbuilder_launch(app_args):
 
     :returns: (string) Command line arguments to launch DCC with.
     """
-    new_args = "\"%s\"" % os.path.join(
+    new_args = '"%s"' % os.path.join(
         _get_app_specific_path("motionbuilder"), "startup", "init_tank.py"
     )
     if app_args:
@@ -304,7 +311,7 @@ def _prepare_3dsmax_launch(app_args):
     """
     startup_dir = _get_app_startup_path("3dsmax")
     os.environ["TANK_BOOTSTRAP_SCRIPT"] = os.path.join(startup_dir, "tank_startup.py")
-    new_args = "-U MAXScript \"%s\"" % os.path.join(startup_dir, "init_tank.ms")
+    new_args = '-U MAXScript "%s"' % os.path.join(startup_dir, "init_tank.ms")
     if app_args:
         app_args = "%s %s" % (new_args, app_args)
     else:
@@ -341,10 +348,10 @@ def _prepare_3dsmaxplus_launch(context, app_args, app_path):
     max_root = os.path.dirname(app_path)
     sgtk.util.prepend_path_to_env_var("PATH", max_root)
 
-    startup_file = os.path.abspath(os.path.join(
-        engine_path, "python", "startup", "bootstrap.py"
-    ))
-    new_args = "-U PythonHost \"%s\"" % startup_file
+    startup_file = os.path.abspath(
+        os.path.join(engine_path, "python", "startup", "bootstrap.py")
+    )
+    new_args = '-U PythonHost "%s"' % startup_file
     if app_args:
         app_args = "%s %s" % (new_args, app_args)
     else:
@@ -370,6 +377,7 @@ def _prepare_houdini_launch(context):
     sys.path.append(os.path.join(engine_path, "python"))
     try:
         import tk_houdini
+
         tk_houdini.bootstrap.bootstrap(tk_app.sgtk, context)
     except:
         tk_app.log_exception("Error executing engine bootstrap script.")
@@ -408,9 +416,12 @@ def _prepare_flame_flare_launch(engine_name, context, app_path, app_args):
     sys.path.insert(0, python_path)
     try:
         import bootstrap
-        (app_path, new_args) = bootstrap.bootstrap(engine_name, context, app_path, app_args)
 
-    except Exception, e:
+        (app_path, new_args) = bootstrap.bootstrap(
+            engine_name, context, app_path, app_args
+        )
+
+    except Exception as e:
         tk_app.log_exception("Error executing engine bootstrap script.")
 
         if tk_app.engine.has_ui:
@@ -467,37 +478,39 @@ def _prepare_photoshop_launch(context):
         sys.path.append(startup_path)
         try:
             import photoshop_environment_setup
+
             photoshop_environment_setup.setup(tk_app, context)
         except:
             tk_app.log_exception("Error executing engine bootstrap script.")
-            raise TankError("Error executing bootstrap script. Please see log for details.")
+            raise TankError(
+                "Error executing bootstrap script. Please see log for details."
+            )
         return
 
     # no bootstrap logic with the engine, run the legacy version
     extra_configs = tk_app.get_setting("extra", {})
 
     # Get the path to the python executable
-    python_setting = {
-        "darwin": "mac_python_path",
-        "win32": "windows_python_path"
-    }[sys.platform]
+    python_setting = {"darwin": "mac_python_path", "win32": "windows_python_path"}[
+        sys.platform
+    ]
     python_path = extra_configs.get(python_setting)
     if not python_path:
         raise TankError(
-            "Your photoshop app launch config is missing the extra setting %s" %
-            (python_setting)
+            "Your photoshop app launch config is missing the extra setting %s"
+            % (python_setting)
         )
 
     # get the path to extension manager
     manager_setting = {
         "darwin": "mac_extension_manager_path",
-        "win32": "windows_extension_manager_path"
+        "win32": "windows_extension_manager_path",
     }[sys.platform]
     manager_path = extra_configs.get(manager_setting)
     if not manager_path:
         raise TankError(
-            "Your photoshop app launch config is missing the extra setting %s!" %
-            (manager_setting)
+            "Your photoshop app launch config is missing the extra setting %s!"
+            % (manager_setting)
         )
     os.environ["TANK_PHOTOSHOP_EXTENSION_MANAGER"] = manager_path
 
@@ -505,8 +518,9 @@ def _prepare_photoshop_launch(context):
     sys.path.append(os.path.join(engine_path, "bootstrap"))
     try:
         import photoshop_extension_manager
+
         photoshop_extension_manager.update()
-    except Exception, e:
+    except Exception as e:
         raise TankError(
             "Could not run the Adobe Extension Manager. Please double check your "
             "Shotgun Pipeline Toolkit Photoshop Settings. Error Reported: %s" % e
@@ -552,9 +566,11 @@ def _get_app_startup_path(app_name):
 ##########################################################################################
 # Exceptions
 
+
 class TankBootstrapNotFoundError(TankError):
     """
     Exception raised when an engine-specific bootstrap routine is not
     found.
     """
+
     pass
