@@ -11,6 +11,7 @@
 import sys
 import re
 
+
 def _translate_version_tokens(raw_string, version):
     """
     Returns string with version tokens replaced by their values. Replaces
@@ -42,6 +43,7 @@ def _translate_version_tokens(raw_string, version):
         ver_string = ver_string.replace("{v%d}" % i, token)
     return ver_string
 
+
 def get_clean_version_string(version):
     """
     Returns version string used for current app launch stripped of
@@ -56,6 +58,7 @@ def get_clean_version_string(version):
     :returns: Version string used to launch application.
     """
     return re.sub("[()]", "", version) if version else None
+
 
 def apply_version_to_setting(raw_string, version=None):
     """
@@ -78,6 +81,7 @@ def apply_version_to_setting(raw_string, version=None):
     if version:
         return _translate_version_tokens(raw_string, version)
     return raw_string
+
 
 def clear_dll_directory():
     """
@@ -113,6 +117,7 @@ def clear_dll_directory():
 
     return dll_directory
 
+
 def restore_dll_directory(dll_directory):
     """
     Pop the previously pushed DLL Directory
@@ -125,6 +130,7 @@ def restore_dll_directory(dll_directory):
         # additional information.
         try:
             import win32api
+
             win32api.SetDllDirectory(dll_directory)
         except StandardError:
             pass

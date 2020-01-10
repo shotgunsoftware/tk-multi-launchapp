@@ -12,6 +12,7 @@ import sgtk
 from sgtk.platform.qt import QtCore, QtGui
 from .ui.dialog import Ui_Dialog
 
+
 def show_path_error_dialog(app_instance, cmd_line):
     """
     Shows a modal dialog with information about an invalid path
@@ -21,8 +22,10 @@ def show_path_error_dialog(app_instance, cmd_line):
                      to the user as part of the message
     """
     widget = app_instance.engine.show_dialog(
-        "Error launching Application", app_instance, AppDialog,
-        app_instance=app_instance
+        "Error launching Application",
+        app_instance,
+        AppDialog,
+        app_instance=app_instance,
     )
     widget.show_path_error_message(cmd_line)
 
@@ -36,8 +39,10 @@ def show_generic_error_dialog(app_instance, error_message):
     :param cmd_line: Error message to present to the user
     """
     widget = app_instance.engine.show_dialog(
-        "Error launching Application", app_instance, AppDialog,
-        app_instance=app_instance
+        "Error launching Application",
+        app_instance,
+        AppDialog,
+        app_instance=app_instance,
     )
     widget.show_generic_error_message(error_message)
 
@@ -71,12 +76,14 @@ class AppDialog(QtGui.QWidget):
         :param cmd_line: Launch command line that should be displayed
                          to the user as part of the message
         """
-        msg = ("<b style='color: rgb(252, 98, 70)'>Failed to launch "
-               "application!</b> This is most likely because the path "
-               "is not set correctly. The command that was used to "
-               "attempt to launch is '%s'. <br><br>Click the button below "
-               "to learn more about how to configure Toolkit to launch "
-               "applications." %  cmd_line)
+        msg = (
+            "<b style='color: rgb(252, 98, 70)'>Failed to launch "
+            "application!</b> This is most likely because the path "
+            "is not set correctly. The command that was used to "
+            "attempt to launch is '%s'. <br><br>Click the button below "
+            "to learn more about how to configure Toolkit to launch "
+            "applications." % cmd_line
+        )
 
         self.ui.message.setText(msg)
 
@@ -86,11 +93,12 @@ class AppDialog(QtGui.QWidget):
 
         :param error_message: Error message to present to the user.
         """
-        msg = ("<b style='color: rgb(252, 98, 70)'>Failed to launch "
-               "application!</b><br><br>The following error was reported: "
-               "<b>%s</b><br><br>Click the button below to learn more about "
-               "how to configure Toolkit to launch applications." %
-                error_message)
+        msg = (
+            "<b style='color: rgb(252, 98, 70)'>Failed to launch "
+            "application!</b><br><br>The following error was reported: "
+            "<b>%s</b><br><br>Click the button below to learn more about "
+            "how to configure Toolkit to launch applications." % error_message
+        )
 
         self.ui.message.setText(msg)
 
