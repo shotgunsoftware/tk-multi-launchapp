@@ -108,11 +108,11 @@ def clear_dll_directory():
             # GetDLLDirectory throws an exception if none was set
             try:
                 dll_directory = win32api.GetDllDirectory(None)
-            except StandardError:
+            except Exception:
                 dll_directory = None
 
             win32api.SetDllDirectory(None)
-        except StandardError:
+        except Exception:
             pass
 
     return dll_directory
@@ -132,5 +132,5 @@ def restore_dll_directory(dll_directory):
             import win32api
 
             win32api.SetDllDirectory(dll_directory)
-        except StandardError:
+        except Exception:
             pass
