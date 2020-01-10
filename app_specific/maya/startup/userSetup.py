@@ -22,7 +22,7 @@ def bootstrap_tank():
     
     try:
         import tank
-    except Exception, e:
+    except Exception as e:
         OpenMaya.MGlobal.displayError("Shotgun: Could not import sgtk! Disabling for now: %s" % e)
         return
     
@@ -33,13 +33,13 @@ def bootstrap_tank():
     engine_name = os.environ.get("TANK_ENGINE") 
     try:
         context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
-    except Exception, e:
+    except Exception as e:
         OpenMaya.MGlobal.displayError("Shotgun: Could not create context! Shotgun Pipeline Toolkit will be disabled. Details: %s" % e)
         return
         
     try:    
         engine = tank.platform.start_engine(engine_name, context.tank, context)
-    except Exception, e:
+    except Exception as e:
         OpenMaya.MGlobal.displayError("Shotgun: Could not start engine: %s" % e)
         return
     

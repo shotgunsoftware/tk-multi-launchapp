@@ -60,7 +60,7 @@ def LoadShotgunPipelineToolkit_OnEvent(in_ctxt):
     # import sgtk:
     try:
         import sgtk
-    except Exception, e:
+    except Exception as e:
         Application.LogMessage("Shotgun: Could not import sgtk! Disabling for now: %s" % e, constants.siError)
         return
 
@@ -68,14 +68,14 @@ def LoadShotgunPipelineToolkit_OnEvent(in_ctxt):
     engine_name = os.environ.get("TANK_ENGINE")
     try:
         context = sgtk.context.deserialize(os.environ.get("TANK_CONTEXT"))
-    except Exception, e:
+    except Exception as e:
         Application.LogMessage("Shotgun: Could not create context! Shotgun Pipeline Toolkit will be disabled. Details: %s" % e, constants.siError)
         return
 
     # start the engine:
     try:
         engine = sgtk.platform.start_engine(engine_name, context.sgtk, context)
-    except Exception, e:
+    except Exception as e:
         Application.LogMessage("Shotgun: Could not start engine: %s" % e, constants.siError)
         return
 

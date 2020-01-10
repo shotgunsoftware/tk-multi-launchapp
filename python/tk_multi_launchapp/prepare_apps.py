@@ -410,7 +410,7 @@ def _prepare_flame_flare_launch(engine_name, context, app_path, app_args):
         import bootstrap
         (app_path, new_args) = bootstrap.bootstrap(engine_name, context, app_path, app_args)
 
-    except Exception, e:
+    except Exception as e:
         tk_app.log_exception("Error executing engine bootstrap script.")
 
         if tk_app.engine.has_ui:
@@ -506,7 +506,7 @@ def _prepare_photoshop_launch(context):
     try:
         import photoshop_extension_manager
         photoshop_extension_manager.update()
-    except Exception, e:
+    except Exception as e:
         raise TankError(
             "Could not run the Adobe Extension Manager. Please double check your "
             "Shotgun Pipeline Toolkit Photoshop Settings. Error Reported: %s" % e

@@ -338,7 +338,7 @@ class BaseLauncher(object):
                 self._tk_app.sgtk.create_filesystem_structure(
                     entity_type, entity_id, engine=defer_keyword
                 )
-            except sgtk.TankError, err:
+            except sgtk.TankError as err:
                 raise TankError(
                     "Could not create folders on disk. Error reported: %s" % err
                 )

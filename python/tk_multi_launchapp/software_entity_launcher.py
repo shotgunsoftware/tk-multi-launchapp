@@ -574,7 +574,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                     "applications." % engine
                 )
                 return []
-        except Exception, e:
+        except Exception as e:
             self._tk_app.log_debug(
                 "Unable to construct engine launcher for %s. Cannot determine "
                 "corresponding DCC application information:\n%s" % (engine, e)
@@ -585,7 +585,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         try:
             self._tk_app.log_debug("Scanning for Toolkit engine %s local applications." % engine)
             software_versions = engine_launcher.scan_software()
-        except Exception, e:
+        except Exception as e:
             self._tk_app.log_warning(
                 "Caught unexpected error scanning for DCC applications corresponding "
                 "to Toolkit engine %s:\n%s\n%s" % (engine, e, traceback.format_exc())
