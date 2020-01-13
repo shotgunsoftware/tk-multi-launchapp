@@ -31,9 +31,7 @@ def bootstrap_tank():
 
     engine_name = os.environ.get("TANK_ENGINE")
     try:
-        context = tank.context.deserialize(
-            os.environ.get("TANK_CONTEXT"), use_pickle=False
-        )
+        context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception as e:
         FBMessageBox(
             "Shotgun: Error",

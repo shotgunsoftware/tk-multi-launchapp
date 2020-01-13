@@ -37,9 +37,7 @@ def bootstrap_tank():
 
     engine_name = os.environ.get("TANK_ENGINE")
     try:
-        context = tank.context.deserialize(
-            os.environ.get("TANK_CONTEXT"), use_pickle=False
-        )
+        context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception as e:
         OpenMaya.MGlobal.displayError(
             "Shotgun: Could not create context! Shotgun Pipeline Toolkit will be disabled. Details: %s"
