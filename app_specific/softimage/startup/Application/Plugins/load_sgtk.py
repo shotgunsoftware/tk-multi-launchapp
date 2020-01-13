@@ -81,7 +81,9 @@ def LoadShotgunPipelineToolkit_OnEvent(in_ctxt):
     # parse environment for the engine name and context
     engine_name = os.environ.get("TANK_ENGINE")
     try:
-        context = sgtk.context.deserialize(os.environ.get("TANK_CONTEXT"))
+        context = sgtk.context.deserialize(
+            os.environ.get("TANK_CONTEXT"), use_pickle=False
+        )
     except Exception as e:
         Application.LogMessage(
             "Shotgun: Could not create context! Shotgun Pipeline Toolkit will be disabled. Details: %s"
