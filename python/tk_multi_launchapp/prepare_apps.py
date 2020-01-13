@@ -80,7 +80,7 @@ def prepare_launch_for_engine(
 
     # serialize the context into an env var
     # Do not use pickle for serialization.
-    os.environ["TANK_CONTEXT"] = sgtk.context.serialize(context, use_pickle=False)
+    os.environ["TANK_CONTEXT"] = sgtk.context.serialize(context, use_json=True)
     tk_app.log_debug("Setting TANK_CONTEXT to '%r'" % context)
 
     # Set environment variables used by apps to prep Tank engine
