@@ -38,13 +38,12 @@ class AppLaunch(tank.Hook):
 
         :returns: (dict) The two valid keys are 'command' (str) and 'return_code' (int).
         """
-        system = sys.platform
 
-        if system == "linux2":
+        if tank.util.is_linux():
             # on linux, we just run the executable directly
             cmd = "%s %s &" % (app_path, app_args)
 
-        elif system == "darwin":
+        elif tank.util.is_macos():
             # If we're on OS X, then we have two possibilities: we can be asked
             # to launch an application bundle using the "open" command, or we
             # might have been given an executable that we need to treat like
@@ -63,7 +62,7 @@ class AppLaunch(tank.Hook):
             else:
                 cmd = "%s %s &" % (app_path, app_args)
 
-        elif system == "win32":
+        else:
             # on windows, we run the start command in order to avoid
             # any command shells popping up as part of the application launch.
             cmd = 'start /B "App" "%s" %s' % (app_path, app_args)

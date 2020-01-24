@@ -10,6 +10,7 @@
 
 import sys
 import re
+import sgtk
 
 
 def _translate_version_tokens(raw_string, version):
@@ -96,7 +97,7 @@ def clear_dll_directory():
        we need to keep the desktop dll directory.
     """
     dll_directory = None
-    if sys.platform == "win32":
+    if sgtk.util.is_windows():
         # This 'try' block will fail silently if user is using
         # a different python interpreter then Desktop, in which
         # case it will be fine since the Desktop will have set
@@ -108,11 +109,11 @@ def clear_dll_directory():
             # GetDLLDirectory throws an exception if none was set
             try:
                 dll_directory = win32api.GetDllDirectory(None)
-            except StandardError:
+            except Exception:
                 dll_directory = None
 
             win32api.SetDllDirectory(None)
-        except StandardError:
+        except Exception:
             pass
 
     return dll_directory
@@ -124,7 +125,7 @@ def restore_dll_directory(dll_directory):
 
     :param dll_directory: The previously pushed DLL directory
     """
-    if sys.platform == "win32":
+    if sgtk.util.is_windows():
         # This may fail silently, which is the correct behavior.
         # Refer to the comments in _clear_dll_directory() for
         # additional information.
@@ -132,5 +133,5 @@ def restore_dll_directory(dll_directory):
             import win32api
 
             win32api.SetDllDirectory(dll_directory)
-        except StandardError:
+        except Exception:
             pass

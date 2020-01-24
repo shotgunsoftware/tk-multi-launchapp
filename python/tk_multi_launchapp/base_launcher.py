@@ -37,9 +37,13 @@ class BaseLauncher(object):
         self._tk_app = sgtk.platform.current_bundle()
 
         # Store the current platform value
-        self._platform_name = {"linux2": "linux", "darwin": "mac", "win32": "windows"}[
-            sys.platform
-        ]
+        self._platform_name = (
+            "linux"
+            if sgtk.util.is_linux()
+            else "mac"
+            if sgtk.util.is_macos()
+            else "windows"
+        )
 
     def _register_launch_command(
         self,
@@ -282,7 +286,17 @@ class BaseLauncher(object):
         meta["app"] = "%s %s" % (self._tk_app.name, self._tk_app.version)
         meta["launched_engine"] = app_engine
         meta["command"] = command_executed
-        meta["platform"] = sys.platform
+        # In Python 3 and certain flavors of Python 2, the sys.platform value under Linux
+        # can be linux2, linux3, linux4 or just linux, which is annoying.
+        # This fixes the string for all platforms so the reported result
+        # is consistent with the previous metrics we had.
+        meta["platform"] = (
+            "win32"
+            if sgtk.platform.is_windows()
+            else "darwin"
+            if sgtk.platform.is_macos()
+            else "linux2"
+        )
         if ctx.task:
             meta["task"] = ctx.task["id"]
         desc = "%s %s: %s" % (self._tk_app.name, self._tk_app.version, menu_name)
