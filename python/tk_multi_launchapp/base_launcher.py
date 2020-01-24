@@ -14,7 +14,6 @@ from distutils.version import LooseVersion
 
 import sgtk
 from sgtk import TankError
-from tank_vendor.shotgun_api3.lib import sgsix
 
 from .util import apply_version_to_setting, get_clean_version_string
 from .util import clear_dll_directory, restore_dll_directory
@@ -287,7 +286,17 @@ class BaseLauncher(object):
         meta["app"] = "%s %s" % (self._tk_app.name, self._tk_app.version)
         meta["launched_engine"] = app_engine
         meta["command"] = command_executed
-        meta["platform"] = sgsix.platform
+        # In Python 3 and certain flavors of Python 2, the sys.platform value under Linux
+        # can be linux2, linux3, linux4 or just linux, which is annoying.
+        # This fixes the string for all platforms so the reported result
+        # is consistent with the previous metrics we had.
+        meta["platform"] = (
+            "win32"
+            if sgtk.platform.is_windows()
+            else "darwin"
+            if sgtk.platform.is_macos()
+            else "linux2"
+        )
         if ctx.task:
             meta["task"] = ctx.task["id"]
         desc = "%s %s: %s" % (self._tk_app.name, self._tk_app.version, menu_name)
