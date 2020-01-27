@@ -292,9 +292,9 @@ class BaseLauncher(object):
         # is consistent with the previous metrics we had.
         meta["platform"] = (
             "win32"
-            if sgtk.platform.is_windows()
+            if sgtk.util.is_windows()
             else "darwin"
-            if sgtk.platform.is_macos()
+            if sgtk.util.is_macos()
             else "linux2"
         )
         if ctx.task:
