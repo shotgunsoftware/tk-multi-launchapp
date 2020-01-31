@@ -1,11 +1,11 @@
 # Copyright (c) 2013 Shotgun Software Inc.
-# 
+#
 # CONFIDENTIAL AND PROPRIETARY
-# 
-# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit 
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
 # Source Code License included in this distribution package. See LICENSE.
-# By accessing, using, copying or modifying this work you indicate your 
-# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 # Metadata defining the behaviour and requirements for this app
@@ -16,7 +16,7 @@ configuration:
 
     use_software_entity:
         type: bool
-        description: Whether to use Shotgun Software Entities to register 
+        description: Whether to use Shotgun Software Entities to register
                      launch commands for available DCCs.
         default_value: false
 
@@ -48,37 +48,37 @@ configuration:
         type: str
         description: The path to the application executable on Windows.
         default_value: ""
-    
+
     windows_args:
         type: str
         description: The arguments to be passed to application on Windows, as a string.
         default_value: ""
-    
+
     linux_path:
         type: str
         description: The path to the application executable on Linux.
         default_value: ""
-    
+
     linux_args:
         type: str
         description: The arguments to be passed to application on Linux, as a string.
         default_value: ""
-    
+
     mac_path:
         type: str
         description: The path to the application executable on Mac OS X.
         default_value: ""
-    
+
     mac_args:
         type: str
         description: The arguments to be passed to application on Mac OS X, as a string.
         default_value: ""
-    
+
     engine:
         type: str
         description: "The name of the Shotgun engine to start. This is typically the application
-                      name prefixed with tk, e.g. tk-maya, tk-nuke, tk-photoshop etc. If you set 
-                      this to an empty string, no toolkit engine will be started, meaning that 
+                      name prefixed with tk, e.g. tk-maya, tk-nuke, tk-photoshop etc. If you set
+                      this to an empty string, no toolkit engine will be started, meaning that
                       you can launch applications that do not have toolkit engines set up."
         default_value: ""
 
@@ -97,21 +97,21 @@ configuration:
     defer_keyword:
         type: str
         default_value: ""
-        description: "Advanced parameter. This allows for advanced customization around deferred folder creation. 
+        description: "Advanced parameter. This allows for advanced customization around deferred folder creation.
                       Deferred folder creation allows for the creation of partial subfolder structures depending
                       on a specific keyword (see main documentation for details). Before an app is launched, folders
-                      are automatically created and by default (e.g. if you leave this setting as null), 
-                      the launch app will pass the name of the engine as the deferred folder creation keyword. 
-                      This makes it easy to set up deferred rules in your folder creation config for tk-maya, 
-                      tk-nuke etc. However, if you for example wanted to set up specific deferred folder structures 
+                      are automatically created and by default (e.g. if you leave this setting as null),
+                      the launch app will pass the name of the engine as the deferred folder creation keyword.
+                      This makes it easy to set up deferred rules in your folder creation config for tk-maya,
+                      tk-nuke etc. However, if you for example wanted to set up specific deferred folder structures
                       for Nuke and Nuke X (both running the nuke engine), you need a finer granularity. This setting
                       can then be used to override the default behaviour of just passing the engine name. Instead, you
                       can pass any string into the deferred folder creation (for example 'nuke' and 'nuke_x' in the case
-                      above). This parameter is also useful if you want to use deferred folder creation in 
-                      conjunction with launching of apps which do not have a toolkit engine defined - for these 
+                      above). This parameter is also useful if you want to use deferred folder creation in
+                      conjunction with launching of apps which do not have a toolkit engine defined - for these
                       app launch instances, the engine setting is left blank, and therefore no engine name is passed
                       into the deferred folder creation. In such cases you can utilize this parameter to control
-                      the deferred folder creation. 
+                      the deferred folder creation.
 
                       You can specify multiple keywords using a comma as a delimiter (eg. 'nuke, nuke_x').
                       This will trigger folder creation for folders in your schema that have any
@@ -161,8 +161,8 @@ configuration:
         type: hook
         default_value: app_launch
         description: "Called to launch the application. This hook contains the code that does
-                     the actual execution of the launch command and parameters. If you have 
-                     a custom launcher system in your studio, it can be handy to override 
+                     the actual execution of the launch command and parameters. If you have
+                     a custom launcher system in your studio, it can be handy to override
                      Tank's default launch behaviour."
 
     hook_before_app_launch:
@@ -172,7 +172,7 @@ configuration:
                      useful if you don't want to modify the way applications are being launched
                      (which is advanced usage and can be done by overriding the app_launch hook),
                      but merely want to modify the environment before app launch. You may want
-                     to add additional pipeline paths, APIs or other things to the setup, or 
+                     to add additional pipeline paths, APIs or other things to the setup, or
                      specify additional scripts etc to run."
 
     hook_before_register_command:
@@ -186,17 +186,17 @@ configuration:
 # the Shotgun fields that this app needs in order to operate correctly
 requires_shotgun_fields:
 
-# More verbose description of this item 
+# More verbose description of this item
 display_name: "Launch Application"
 description: "Launch Applications and initialize the Shotgun Pipeline Toolkit."
 
 # Required minimum versions for this item to run
 requires_shotgun_version:
-requires_core_version: "v0.18.74"
+requires_core_version: "v0.19.1"
 requires_engine_version:
 
 # the engines that this app can operate in:
-supported_engines: 
+supported_engines:
 
 frameworks:
     - {"name": "tk-framework-shotgunutils", "version": "v5.x.x", "minimum_version": "v5.1.0"}

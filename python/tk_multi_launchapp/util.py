@@ -10,6 +10,8 @@
 
 import sys
 import re
+import sgtk
+
 
 def _translate_version_tokens(raw_string, version):
     """
@@ -42,6 +44,7 @@ def _translate_version_tokens(raw_string, version):
         ver_string = ver_string.replace("{v%d}" % i, token)
     return ver_string
 
+
 def get_clean_version_string(version):
     """
     Returns version string used for current app launch stripped of
@@ -56,6 +59,7 @@ def get_clean_version_string(version):
     :returns: Version string used to launch application.
     """
     return re.sub("[()]", "", version) if version else None
+
 
 def apply_version_to_setting(raw_string, version=None):
     """
@@ -79,6 +83,7 @@ def apply_version_to_setting(raw_string, version=None):
         return _translate_version_tokens(raw_string, version)
     return raw_string
 
+
 def clear_dll_directory():
     """
     Push current Dll Directory. There are two cases that
@@ -92,7 +97,7 @@ def clear_dll_directory():
        we need to keep the desktop dll directory.
     """
     dll_directory = None
-    if sys.platform == "win32":
+    if sgtk.util.is_windows():
         # This 'try' block will fail silently if user is using
         # a different python interpreter then Desktop, in which
         # case it will be fine since the Desktop will have set
@@ -104,14 +109,15 @@ def clear_dll_directory():
             # GetDLLDirectory throws an exception if none was set
             try:
                 dll_directory = win32api.GetDllDirectory(None)
-            except StandardError:
+            except Exception:
                 dll_directory = None
 
             win32api.SetDllDirectory(None)
-        except StandardError:
+        except Exception:
             pass
 
     return dll_directory
+
 
 def restore_dll_directory(dll_directory):
     """
@@ -119,12 +125,13 @@ def restore_dll_directory(dll_directory):
 
     :param dll_directory: The previously pushed DLL directory
     """
-    if sys.platform == "win32":
+    if sgtk.util.is_windows():
         # This may fail silently, which is the correct behavior.
         # Refer to the comments in _clear_dll_directory() for
         # additional information.
         try:
             import win32api
+
             win32api.SetDllDirectory(dll_directory)
-        except StandardError:
+        except Exception:
             pass

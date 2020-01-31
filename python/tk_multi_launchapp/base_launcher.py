@@ -28,6 +28,7 @@ class BaseLauncher(object):
     information required to launch an application from a variety
     of sources.
     """
+
     def __init__(self):
         """
         Initialize members
@@ -36,9 +37,13 @@ class BaseLauncher(object):
         self._tk_app = sgtk.platform.current_bundle()
 
         # Store the current platform value
-        self._platform_name = {
-            "linux2": "linux", "darwin": "mac", "win32": "windows"
-        }[sys.platform]
+        self._platform_name = (
+            "linux"
+            if sgtk.util.is_linux()
+            else "mac"
+            if sgtk.util.is_macos()
+            else "windows"
+        )
 
     def _register_launch_command(
         self,
@@ -85,9 +90,7 @@ class BaseLauncher(object):
             description = "Launches and initializes an application environment."
 
         # Resolve any env variables in the specified path to the application to launch.
-        app_path = os.path.expandvars(
-            apply_version_to_setting(app_path, version)
-        )
+        app_path = os.path.expandvars(apply_version_to_setting(app_path, version))
 
         # the command name mustn't contain spaces and funny chars, so sanitize it.
         # Also, should be nice for the shell engine.
@@ -115,32 +118,33 @@ class BaseLauncher(object):
                 "icon": icon,
                 "group": group,
                 "group_default": group_default,
-                "engine_name": app_engine
+                "engine_name": app_engine,
             }
 
             properties["software_entity_id"] = software_entity_id
 
             def launch_version(*args, **kwargs):
                 self._launch_callback(
-                    menu_name,
-                    app_engine,
-                    app_path,
-                    app_args,
-                    version,
-                    *args, **kwargs
+                    menu_name, app_engine, app_path, app_args, version, *args, **kwargs
                 )
 
             self._tk_app.log_debug(
-                "Registering command %s to launch %s with args %s for engine %s" %
-                (command_name, app_path, app_args, app_engine)
+                "Registering command %s to launch %s with args %s for engine %s"
+                % (command_name, app_path, app_args, app_engine)
             )
             self._tk_app.engine.register_command(
                 command_name, launch_version, properties
             )
 
     def _launch_app(
-        self, menu_name, app_engine, app_path, app_args, context,
-        version=None, file_to_open=None
+        self,
+        menu_name,
+        app_engine,
+        app_path,
+        app_args,
+        context,
+        version=None,
+        file_to_open=None,
     ):
         """
         Launches an application. No environment variable change is
@@ -199,8 +203,7 @@ class BaseLauncher(object):
             try:
                 # Launch the application
                 self._tk_app.log_debug(
-                    "Launching executable '%s' with args '%s'" %
-                    (app_path, app_args)
+                    "Launching executable '%s' with args '%s'" % (app_path, app_args)
                 )
                 result = self._tk_app.execute_hook(
                     "hook_app_launch",
@@ -225,13 +228,14 @@ class BaseLauncher(object):
                         "This is most likely because the path is not set correctly."
                         "The command that was used to attempt to launch is '%s'. "
                         "<br><br><a href='%s' target=_new>Click here</a> to learn "
-                        "more about how to setup your app launch configuration." %
-                        (launch_cmd, self._tk_app.HELP_DOC_URL)
+                        "more about how to setup your app launch configuration."
+                        % (launch_cmd, self._tk_app.HELP_DOC_URL)
                     )
 
                 elif self._tk_app.engine.has_ui:
                     # got UI support. Launch dialog with nice message
                     from ..not_found_dialog import show_path_error_dialog
+
                     show_path_error_dialog(self._tk_app, launch_cmd)
 
                 else:
@@ -280,11 +284,24 @@ class BaseLauncher(object):
         """
         meta = {}
         meta["core"] = self._tk_app.sgtk.version
-        meta["engine"] = "%s %s" % (self._tk_app.engine.name, self._tk_app.engine.version)
+        meta["engine"] = "%s %s" % (
+            self._tk_app.engine.name,
+            self._tk_app.engine.version,
+        )
         meta["app"] = "%s %s" % (self._tk_app.name, self._tk_app.version)
         meta["launched_engine"] = app_engine
         meta["command"] = command_executed
-        meta["platform"] = sys.platform
+        # In Python 3 and certain flavors of Python 2, the sys.platform value under Linux
+        # can be linux2, linux3, linux4 or just linux, which is annoying.
+        # This fixes the string for all platforms so the reported result
+        # is consistent with the previous metrics we had.
+        meta["platform"] = (
+            "win32"
+            if sgtk.util.is_windows()
+            else "darwin"
+            if sgtk.util.is_macos()
+            else "linux2"
+        )
         if ctx.task:
             meta["task"] = ctx.task["id"]
         desc = "%s %s: %s" % (self._tk_app.name, self._tk_app.version, menu_name)
@@ -292,7 +309,9 @@ class BaseLauncher(object):
             self._tk_app.sgtk, ctx, "Toolkit_App_Startup", desc, meta
         )
 
-    def _launch_callback(self, menu_name, app_engine, app_path, app_args, version=None, file_to_open=None):
+    def _launch_callback(
+        self, menu_name, app_engine, app_path, app_args, version=None, file_to_open=None
+    ):
         """
         Default method to launch DCC application command based on the current context.
 
@@ -337,13 +356,13 @@ class BaseLauncher(object):
             defer_keyword = self._tk_app.get_setting("defer_keyword") or app_engine
             try:
                 self._tk_app.log_debug(
-                    "Creating folders for %s %s. Defer keyword: '%s'" %
-                    (entity_type, entity_id, defer_keyword)
+                    "Creating folders for %s %s. Defer keyword: '%s'"
+                    % (entity_type, entity_id, defer_keyword)
                 )
                 self._tk_app.sgtk.create_filesystem_structure(
                     entity_type, entity_id, engine=defer_keyword
                 )
-            except sgtk.TankError, err:
+            except sgtk.TankError as err:
                 raise TankError(
                     "Could not create folders on disk. Error reported: %s" % err
                 )
