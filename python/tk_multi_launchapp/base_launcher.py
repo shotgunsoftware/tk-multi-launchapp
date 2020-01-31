@@ -50,7 +50,8 @@ class BaseLauncher(object):
         version=None,
         group=None,
         group_default=True,
-        software_entity_id=None
+        software_entity_id=None,
+        description=None,
     ):
         """
         Register a launch command with the current engine.
@@ -74,10 +75,14 @@ class BaseLauncher(object):
                                    also interpreted by the engine the command is registered with.
         :param int software_entity_id: If set, this is the entity id of the software entity that
                                        is associated with this launch command.
+        :param str description: (Optional) Custom description/tooltip to use.
+
         """
         # do the {version} replacement if needed
         icon = apply_version_to_setting(app_icon, version)
         menu_name = apply_version_to_setting(app_menu_name, version)
+        if description is None:
+            description = "Launches and initializes an application environment."
 
         # Resolve any env variables in the specified path to the application to launch.
         app_path = os.path.expandvars(
@@ -106,7 +111,7 @@ class BaseLauncher(object):
             properties = {
                 "title": menu_name,
                 "short_name": command_name,
-                "description": "Launches and initializes an application environment.",
+                "description": description,
                 "icon": icon,
                 "group": group,
                 "group_default": group_default,

@@ -92,6 +92,9 @@ class SoftwareEntityLauncher(BaseLauncher):
             # get associated engine (can be none)
             engine_str = sw_entity["engine"]
 
+            # get description, fall back to None
+            description = sw_entity["description"] if sw_entity["description"] else None
+
             # determine if we are in 'automatic' mode or manual
             if sw_entity.get("windows_path") is None and \
                     sw_entity.get("mac_path") is None and \
@@ -113,7 +116,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                     dcc_products,
                     app_group,
                     is_group_default,
-                    sw_entity["id"]
+                    sw_entity["id"],
+                    description=description,
                 )
 
             else:
@@ -152,7 +156,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                     app_path,
                     app_args,
                     icon_path,
-                    sw_entity["id"]
+                    sw_entity["id"],
+                    description=description,
                 )
 
     def launch_from_path(self, path, version=None):
@@ -272,6 +277,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         # Expand Software field names that rely on the current platform
         sw_fields = [
             "code",
+            "description",
             "image",
             "engine",
             "version_names",
@@ -305,8 +311,8 @@ class SoftwareEntityLauncher(BaseLauncher):
         return sw_entities
 
     def _scan_for_software_and_register(
-        self, engine_str, dcc_versions, dcc_products, group, is_group_default, software_entity_id
-    ):
+        self, engine_str, dcc_versions, dcc_products, group, is_group_default, software_entity_id,
+        description=None):
         """
         Scan for installed software and register commands for all entries detected.
 
@@ -326,6 +332,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         :param str group: String to group registered commands by
         :param bool is_group_default: If true, make the highest version match found
             by the scan the default.
+        :param str description: (Optional) Custom description/tooltip to use.
         """
         # No application path was specified, triggering "auto discovery" mode. Attempt to
         # find relevant application path(s) from the engine launcher.
@@ -419,12 +426,14 @@ class SoftwareEntityLauncher(BaseLauncher):
                 software_version.version,
                 group_name,
                 group_default,
-                software_entity_id
+                software_entity_id,
+                description=description,
             )
 
     def _manual_register(
         self, engine_str, dcc_versions, group, is_group_default,
-        display_name, path, args, icon_path, software_entity_id
+        display_name, path, args, icon_path, software_entity_id,
+        description=None,
     ):
         """
         Parse manual software definition given by input params and register
@@ -443,6 +452,7 @@ class SoftwareEntityLauncher(BaseLauncher):
             contains more than one item, this should contain a {version} token.
         :param args: Launch arguments.
         :param icon_path: Path to an icon thumbnail on disk.
+        :param str description: (Optional) Custom description/tooltip to use.
         """
         if dcc_versions:
             # Construct a command for each version.
@@ -475,7 +485,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                     version,
                     group,
                     group_default,
-                    software_entity_id
+                    software_entity_id,
+                    description=description,
                 )
 
         else:
@@ -489,7 +500,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                 None,  # version
                 group,
                 is_group_default,
-                software_entity_id
+                software_entity_id,
+                description=description,
             )
 
     def _extract_thumbnail(self, entity_type, entity_id, sg_thumb_url):
