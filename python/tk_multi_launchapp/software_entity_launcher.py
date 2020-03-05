@@ -92,6 +92,10 @@ class SoftwareEntityLauncher(BaseLauncher):
             # get associated engine (can be none)
             engine_str = sw_entity["engine"]
 
+            # Resolve the app path and args field names for the current platform
+            app_path_field = "%s_path" % self._platform_name
+            app_args_field = "%s_args" % self._platform_name
+
             # determine if we are in 'automatic' mode or manual
             if (
                 sw_entity.get("windows_path") is None
@@ -110,12 +114,17 @@ class SoftwareEntityLauncher(BaseLauncher):
                     )
                     continue
 
+                # Not the same as saying get(app_args_field, "") since the key might exist but the value may still
+                # be None. If we have no args we should provide an empty string.
+                app_args = sw_entity[app_args_field] or ""
+
                 # defer to the automatic DCC scan to enumerate and register DCCs
                 self._scan_for_software_and_register(
                     engine_str,
                     dcc_versions,
                     dcc_products,
                     app_group,
+                    app_args,
                     is_group_default,
                     sw_entity["id"],
                 )
@@ -125,10 +134,6 @@ class SoftwareEntityLauncher(BaseLauncher):
                 self._tk_app.log_debug(
                     "One or more path fields are not None. Manual mode."
                 )
-
-                # Resolve the app path and args field names for the current platform
-                app_path_field = "%s_path" % self._platform_name
-                app_args_field = "%s_args" % self._platform_name
 
                 if sw_entity[app_path_field] is None:
                     # manual mode but nothing to do for our os
@@ -271,8 +276,6 @@ class SoftwareEntityLauncher(BaseLauncher):
             sw_filters.append(user_group_filter)
 
         # The list of fields we need to retrieve in order to launch the app(s)
-        # @todo: When the Software entity becomes native, these field names
-        #        will need to be updated.
         # Expand Software field names that rely on the current platform
         sw_fields = [
             "code",
@@ -312,6 +315,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         dcc_versions,
         dcc_products,
         group,
+        args,
         is_group_default,
         software_entity_id,
     ):
@@ -425,13 +429,20 @@ class SoftwareEntityLauncher(BaseLauncher):
             # engine UIs.
             group_name = group or software_version.product
 
+            # Combine any args set on the Software entity with those added in the software detection.
+            # The args from the Software entity will be in string form, and the args from the SoftwareVersion will be
+            # a list of strings. We should combine them together into one list of string and then join them to a
+            # single string.
+            args_list =(software_version.args or []) + [args]
+            launch_args = " ".join(args_list)
+
             # perform the registration
             self._register_launch_command(
                 software_version.display_name,
                 software_version.icon,
                 launch_engine_str,
                 software_version.path,
-                " ".join(software_version.args or []),
+                launch_args,
                 software_version.version,
                 group_name,
                 group_default,
