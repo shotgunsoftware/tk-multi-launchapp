@@ -55,7 +55,7 @@ class BaseLauncher(object):
         version=None,
         group=None,
         group_default=True,
-        software_entity_id=None,
+        software_entity=None,
     ):
         """
         Register a launch command with the current engine.
@@ -116,7 +116,7 @@ class BaseLauncher(object):
                 "engine_name": app_engine,
             }
 
-            properties["software_entity_id"] = software_entity_id
+            properties["software_entity"] = software_entity
 
             def launch_version(*args, **kwargs):
                 self._launch_callback(
@@ -125,7 +125,7 @@ class BaseLauncher(object):
                     app_path,
                     app_args,
                     version,
-                    software_entity_id,
+                    software_entity,
                     *args,
                     **kwargs
                 )
@@ -146,7 +146,7 @@ class BaseLauncher(object):
         app_args,
         context,
         version=None,
-        software_entity_id=None,
+        software_entity=None,
         file_to_open=None,
     ):
         """
@@ -198,7 +198,7 @@ class BaseLauncher(object):
                 app_args=app_args,
                 version=version_string,
                 engine_name=app_engine,
-                software_entity_id=software_entity_id,
+                software_entity_id=software_entity,
             )
 
             # Ticket 26741: Avoid having odd DLL loading issues on windows
@@ -218,7 +218,7 @@ class BaseLauncher(object):
                     app_args=app_args,
                     version=version_string,
                     engine_name=app_engine,
-                    software_entity_id=software_entity_id,
+                    software_entity_id=software_entity,
                 )
                 launch_cmd = result.get("command")
                 return_code = result.get("return_code")
@@ -325,7 +325,7 @@ class BaseLauncher(object):
         app_args,
         version=None,
         file_to_open=None,
-        software_entity_id=None,
+        software_entity=None,
     ):
         """
         Default method to launch DCC application command based on the current context.
@@ -393,7 +393,7 @@ class BaseLauncher(object):
             app_args,
             self._tk_app.context,
             version,
-            software_entity_id,
+            software_entity,
             file_to_open,
         )
 

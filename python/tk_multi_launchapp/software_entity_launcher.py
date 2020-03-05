@@ -126,7 +126,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                     app_group,
                     app_args,
                     is_group_default,
-                    sw_entity["id"],
+                    sw_entity,
                 )
 
             else:
@@ -317,7 +317,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         group,
         args,
         is_group_default,
-        software_entity_id,
+        software_entity,
     ):
         """
         Scan for installed software and register commands for all entries detected.
@@ -338,8 +338,8 @@ class SoftwareEntityLauncher(BaseLauncher):
         :param str group: String to group registered commands by
         :param bool is_group_default: If true, make the highest version match found
             by the scan the default.
-        :param int software_entity_id: If set, this is the entity id of the software entity that
-                                       is associated with this launch command.
+        :param int software_entity: If set, this is the entity representing the software entity that
+                                    is associated with this launch command.
         """
         # No application path was specified, triggering "auto discovery" mode. Attempt to
         # find relevant application path(s) from the engine launcher.
@@ -375,7 +375,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 "determine_engine_instance_name",
                 software_version=software_version,
                 engine_instance_name=engine_str,
-                software_entity_id=software_entity_id,
+                software_entity=software_entity,
             )
 
             # If the engine name was transformed by the hook, then we need to
@@ -449,7 +449,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 software_version.version,
                 group_name,
                 group_default,
-                software_entity_id,
+                software_entity,
             )
 
     def _manual_register(
