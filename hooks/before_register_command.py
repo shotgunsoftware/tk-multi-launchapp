@@ -23,7 +23,7 @@ class BeforeRegisterCommand(HookBaseClass):
     """
 
     def determine_engine_instance_name(
-        self, software_version, engine_instance_name, software_entity_id=None
+        self, software_version, engine_instance_name
     ):
         """
         Hook method to intercept SoftwareLauncher and engine instance name data prior to
@@ -35,8 +35,6 @@ class BeforeRegisterCommand(HookBaseClass):
         :type: :class:`sgtk.platform.SoftwareVersion`
         :param str engine_instance_name: The name of the engine instance that will
             be used when SGTK is bootstrapped during launch.
-        :param software_entity_id: (int) If set, this is the entity id of the
-            software entity that is associated with this launch command.
 
         :returns: The desired engine instance name.
         :rtype: str

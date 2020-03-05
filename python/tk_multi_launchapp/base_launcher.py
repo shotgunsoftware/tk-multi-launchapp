@@ -77,8 +77,8 @@ class BaseLauncher(object):
                                    indicate whether to launch this command if the group is
                                    selected instead of an individual command. This value is
                                    also interpreted by the engine the command is registered with.
-        :param int software_entity_id: If set, this is the entity id of the software entity that
-                                       is associated with this launch command.
+        :param int software_entity: If set, this is the entity representing the software entity that
+                                    is associated with this launch command.
         """
         # do the {version} replacement if needed
         icon = apply_version_to_setting(app_icon, version)
@@ -163,9 +163,9 @@ class BaseLauncher(object):
         :param context: Toolkit context to open the app in.
         :param version: (Optional) Version of the app to launch. Specifying
                         None means no {version} substitutions will take place.
-        :param software_entity_id: (Optional) If set, this is the entity id of
-                                   the software entity that is associated with
-                                   this launch command.
+        :param software_entity: (Optional) If set, this is the entity representing
+                                the software entity that is associated with
+                                this launch command.
         :param file_to_open: (Optional) File to open when the app launches.
         """
         try:
@@ -198,7 +198,7 @@ class BaseLauncher(object):
                 app_args=app_args,
                 version=version_string,
                 engine_name=app_engine,
-                software_entity_id=software_entity,
+                software_entity=software_entity,
             )
 
             # Ticket 26741: Avoid having odd DLL loading issues on windows
@@ -218,7 +218,7 @@ class BaseLauncher(object):
                     app_args=app_args,
                     version=version_string,
                     engine_name=app_engine,
-                    software_entity_id=software_entity,
+                    software_entity=software_entity,
                 )
                 launch_cmd = result.get("command")
                 return_code = result.get("return_code")
@@ -338,9 +338,9 @@ class BaseLauncher(object):
         :param app_args: Args string to pass to the DCC at launch time.
         :param version: (Optional) Specific version of DCC to launch. Used to
                         parse {version}, {v0}, {v1}, ... information from.
-        :param software_entity_id: (Optional) If set, this is the entity id of
-                                   the software entity that is associated with
-                                   this launch command.
+        :param software_entity: (Optional) If set, this is the entity representing
+                                the software entity that is associated with
+                                this launch command.
         """
         # Verify a Project is defined in the context.
         if self._tk_app.context.project is None:

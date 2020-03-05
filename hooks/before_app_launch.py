@@ -30,7 +30,7 @@ class BeforeAppLaunch(tank.Hook):
         app_args,
         version,
         engine_name,
-        software_entity_id=None,
+        software_entity=None,
         **kwargs
     ):
         """
@@ -42,9 +42,8 @@ class BeforeAppLaunch(tank.Hook):
             "versions" settings of the Launcher instance, otherwise None
         :param engine_name (str) The name of the engine associated with the
             software about to be launched.
-        :param software_entity_id: (int) If set, this is the entity id of the
-            software entity that is associated with this launch command.
-
+        :param software_entity: (dict) If set, this is the Software entity that is
+            associated with this launch command.
         """
 
         # accessing the current context (current shot, etc)
