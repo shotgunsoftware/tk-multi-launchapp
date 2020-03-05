@@ -22,9 +22,7 @@ class BeforeRegisterCommand(HookBaseClass):
     launchers.
     """
 
-    def determine_engine_instance_name(
-        self, software_version, engine_instance_name
-    ):
+    def determine_engine_instance_name(self, software_version, engine_instance_name):
         """
         Hook method to intercept SoftwareLauncher and engine instance name data prior to
         launcher command registration and alter the engine instance name should that

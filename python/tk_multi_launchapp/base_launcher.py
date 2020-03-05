@@ -77,7 +77,7 @@ class BaseLauncher(object):
                                    indicate whether to launch this command if the group is
                                    selected instead of an individual command. This value is
                                    also interpreted by the engine the command is registered with.
-        :param int software_entity: If set, this is the entity representing the software entity that
+        :param int software_entity: (Optional) If set, this is the entity representing the software entity that
                                     is associated with this launch command.
         """
         # do the {version} replacement if needed

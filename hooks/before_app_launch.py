@@ -25,13 +25,7 @@ class BeforeAppLaunch(tank.Hook):
     """
 
     def execute(
-        self,
-        app_path,
-        app_args,
-        version,
-        engine_name,
-        software_entity=None,
-        **kwargs
+        self, app_path, app_args, version, engine_name, software_entity=None, **kwargs
     ):
         """
         The execute function of the hook will be called prior to starting the required application
