@@ -25,7 +25,15 @@ class AppLaunch(tank.Hook):
     Hook to run an application.
     """
 
-    def execute(self, app_path, app_args, version, engine_name, software_entity_id=None, **kwargs):
+    def execute(
+        self,
+        app_path,
+        app_args,
+        version,
+        engine_name,
+        software_entity_id=None,
+        **kwargs
+    ):
         """
         The execute functon of the hook will be called to start the required application
 

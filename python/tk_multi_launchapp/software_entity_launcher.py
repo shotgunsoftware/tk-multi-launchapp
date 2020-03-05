@@ -375,7 +375,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 "determine_engine_instance_name",
                 software_version=software_version,
                 engine_instance_name=engine_str,
-                software_entity_id=software_entity_id
+                software_entity_id=software_entity_id,
             )
 
             # If the engine name was transformed by the hook, then we need to
@@ -436,7 +436,7 @@ class SoftwareEntityLauncher(BaseLauncher):
             # The args from the Software entity will be in string form, and the args from the SoftwareVersion will be
             # a list of strings. We should combine them together into one list of string and then join them to a
             # single string.
-            args_list =(software_version.args or []) + [args]
+            args_list = (software_version.args or []) + [args]
             launch_args = " ".join(args_list)
 
             # perform the registration

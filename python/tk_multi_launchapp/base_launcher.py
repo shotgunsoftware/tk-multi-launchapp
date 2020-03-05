@@ -146,7 +146,7 @@ class BaseLauncher(object):
         app_args,
         context,
         version=None,
-        software_entity_id=None
+        software_entity_id=None,
         file_to_open=None,
     ):
         """
@@ -198,7 +198,7 @@ class BaseLauncher(object):
                 app_args=app_args,
                 version=version_string,
                 engine_name=app_engine,
-                software_entity_id=software_entity_id
+                software_entity_id=software_entity_id,
             )
 
             # Ticket 26741: Avoid having odd DLL loading issues on windows
@@ -218,7 +218,7 @@ class BaseLauncher(object):
                     app_args=app_args,
                     version=version_string,
                     engine_name=app_engine,
-                    software_entity_id=software_entity_id
+                    software_entity_id=software_entity_id,
                 )
                 launch_cmd = result.get("command")
                 return_code = result.get("return_code")
@@ -318,7 +318,14 @@ class BaseLauncher(object):
         )
 
     def _launch_callback(
-        self, menu_name, app_engine, app_path, app_args, version=None, file_to_open=None, software_entity_id=None,
+        self,
+        menu_name,
+        app_engine,
+        app_path,
+        app_args,
+        version=None,
+        file_to_open=None,
+        software_entity_id=None,
     ):
         """
         Default method to launch DCC application command based on the current context.
@@ -387,7 +394,7 @@ class BaseLauncher(object):
             self._tk_app.context,
             version,
             software_entity_id,
-            file_to_open
+            file_to_open,
         )
 
     def register_launch_commands(self):
