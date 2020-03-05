@@ -25,7 +25,7 @@ class AppLaunch(tank.Hook):
     Hook to run an application.
     """
 
-    def execute(self, app_path, app_args, version, engine_name, **kwargs):
+    def execute(self, app_path, app_args, version, engine_name, software_entity_id=None, **kwargs):
         """
         The execute functon of the hook will be called to start the required application
 
@@ -35,6 +35,8 @@ class AppLaunch(tank.Hook):
             "versions" settings of the Launcher instance, otherwise None
         :param engine_name (str) The name of the engine associated with the
             software about to be launched.
+        :param software_entity_id: (int) If set, this is the entity id of the
+            software entity that is associated with this launch command.
 
         :returns: (dict) The two valid keys are 'command' (str) and 'return_code' (int).
         """
