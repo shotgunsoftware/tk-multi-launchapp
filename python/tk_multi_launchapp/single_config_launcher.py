@@ -15,10 +15,12 @@ from sgtk import TankError
 
 from .base_launcher import BaseLauncher
 
+
 class SingleConfigLauncher(BaseLauncher):
     """
     Launches a DCC based on traditional configuration settings.
     """
+
     def __init__(self):
         """
         Initialize base class and member values
@@ -82,8 +84,13 @@ class SingleConfigLauncher(BaseLauncher):
             sorted_versions = self._sort_versions(app_versions)
             self._tk_app.log_debug(
                 "Unable to apply group '%s' group_default value to list of DCC versions : %s. "
-                "Setting group '%s' default to highest version '%s' instead." %
-                (self._app_group, sorted_versions, self._app_group, sorted_versions[0])
+                "Setting group '%s' default to highest version '%s' instead."
+                % (
+                    self._app_group,
+                    sorted_versions,
+                    self._app_group,
+                    sorted_versions[0],
+                )
             )
 
             for version in app_versions:
@@ -161,12 +168,3 @@ class SingleConfigLauncher(BaseLauncher):
                 version=version,
                 file_to_open=path,
             )
-
-
-
-
-
-
-
-
-
