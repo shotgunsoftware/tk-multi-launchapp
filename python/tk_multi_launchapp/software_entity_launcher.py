@@ -375,7 +375,6 @@ class SoftwareEntityLauncher(BaseLauncher):
                 "determine_engine_instance_name",
                 software_version=software_version,
                 engine_instance_name=engine_str,
-                software_entity=software_entity,
             )
 
             # If the engine name was transformed by the hook, then we need to
