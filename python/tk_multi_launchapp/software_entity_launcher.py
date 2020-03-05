@@ -293,6 +293,9 @@ class SoftwareEntityLauncher(BaseLauncher):
             "windows_args",
         ]
 
+        # Add any user defined fields to the list of fields we should request.
+        sw_fields += self._tk_app.get_setting("software_entity_extra_fields")
+
         # Log the resolved filter.
         self._tk_app.log_debug(
             "Searching for Software entities matching filters:\n%s"
