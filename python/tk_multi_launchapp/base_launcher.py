@@ -125,8 +125,8 @@ class BaseLauncher(object):
                     app_path,
                     app_args,
                     version,
-                    software_entity,
                     *args,
+                    software_entity=software_entity,
                     **kwargs
                 )
 
@@ -146,8 +146,8 @@ class BaseLauncher(object):
         app_args,
         context,
         version=None,
-        software_entity=None,
         file_to_open=None,
+        software_entity=None,
     ):
         """
         Launches an application. No environment variable change is
@@ -163,10 +163,10 @@ class BaseLauncher(object):
         :param context: Toolkit context to open the app in.
         :param version: (Optional) Version of the app to launch. Specifying
                         None means no {version} substitutions will take place.
+        :param file_to_open: (Optional) File to open when the app launches.
         :param software_entity: (Optional) If set, this is the entity representing
                                 the software entity that is associated with
                                 this launch command.
-        :param file_to_open: (Optional) File to open when the app launches.
         """
         try:
             # Clone the environment variables
@@ -393,8 +393,8 @@ class BaseLauncher(object):
             app_args,
             self._tk_app.context,
             version,
-            software_entity,
             file_to_open,
+            software_entity,
         )
 
     def register_launch_commands(self):
