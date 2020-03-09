@@ -162,7 +162,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                     app_path,
                     app_args,
                     icon_path,
-                    sw_entity["id"],
+                    sw_entity,
                 )
 
     def launch_from_path(self, path, version=None):
@@ -238,7 +238,9 @@ class SoftwareEntityLauncher(BaseLauncher):
                 # Software entities that have either no Project restrictions OR
                 # include the context Project as a restriction.
                 project_filters.append(["projects", "in", current_project])
-                sw_filters.append({"filter_operator": "or", "filters": project_filters})
+                sw_filters.append(
+                    {"filter_operator": "any", "filters": project_filters}
+                )
             else:
                 # If no context Project is defined, then only retrieve
                 # Software entities that do not have any Project restrictions.
@@ -257,11 +259,11 @@ class SoftwareEntityLauncher(BaseLauncher):
             # OR User restrictions.
             sw_filters.append(
                 {
-                    "filter_operator": "or",
+                    "filter_operator": "any",
                     "filters": [
                         user_group_filter,
                         {
-                            "filter_operator": "or",
+                            "filter_operator": "any",
                             "filters": [
                                 ["user_restrictions", "in", current_user],
                                 ["user_restrictions.Group.users", "in", current_user],
@@ -464,7 +466,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         path,
         args,
         icon_path,
-        software_entity_id,
+        software_entity,
     ):
         """
         Parse manual software definition given by input params and register
@@ -483,6 +485,7 @@ class SoftwareEntityLauncher(BaseLauncher):
             contains more than one item, this should contain a {version} token.
         :param args: Launch arguments.
         :param icon_path: Path to an icon thumbnail on disk.
+        :param software_entity: A dict representing the Shotgun Software entity.
         """
         if dcc_versions:
             # Construct a command for each version.
@@ -515,7 +518,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                     version,
                     group,
                     group_default,
-                    software_entity_id,
+                    software_entity,
                 )
 
         else:
@@ -529,7 +532,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 None,  # version
                 group,
                 is_group_default,
-                software_entity_id,
+                software_entity,
             )
 
     def _extract_thumbnail(self, entity_type, entity_id, sg_thumb_url):

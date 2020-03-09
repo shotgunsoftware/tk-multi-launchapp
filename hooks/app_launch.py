@@ -15,8 +15,6 @@ This hook is executed to launch the applications.
 """
 
 import os
-import re
-import sys
 import tank
 
 
@@ -29,7 +27,7 @@ class AppLaunch(tank.Hook):
         self, app_path, app_args, version, engine_name, software_entity=None, **kwargs
     ):
         """
-        The execute functon of the hook will be called to start the required application
+        The execute function of the hook will be called to start the required application
 
         :param app_path: (str) The path of the application executable
         :param app_args: (str) Any arguments the application may require
