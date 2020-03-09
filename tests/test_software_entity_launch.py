@@ -50,7 +50,7 @@ class TestAutoSoftwareEntityLaunch(LaunchAppTestBase):
                     "linux_args": self._additional_args,
                     "mac_args": self._additional_args,
                     "windows_args": self._additional_args,
-                    # This isn't a standard field that the Software entity would normally request, but
+                    # This isn't a standard field that the launch app would normally request, but
                     # We are testing here that the `software_entity_extra_fields` setting which is set to include
                     # the description field in the fixtures will actually fetch the field.
                     "description": "my description",
