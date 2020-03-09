@@ -14,7 +14,4 @@ from tank import Hook
 
 class PickEnvironment(Hook):
     def execute(self, context):
-        if context.task is None:
-            return "project"
-        else:
-            return "task"
+        return "project"
