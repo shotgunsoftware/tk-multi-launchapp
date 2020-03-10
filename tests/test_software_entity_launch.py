@@ -16,6 +16,9 @@ from tank_test.tank_test_base import setUpModule  # noqa
 
 from launchapp_test_base import LaunchAppTestBase
 
+from sgtk.platform import SoftwareVersion
+from sgtk.util import pickle
+
 
 class TestAutoSoftwareEntityLaunch(LaunchAppTestBase):
     """
@@ -67,16 +70,16 @@ class TestAutoSoftwareEntityLaunch(LaunchAppTestBase):
         # These represent the standard args a specific engine might add to the list of launch args.
         self._engine_args = ["--engine --engine2"]
         scanned_software = [
-            [
+            SoftwareVersion(
                 "2020",
                 "Test Software",
                 "path/to/software_2020.app",
                 "",
                 self._engine_args,
-            ]
+            )
         ]
 
-        os.environ["SHOTGUN_SCAN_SOFTWARE_LIST"] = json.dumps(scanned_software)
+        os.environ["SHOTGUN_SCAN_SOFTWARE_LIST"] = pickle.dumps(scanned_software)
 
     def _app_launch_hook_override_auto(
         self,
