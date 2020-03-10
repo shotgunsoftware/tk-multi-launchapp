@@ -9,7 +9,6 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import os
-import json
 
 # Required so that the SHOTGUN_HOME env var will be set
 from tank_test.tank_test_base import setUpModule  # noqa
