@@ -116,7 +116,7 @@ class BaseLauncher(object):
                 "engine_name": app_engine,
             }
 
-            properties["software_entity"] = software_entity
+            properties["software_entity_id"] = software_entity.get("id")
 
             def launch_version(*args, **kwargs):
                 self._launch_callback(
