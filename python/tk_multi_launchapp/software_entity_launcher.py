@@ -92,6 +92,9 @@ class SoftwareEntityLauncher(BaseLauncher):
             # get associated engine (can be none)
             engine_str = sw_entity["engine"]
 
+            # get description, fall back to None
+            description = sw_entity["description"] if sw_entity["description"] else None
+
             # Resolve the app path and args field names for the current platform
             app_path_field = "%s_path" % self._platform_name
             app_args_field = "%s_args" % self._platform_name
@@ -127,6 +130,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                     app_args,
                     is_group_default,
                     sw_entity,
+                    description=description,
                 )
 
             else:
@@ -163,6 +167,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                     app_args,
                     icon_path,
                     sw_entity,
+                    description=description,
                 )
 
     def launch_from_path(self, path, version=None):
@@ -281,6 +286,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         # Expand Software field names that rely on the current platform
         sw_fields = [
             "code",
+            "description",
             "image",
             "engine",
             "version_names",
@@ -323,6 +329,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         args,
         is_group_default,
         software_entity,
+        description=None,
     ):
         """
         Scan for installed software and register commands for all entries detected.
@@ -345,6 +352,7 @@ class SoftwareEntityLauncher(BaseLauncher):
             by the scan the default.
         :param int software_entity: If set, this is the entity representing the software entity that
                                     is associated with this launch command.
+        :param str description: (Optional) Custom description/tooltip to use.
         """
         # No application path was specified, triggering "auto discovery" mode. Attempt to
         # find relevant application path(s) from the engine launcher.
@@ -454,6 +462,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 group_name,
                 group_default,
                 software_entity,
+                description=description,
             )
 
     def _manual_register(
@@ -467,6 +476,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         args,
         icon_path,
         software_entity,
+        description=None,
     ):
         """
         Parse manual software definition given by input params and register
@@ -486,6 +496,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         :param args: Launch arguments.
         :param icon_path: Path to an icon thumbnail on disk.
         :param software_entity: A dict representing the Shotgun Software entity.
+        :param str description: (Optional) Custom description/tooltip to use.
         """
         if dcc_versions:
             # Construct a command for each version.
@@ -519,6 +530,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                     group,
                     group_default,
                     software_entity,
+                    description=description,
                 )
 
         else:
@@ -533,6 +545,7 @@ class SoftwareEntityLauncher(BaseLauncher):
                 group,
                 is_group_default,
                 software_entity,
+                description=description,
             )
 
     def _extract_thumbnail(self, entity_type, entity_id, sg_thumb_url):

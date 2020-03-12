@@ -15,6 +15,8 @@ develop-eggs
 
 # Installer logs
 pip-log.txt
+/.cached_metadata.pickle
+/tk-metadata/
 
 # Unit test / coverage reports
 .coverage
