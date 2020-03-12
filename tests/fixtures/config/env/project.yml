@@ -15,7 +15,7 @@ engines:
     apps:
       tk-multi-launchapp:
         use_software_entity: true
-        software_entity_extra_fields: ["description"]
+        software_entity_extra_fields: ["created_at"]
         hook_app_launch: '{self}/app_launch.py:{$SHOTGUN_TEST_HOOK}/hook.py'
         location: {'type': 'dev', 'path': '$SHOTGUN_CURRENT_REPO_ROOT'}
 

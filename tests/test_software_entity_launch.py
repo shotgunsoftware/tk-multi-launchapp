@@ -9,6 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import os
+import datetime
 
 # Required so that the SHOTGUN_HOME env var will be set
 from tank_test.tank_test_base import setUpModule  # noqa
@@ -19,7 +20,7 @@ from sgtk.platform import SoftwareVersion
 from sgtk.util import pickle
 
 
-class TestAutoSoftwareEntityLaunch(LaunchAppTestBase):
+class TestSoftwareEntity(LaunchAppTestBase):
     """
     Tests launching via a Software entity where the paths were automatically found, via the engine's startup.
     """
@@ -35,11 +36,11 @@ class TestAutoSoftwareEntityLaunch(LaunchAppTestBase):
         # Create one Software entity where the path is provided and one where it isn't.
         # This will test manual and automatic software path finding.
 
-        def register_software(path):
+        def register_software(name, path=None, description=None):
             return self.mockgun.create(
                 "Software",
                 {
-                    "code": "TestSoftware",
+                    "code": name,
                     "engine": "tk-testengine",
                     "image": None,
                     "version_names": None,
@@ -52,15 +53,23 @@ class TestAutoSoftwareEntityLaunch(LaunchAppTestBase):
                     "linux_args": self._additional_args,
                     "mac_args": self._additional_args,
                     "windows_args": self._additional_args,
+                    "description": description,
                     # This isn't a standard field that the launch app would normally request, but
-                    # We are testing here that the `software_entity_extra_fields` setting which is set to include
-                    # the description field in the fixtures will actually fetch the field.
-                    "description": "my description",
+                    # we are testing that the `software_entity_extra_fields` setting which is set to include
+                    # the created_at field in the fixtures will actually fetch the field.
+                    "created_at": datetime.datetime.now(),
                 },
             )
 
-        self._manual_software_entity = register_software("/path/to/software")
-        self._auto_software_entity = register_software(None)
+        # Manual and Auto path SW entities
+        self._manual_software_entity = register_software(
+            "manual", "/path/to/software", "manual paths"
+        )
+        self._auto_software_entity = register_software("auto", description="auto paths")
+        # No description entity, use a path so that we can have command name registered
+        self._no_desc_software_entity = register_software(
+            "no description", "/path/to/software"
+        )
 
         # Provide the scan results to the tk-testengine startup scan software method via an environment variable.
         # We json serialize a list of lists. Each sub list must contain a value for the SoftwareEntity initialization
@@ -71,7 +80,7 @@ class TestAutoSoftwareEntityLaunch(LaunchAppTestBase):
         scanned_software = [
             SoftwareVersion(
                 "2020",
-                "Test Software",
+                "Auto",  # For auto path SW entities this becomes part of the command name + the version/year
                 "path/to/software_2020.app",
                 "",
                 self._engine_args,
@@ -126,7 +135,7 @@ class TestAutoSoftwareEntityLaunch(LaunchAppTestBase):
         # correct.
         self.engine.hook_overrides["execute"] = self._app_launch_hook_override_auto
         # Execute the app launch callback.
-        self.engine.commands["test_software_2020"]["callback"]()
+        self.engine.commands["auto_2020"]["callback"]()
 
     def test_launch_app_manual(self):
         """
@@ -136,4 +145,24 @@ class TestAutoSoftwareEntityLaunch(LaunchAppTestBase):
         # correct.
         self.engine.hook_overrides["execute"] = self._app_launch_hook_override_manual
         # test the Manual path finding Software entity (this generates a slightly different registered command name)
-        self.engine.commands["testsoftware"]["callback"]()
+        self.engine.commands["manual"]["callback"]()
+
+    def test_action_description(self):
+        """
+        Make sure that the description on the SG entity matches that in the registered command properties.
+        """
+        # Test the manual path register (when a hard coded path is provided in the Software entity)
+        self.assertEqual(
+            self.engine.commands["manual"]["properties"]["description"],
+            self._manual_software_entity["description"],
+        )
+        # Test the automatic path register.
+        self.assertEqual(
+            self.engine.commands["auto_2020"]["properties"]["description"],
+            self._auto_software_entity["description"],
+        )
+        # Test that a default description is given when None is set on the Software entity.
+        self.assertEqual(
+            self.engine.commands["no_description"]["properties"]["description"],
+            "Launches and initializes an application environment.",
+        )
