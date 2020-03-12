@@ -42,4 +42,3 @@ jobs:
   parameters:
     additional_repositories:
       - name: tk-framework-shotgunutils
-    tk_toolchain_ref: add_engine_startup
