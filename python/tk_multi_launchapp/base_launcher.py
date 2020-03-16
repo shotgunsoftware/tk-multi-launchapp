@@ -55,7 +55,8 @@ class BaseLauncher(object):
         version=None,
         group=None,
         group_default=True,
-        software_entity_id=None,
+        software_entity=None,
+        description=None,
     ):
         """
         Register a launch command with the current engine.
@@ -77,12 +78,17 @@ class BaseLauncher(object):
                                    indicate whether to launch this command if the group is
                                    selected instead of an individual command. This value is
                                    also interpreted by the engine the command is registered with.
-        :param int software_entity_id: If set, this is the entity id of the software entity that
-                                       is associated with this launch command.
+        :param int software_entity: (Optional) If set, this is the entity representing the software entity that
+                                    is associated with this launch command.
+        :param str description: (Optional) Custom description/tooltip to use.
+
         """
         # do the {version} replacement if needed
         icon = apply_version_to_setting(app_icon, version)
         menu_name = apply_version_to_setting(app_menu_name, version)
+
+        if description is None:
+            description = "Launches and initializes an application environment."
 
         # Resolve any env variables in the specified path to the application to launch.
         app_path = os.path.expandvars(apply_version_to_setting(app_path, version))
@@ -109,18 +115,27 @@ class BaseLauncher(object):
             properties = {
                 "title": menu_name,
                 "short_name": command_name,
-                "description": "Launches and initializes an application environment.",
+                "description": description,
                 "icon": icon,
                 "group": group,
                 "group_default": group_default,
                 "engine_name": app_engine,
             }
 
-            properties["software_entity_id"] = software_entity_id
+            properties["software_entity_id"] = (
+                software_entity.get("id") if software_entity else None
+            )
 
             def launch_version(*args, **kwargs):
                 self._launch_callback(
-                    menu_name, app_engine, app_path, app_args, version, *args, **kwargs
+                    menu_name,
+                    app_engine,
+                    app_path,
+                    app_args,
+                    version,
+                    *args,
+                    software_entity=software_entity,
+                    **kwargs
                 )
 
             self._tk_app.log_debug(
@@ -140,6 +155,7 @@ class BaseLauncher(object):
         context,
         version=None,
         file_to_open=None,
+        software_entity=None,
     ):
         """
         Launches an application. No environment variable change is
@@ -156,6 +172,9 @@ class BaseLauncher(object):
         :param version: (Optional) Version of the app to launch. Specifying
                         None means no {version} substitutions will take place.
         :param file_to_open: (Optional) File to open when the app launches.
+        :param software_entity: (Optional) If set, this is the entity representing
+                                the software entity that is associated with
+                                this launch command.
         """
         try:
             # Clone the environment variables
@@ -187,6 +206,7 @@ class BaseLauncher(object):
                 app_args=app_args,
                 version=version_string,
                 engine_name=app_engine,
+                software_entity=software_entity,
             )
 
             # Ticket 26741: Avoid having odd DLL loading issues on windows
@@ -206,6 +226,7 @@ class BaseLauncher(object):
                     app_args=app_args,
                     version=version_string,
                     engine_name=app_engine,
+                    software_entity=software_entity,
                 )
                 launch_cmd = result.get("command")
                 return_code = result.get("return_code")
@@ -305,7 +326,14 @@ class BaseLauncher(object):
         )
 
     def _launch_callback(
-        self, menu_name, app_engine, app_path, app_args, version=None, file_to_open=None
+        self,
+        menu_name,
+        app_engine,
+        app_path,
+        app_args,
+        version=None,
+        file_to_open=None,
+        software_entity=None,
     ):
         """
         Default method to launch DCC application command based on the current context.
@@ -318,6 +346,9 @@ class BaseLauncher(object):
         :param app_args: Args string to pass to the DCC at launch time.
         :param version: (Optional) Specific version of DCC to launch. Used to
                         parse {version}, {v0}, {v1}, ... information from.
+        :param software_entity: (Optional) If set, this is the entity representing
+                                the software entity that is associated with
+                                this launch command.
         """
         # Verify a Project is defined in the context.
         if self._tk_app.context.project is None:
@@ -371,6 +402,7 @@ class BaseLauncher(object):
             self._tk_app.context,
             version,
             file_to_open,
+            software_entity,
         )
 
     def register_launch_commands(self):

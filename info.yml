@@ -20,6 +20,18 @@ configuration:
                      launch commands for available DCCs.
         default_value: false
 
+    software_entity_extra_fields:
+        type: list
+        allows_empty: True
+        values:
+            type: str
+        default_value: []
+        description: "A list of Software entity field code names that should be fetched and
+                     and passed to the hooks as part of the Software entity dictionary.
+                     The main fields are already fetched and provided by default, but this
+                     allows custom fields to be specified without needing to perform a second
+                     look up in Shotgun."
+
     scan_all_projects:
         type: bool
         description: When true, and when use_software_entity is true, launchers

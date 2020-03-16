@@ -92,6 +92,13 @@ class SoftwareEntityLauncher(BaseLauncher):
             # get associated engine (can be none)
             engine_str = sw_entity["engine"]
 
+            # get description, fall back to None
+            description = sw_entity["description"] if sw_entity["description"] else None
+
+            # Resolve the app path and args field names for the current platform
+            app_path_field = "%s_path" % self._platform_name
+            app_args_field = "%s_args" % self._platform_name
+
             # determine if we are in 'automatic' mode or manual
             if (
                 sw_entity.get("windows_path") is None
@@ -110,14 +117,20 @@ class SoftwareEntityLauncher(BaseLauncher):
                     )
                     continue
 
+                # Not the same as saying get(app_args_field, "") since the key might exist but the value may still
+                # be None. If we have no args we should provide an empty string.
+                app_args = sw_entity[app_args_field] or ""
+
                 # defer to the automatic DCC scan to enumerate and register DCCs
                 self._scan_for_software_and_register(
                     engine_str,
                     dcc_versions,
                     dcc_products,
                     app_group,
+                    app_args,
                     is_group_default,
-                    sw_entity["id"],
+                    sw_entity,
+                    description=description,
                 )
 
             else:
@@ -125,10 +138,6 @@ class SoftwareEntityLauncher(BaseLauncher):
                 self._tk_app.log_debug(
                     "One or more path fields are not None. Manual mode."
                 )
-
-                # Resolve the app path and args field names for the current platform
-                app_path_field = "%s_path" % self._platform_name
-                app_args_field = "%s_args" % self._platform_name
 
                 if sw_entity[app_path_field] is None:
                     # manual mode but nothing to do for our os
@@ -157,7 +166,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                     app_path,
                     app_args,
                     icon_path,
-                    sw_entity["id"],
+                    sw_entity,
+                    description=description,
                 )
 
     def launch_from_path(self, path, version=None):
@@ -233,7 +243,9 @@ class SoftwareEntityLauncher(BaseLauncher):
                 # Software entities that have either no Project restrictions OR
                 # include the context Project as a restriction.
                 project_filters.append(["projects", "in", current_project])
-                sw_filters.append({"filter_operator": "or", "filters": project_filters})
+                sw_filters.append(
+                    {"filter_operator": "any", "filters": project_filters}
+                )
             else:
                 # If no context Project is defined, then only retrieve
                 # Software entities that do not have any Project restrictions.
@@ -252,11 +264,11 @@ class SoftwareEntityLauncher(BaseLauncher):
             # OR User restrictions.
             sw_filters.append(
                 {
-                    "filter_operator": "or",
+                    "filter_operator": "any",
                     "filters": [
                         user_group_filter,
                         {
-                            "filter_operator": "or",
+                            "filter_operator": "any",
                             "filters": [
                                 ["user_restrictions", "in", current_user],
                                 ["user_restrictions.Group.users", "in", current_user],
@@ -271,11 +283,10 @@ class SoftwareEntityLauncher(BaseLauncher):
             sw_filters.append(user_group_filter)
 
         # The list of fields we need to retrieve in order to launch the app(s)
-        # @todo: When the Software entity becomes native, these field names
-        #        will need to be updated.
         # Expand Software field names that rely on the current platform
         sw_fields = [
             "code",
+            "description",
             "image",
             "engine",
             "version_names",
@@ -289,6 +300,9 @@ class SoftwareEntityLauncher(BaseLauncher):
             "mac_args",
             "windows_args",
         ]
+
+        # Add any user defined fields to the list of fields we should request.
+        sw_fields += self._tk_app.get_setting("software_entity_extra_fields")
 
         # Log the resolved filter.
         self._tk_app.log_debug(
@@ -312,8 +326,10 @@ class SoftwareEntityLauncher(BaseLauncher):
         dcc_versions,
         dcc_products,
         group,
+        args,
         is_group_default,
-        software_entity_id,
+        software_entity,
+        description=None,
     ):
         """
         Scan for installed software and register commands for all entries detected.
@@ -334,6 +350,9 @@ class SoftwareEntityLauncher(BaseLauncher):
         :param str group: String to group registered commands by
         :param bool is_group_default: If true, make the highest version match found
             by the scan the default.
+        :param int software_entity: If set, this is the entity representing the software entity that
+                                    is associated with this launch command.
+        :param str description: (Optional) Custom description/tooltip to use.
         """
         # No application path was specified, triggering "auto discovery" mode. Attempt to
         # find relevant application path(s) from the engine launcher.
@@ -425,17 +444,25 @@ class SoftwareEntityLauncher(BaseLauncher):
             # engine UIs.
             group_name = group or software_version.product
 
+            # Combine any args set on the Software entity with those added in the software detection.
+            # The args from the Software entity will be in string form, and the args from the SoftwareVersion will be
+            # a list of strings. We should combine them together into one list of string and then join them to a
+            # single string.
+            args_list = (software_version.args or []) + [args]
+            launch_args = " ".join(args_list)
+
             # perform the registration
             self._register_launch_command(
                 software_version.display_name,
                 software_version.icon,
                 launch_engine_str,
                 software_version.path,
-                " ".join(software_version.args or []),
+                launch_args,
                 software_version.version,
                 group_name,
                 group_default,
-                software_entity_id,
+                software_entity,
+                description=description,
             )
 
     def _manual_register(
@@ -448,7 +475,8 @@ class SoftwareEntityLauncher(BaseLauncher):
         path,
         args,
         icon_path,
-        software_entity_id,
+        software_entity,
+        description=None,
     ):
         """
         Parse manual software definition given by input params and register
@@ -467,6 +495,8 @@ class SoftwareEntityLauncher(BaseLauncher):
             contains more than one item, this should contain a {version} token.
         :param args: Launch arguments.
         :param icon_path: Path to an icon thumbnail on disk.
+        :param software_entity: A dict representing the Shotgun Software entity.
+        :param str description: (Optional) Custom description/tooltip to use.
         """
         if dcc_versions:
             # Construct a command for each version.
@@ -499,7 +529,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                     version,
                     group,
                     group_default,
-                    software_entity_id,
+                    software_entity,
+                    description=description,
                 )
 
         else:
@@ -513,7 +544,8 @@ class SoftwareEntityLauncher(BaseLauncher):
                 None,  # version
                 group,
                 is_group_default,
-                software_entity_id,
+                software_entity,
+                description=description,
             )
 
     def _extract_thumbnail(self, entity_type, entity_id, sg_thumb_url):
