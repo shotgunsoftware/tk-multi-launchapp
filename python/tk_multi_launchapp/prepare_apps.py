@@ -90,6 +90,8 @@ def prepare_launch_for_engine(
     # have an engine-specific bootstrap to use.
     if engine_name == "tk-maya":
         _prepare_maya_launch()
+    elif engine_name == "tk-softimage":
+        _prepare_softimage_launch()
     elif engine_name == "tk-motionbuilder":
         app_args = _prepare_motionbuilder_launch(app_args)
     elif engine_name == "tk-3dsmax":
@@ -247,6 +249,35 @@ def _prepare_maya_launch():
     # Make sure Maya can find the Tank menu
     startup_path = _get_app_startup_path("maya")
     sgtk.util.append_path_to_env_var("PYTHONPATH", startup_path)
+
+
+def _prepare_softimage_launch():
+    """
+    Softimage specific pre-launch environment setup.
+    """
+    # add the startup plug-in to the XSI_PLUGINS path:
+    xsi_plugins = os.path.abspath(
+        os.path.join(
+            _get_app_specific_path("softimage"), "startup", "Application", "Plugins"
+        )
+    )
+    sgtk.util.append_path_to_env_var("XSI_PLUGINS", xsi_plugins)
+
+    # On Linux, Softimage 2013 is missing libssl and sqlite3 libraries.  We have some that
+    # we think will work so lets _append_ them to the LD_LIBRARY_PATH & PYTHONPATH before
+    # launching Softimage.  Note, these can be overriden by specifying a location earlier
+    # in the LD_LIBRARY_PATH & PYTHONPATH if needed
+    if sgtk.util.is_linux():
+        # Note: we can't reliably check the version as the path on linux
+        # is typically just 'xsi'.  This may become a problem if we start
+        # to support 2014 and beyond...
+        #
+        # if "Softimage_2013" in app_path:
+        lib_path = os.path.abspath(
+            os.path.join(_get_app_specific_path("softimage"), "linux", "lib")
+        )
+        sgtk.util.append_path_to_env_var("LD_LIBRARY_PATH", lib_path)
+        sgtk.util.append_path_to_env_var("PYTHONPATH", lib_path)
 
 
 def _prepare_motionbuilder_launch(app_args):
