@@ -35,7 +35,7 @@ def bootstrap_tank():
     except Exception as e:
         FBMessageBox(
             "Shotgun: Error",
-            "Could not create context! Shotgun Pipeline Toolkit will be disabled. Details: %s"
+            "Could not create context! SG Pipeline Toolkit will be disabled. Details: %s"
             % e,
             "Ok",
         )

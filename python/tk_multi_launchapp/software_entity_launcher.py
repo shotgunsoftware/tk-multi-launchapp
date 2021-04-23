@@ -215,7 +215,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         # check that software entity is supported
         if self.__get_sg_server_version() < (7, 2, 0):
             self._tk_app.log_warning(
-                "Your version of Shotgun does not support Software entity based launching."
+                "Your version of SG does not support Software entity based launching."
             )
             return []
 
@@ -312,7 +312,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         sw_entities = self._tk_app.shotgun.find("Software", sw_filters, sw_fields)
         if not sw_entities:
             # No Entities found matching filters, nothing to do.
-            self._tk_app.log_debug("No matching Shotgun Software entities found.")
+            self._tk_app.log_debug("No matching SG Software entities found.")
         else:
             self._tk_app.log_debug(
                 "Got software data from Shotgun:\n%s" % pprint.pformat(sw_entities)
