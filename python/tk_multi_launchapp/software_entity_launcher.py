@@ -315,7 +315,7 @@ class SoftwareEntityLauncher(BaseLauncher):
             self._tk_app.log_debug("No matching SG Software entities found.")
         else:
             self._tk_app.log_debug(
-                "Got software data from Shotgun:\n%s" % pprint.pformat(sw_entities)
+                "Got software data from ShotGrid:\n%s" % pprint.pformat(sw_entities)
             )
 
         return sw_entities
@@ -569,7 +569,7 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         if sg_thumb_url is None:
             self._tk_app.log_debug(
-                "No thumbnail is set in Shotgun. Falling back on default."
+                "No thumbnail is set in ShotGrid. Falling back on default."
             )
             # use the launch app icon
             return default_thumbnail_location

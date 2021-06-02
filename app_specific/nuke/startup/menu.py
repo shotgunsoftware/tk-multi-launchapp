@@ -35,7 +35,7 @@ def bootstrap_tank():
     try:
         import tank
     except Exception as e:
-        nuke.warning("Shotgun: Could not import sgtk! Disabling for now: %s" % e)
+        nuke.warning("ShotGrid: Could not import sgtk! Disabling for now: %s" % e)
         return
 
     if not "TANK_ENGINE" in os.environ:
@@ -58,7 +58,7 @@ def bootstrap_tank():
     try:
         engine = tank.platform.start_engine(engine_name, context.tank, context)
     except Exception as e:
-        nuke.warning("Shotgun: Could not start engine: %s" % e)
+        nuke.warning("ShotGrid: Could not start engine: %s" % e)
         return
 
     # clean up temp env vars
