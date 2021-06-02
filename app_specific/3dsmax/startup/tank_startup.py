@@ -19,11 +19,11 @@ def bootstrap_tank():
     try:
         import tank
     except Exception as e:
-        mxs.messageBox("Shotgun: Could not import sgtk! Disabling for now: %s" % e)
+        mxs.messageBox("ShotGrid: Could not import sgtk! Disabling for now: %s" % e)
         return
 
     if not "TANK_ENGINE" in os.environ:
-        mxs.messageBox("Shotgun: Missing required environment variable TANK_ENGINE.")
+        mxs.messageBox("ShotGrid: Missing required environment variable TANK_ENGINE.")
         return
 
     engine_name = os.environ.get("TANK_ENGINE")
@@ -39,7 +39,7 @@ def bootstrap_tank():
     try:
         engine = tank.platform.start_engine(engine_name, context.tank, context)
     except Exception as e:
-        mxs.messageBox("Shotgun: Could not start engine: %s" % e)
+        mxs.messageBox("ShotGrid: Could not start engine: %s" % e)
         return
 
     # clean up temp env vars

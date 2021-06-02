@@ -23,7 +23,7 @@ def bootstrap_tank():
         import tank
     except Exception as e:
         hiero.core.log.error(
-            "Shotgun: Could not import sgtk! Disabling for now: %s" % e
+            "ShotGrid: Could not import sgtk! Disabling for now: %s" % e
         )
         return
 
@@ -44,7 +44,7 @@ def bootstrap_tank():
     try:
         engine = tank.platform.start_engine(engine_name, context.tank, context)
     except Exception as e:
-        hiero.core.log.error("Shotgun: Could not start engine: %s" % e)
+        hiero.core.log.error("ShotGrid: Could not start engine: %s" % e)
         return
 
     # check if we should open a file
