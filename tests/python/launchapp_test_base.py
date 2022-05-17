@@ -19,9 +19,7 @@ import sgtk
 
 
 class LaunchAppTestBase(TankTestBase):
-    """
-
-    """
+    """ """
 
     def setUp(self):
         """
