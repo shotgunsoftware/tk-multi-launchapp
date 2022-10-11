@@ -31,14 +31,19 @@ class LaunchApplication(sgtk.platform.Application):
         # Use the Launchers defined in the tk_multi_launchapp payload
         # to do all of the heavy lifting for this app
         app_payload = self.import_module("tk_multi_launchapp")
-        if self.get_setting("use_software_entity"):
-            # For zero config type setups
-            self._launcher = app_payload.SoftwareEntityLauncher()
-        else:
-            # For traditional setups
-            self._launcher = app_payload.SingleConfigLauncher()
+        # if self.get_setting("use_software_entity"):
+        #     # For zero config type setups
+        #     self._launcher = app_payload.SoftwareEntityLauncher()
+        # else:
+        #     # For traditional setups
+        #     self._launcher = app_payload.SingleConfigLauncher()
 
-        # Register the appropriate DCC launch commands
+        self._launcher = self.execute_hook_method(
+            "hook_launcher", "init", base_class=app_payload.BaseLauncher
+        )
+
+        # # Register the appropriate DCC launch commands
+
         self._launcher.register_launch_commands()
 
     def launch_from_path_and_context(self, path, context, version=None):

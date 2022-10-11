@@ -10,33 +10,26 @@
 
 # Metadata defining the behaviour and requirements for this app
 
-
 # expected fields in the configuration file for this app
 configuration:
-
-    use_software_entity:
-        type: bool
-        description: Whether to use ShotGrid Software Entities to register
-                     launch commands for available DCCs.
-        default_value: false
-
     software_entity_extra_fields:
         type: list
         allows_empty: True
         values:
             type: str
         default_value: []
-        description: "A list of Software entity field code names that should be fetched and
-                     and passed to the hooks as part of the Software entity dictionary.
-                     The main fields are already fetched and provided by default, but this
-                     allows custom fields to be specified without needing to perform a second
-                     look up in ShotGrid."
+        description:
+            "A list of Software entity field code names that should be fetched and
+            and passed to the hooks as part of the Software entity dictionary.
+            The main fields are already fetched and provided by default, but this
+            allows custom fields to be specified without needing to perform a second
+            look up in ShotGrid."
 
     scan_all_projects:
         type: bool
         description: When true, and when use_software_entity is true, launchers
-                     will be registered for all projects instead of only the
-                     current environment's project.
+            will be registered for all projects instead of only the
+            current environment's project.
         default_value: false
 
     menu_name:
@@ -45,15 +38,16 @@ configuration:
         default_value: ""
 
     icon:
-      type: str
-      description: "The path to the icon to appear for the application.  If the
-                   value starts with '{target_engine}' then the remainder of the
-                   path will be relative to the root of the engine's install.  If
-                   the value starts with '{config_path}' then the remainder of the
-                   path will be relative to the root of the configuration.  The
-                   path should use forward slashes which will be replaced with
-                   the correct operating system separator when used."
-      default_value: "{target_engine}/icon_256.png"
+        type: str
+        description:
+            "The path to the icon to appear for the application.  If the
+            value starts with '{target_engine}' then the remainder of the
+            path will be relative to the root of the engine's install.  If
+            the value starts with '{config_path}' then the remainder of the
+            path will be relative to the root of the configuration.  The
+            path should use forward slashes which will be replaced with
+            the correct operating system separator when used."
+        default_value: "{target_engine}/icon_256.png"
 
     # Path information for multiple platforms
     windows_path:
@@ -88,10 +82,11 @@ configuration:
 
     engine:
         type: str
-        description: "The name of the ShotGrid engine to start. This is typically the application
-                      name prefixed with tk, e.g. tk-maya, tk-nuke, tk-photoshop etc. If you set
-                      this to an empty string, no toolkit engine will be started, meaning that
-                      you can launch applications that do not have toolkit engines set up."
+        description:
+            "The name of the ShotGrid engine to start. This is typically the application
+            name prefixed with tk, e.g. tk-maya, tk-nuke, tk-photoshop etc. If you set
+            this to an empty string, no toolkit engine will be started, meaning that
+            you can launch applications that do not have toolkit engines set up."
         default_value: ""
 
     group:
@@ -101,33 +96,35 @@ configuration:
 
     group_default:
         type: bool
-        description: "Boolean value indicating whether this command should represent the group as
-                      a whole. Setting this value to True indicates that this is the command to run and
-                      display in applications that show a single button for each named group."
+        description:
+            "Boolean value indicating whether this command should represent the group as
+            a whole. Setting this value to True indicates that this is the command to run and
+            display in applications that show a single button for each named group."
         default_value: False
 
     defer_keyword:
         type: str
         default_value: ""
-        description: "Advanced parameter. This allows for advanced customization around deferred folder creation.
-                      Deferred folder creation allows for the creation of partial subfolder structures depending
-                      on a specific keyword (see main documentation for details). Before an app is launched, folders
-                      are automatically created and by default (e.g. if you leave this setting as null),
-                      the launch app will pass the name of the engine as the deferred folder creation keyword.
-                      This makes it easy to set up deferred rules in your folder creation config for tk-maya,
-                      tk-nuke etc. However, if you for example wanted to set up specific deferred folder structures
-                      for Nuke and Nuke X (both running the nuke engine), you need a finer granularity. This setting
-                      can then be used to override the default behaviour of just passing the engine name. Instead, you
-                      can pass any string into the deferred folder creation (for example 'nuke' and 'nuke_x' in the case
-                      above). This parameter is also useful if you want to use deferred folder creation in
-                      conjunction with launching of apps which do not have a toolkit engine defined - for these
-                      app launch instances, the engine setting is left blank, and therefore no engine name is passed
-                      into the deferred folder creation. In such cases you can utilize this parameter to control
-                      the deferred folder creation.
+        description:
+            "Advanced parameter. This allows for advanced customization around deferred folder creation.
+            Deferred folder creation allows for the creation of partial subfolder structures depending
+            on a specific keyword (see main documentation for details). Before an app is launched, folders
+            are automatically created and by default (e.g. if you leave this setting as null),
+            the launch app will pass the name of the engine as the deferred folder creation keyword.
+            This makes it easy to set up deferred rules in your folder creation config for tk-maya,
+            tk-nuke etc. However, if you for example wanted to set up specific deferred folder structures
+            for Nuke and Nuke X (both running the nuke engine), you need a finer granularity. This setting
+            can then be used to override the default behaviour of just passing the engine name. Instead, you
+            can pass any string into the deferred folder creation (for example 'nuke' and 'nuke_x' in the case
+            above). This parameter is also useful if you want to use deferred folder creation in
+            conjunction with launching of apps which do not have a toolkit engine defined - for these
+            app launch instances, the engine setting is left blank, and therefore no engine name is passed
+            into the deferred folder creation. In such cases you can utilize this parameter to control
+            the deferred folder creation.
 
-                      You can specify multiple keywords using a comma as a delimiter (eg. 'nuke, nuke_x').
-                      This will trigger folder creation for folders in your schema that have any
-                      of these values in their deferred folder creation setting."
+            You can specify multiple keywords using a comma as a delimiter (eg. 'nuke, nuke_x').
+            This will trigger folder creation for folders in your schema that have any
+            of these values in their deferred folder creation setting."
 
     versions:
         type: list
@@ -135,65 +132,78 @@ configuration:
         values:
             type: str
         default_value: []
-        description: "A list of strings that will be used to substitute for the {version} token
-                     in the values for the other settings for the instance of this app.  For
-                     example, a value of ['2012', '2013', '2014'] for this setting and a value of
-                     'Launch Maya {version}' for menu_name would result in the following command
-                     menu names being registered: Launch Maya 2012, Launch Maya 2013, Launch
-                     Maya 2014.  The first version in the list will be considered the 'default'
-                     version if the engine running the app supports the concept. You can use pieces
-                     of the version if you wrap the parts in parenthesis like ['(7.0)v3', '(8.0)v1'].
-                     These pieces of the version string are available in the other settings via the
-                     {v0}, {v1}, {v2}, ... replacement tokens."
+        description:
+            "A list of strings that will be used to substitute for the {version} token
+            in the values for the other settings for the instance of this app.  For
+            example, a value of ['2012', '2013', '2014'] for this setting and a value of
+            'Launch Maya {version}' for menu_name would result in the following command
+            menu names being registered: Launch Maya 2012, Launch Maya 2013, Launch
+            Maya 2014.  The first version in the list will be considered the 'default'
+            version if the engine running the app supports the concept. You can use pieces
+            of the version if you wrap the parts in parenthesis like ['(7.0)v3', '(8.0)v1'].
+            These pieces of the version string are available in the other settings via the
+            {v0}, {v1}, {v2}, ... replacement tokens."
 
     skip_engine_instances:
         type: list
         allows_empty: True
         values:
-          type: str
+            type: str
         default_value: []
-        description: "A list of string names of engine instances to skip registering Software
-                     launcher commands for. For example, a value of ['tk-nukestudio'] for this
-                     setting would stop any Software entity launcher commands being registered
-                     with the engine that reference the 'tk-nukestudio' engine instance in that
-                     environment. This can be used to allow for an engine instance to be configured
-                     for a given environment without a launcher existing for it. This is useful
-                     in the case of Nuke Studio, where we want to allow for context changes into
-                     certain environments, but we only want the application to be launchable from
-                     a project environment. This setting only has an impact on Software entity
-                     launchers."
+        description:
+            "A list of string names of engine instances to skip registering Software
+            launcher commands for. For example, a value of ['tk-nukestudio'] for this
+            setting would stop any Software entity launcher commands being registered
+            with the engine that reference the 'tk-nukestudio' engine instance in that
+            environment. This can be used to allow for an engine instance to be configured
+            for a given environment without a launcher existing for it. This is useful
+            in the case of Nuke Studio, where we want to allow for context changes into
+            certain environments, but we only want the application to be launchable from
+            a project environment. This setting only has an impact on Software entity
+            launchers."
 
     extra:
         type: dict
-        description: "ShotGrid engine specific extra values. These are defined per ShotGrid engine.
-                     Please look in the app documentation for more details."
+        description:
+            "ShotGrid engine specific extra values. These are defined per ShotGrid engine.
+            Please look in the app documentation for more details."
         default_value: {}
 
     hook_app_launch:
         type: hook
-        default_value: app_launch
-        description: "Called to launch the application. This hook contains the code that does
-                     the actual execution of the launch command and parameters. If you have
-                     a custom launcher system in your studio, it can be handy to override
-                     Tank's default launch behaviour."
+        default_value: "{self}/app_launch.py"
+        description:
+            "Called to launch the application. This hook contains the code that does
+            the actual execution of the launch command and parameters. If you have
+            a custom launcher system in your studio, it can be handy to override
+            Tank's default launch behaviour."
 
     hook_before_app_launch:
         type: hook
-        default_value: before_app_launch
-        description: "This hook is called just before the hook_app_launch is used and can be
-                     useful if you don't want to modify the way applications are being launched
-                     (which is advanced usage and can be done by overriding the app_launch hook),
-                     but merely want to modify the environment before app launch. You may want
-                     to add additional pipeline paths, APIs or other things to the setup, or
-                     specify additional scripts etc to run."
+        default_value: "{self}/before_app_launch.py"
+        description:
+            "This hook is called just before the hook_app_launch is used and can be
+            useful if you don't want to modify the way applications are being launched
+            (which is advanced usage and can be done by overriding the app_launch hook),
+            but merely want to modify the environment before app launch. You may want
+            to add additional pipeline paths, APIs or other things to the setup, or
+            specify additional scripts etc to run."
 
     hook_before_register_command:
         type: hook
-        default_value: before_register_command
-        description: "This hook is called just before launcher command registration occurs.
-                      it can be used to alter the engine instance name associated with the
-                      launcher should that be required. This hook's methods are only called
-                      when Software entity launchers are being used."
+        default_value: "{self}/before_register_command.py"
+        description:
+            "This hook is called just before launcher command registration occurs.
+            it can be used to alter the engine instance name associated with the
+            launcher should that be required. This hook's methods are only called
+            when Software entity launchers are being used."
+
+    hook_launcher:
+        type: hook
+        default_value: "{self}/single_config_launcher.py"
+        description:
+            "This hook controls the method by which applications are collected
+            and launched."
 
 # the Shotgun fields that this app needs in order to operate correctly
 requires_shotgun_fields:
@@ -211,4 +221,8 @@ requires_engine_version:
 supported_engines:
 
 frameworks:
-    - {"name": "tk-framework-shotgunutils", "version": "v5.x.x", "minimum_version": "v5.1.0"}
+    - {
+          "name": "tk-framework-shotgunutils",
+          "version": "v5.x.x",
+          "minimum_version": "v5.1.0",
+      }

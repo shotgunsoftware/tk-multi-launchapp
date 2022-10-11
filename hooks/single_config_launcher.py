@@ -13,27 +13,30 @@ import os
 import sgtk
 from sgtk import TankError
 
-from .base_launcher import BaseLauncher
+HookBaseClass = sgtk.get_hook_baseclass()
 
 
-class SingleConfigLauncher(BaseLauncher):
+class SingleConfigLauncher(HookBaseClass):
     """
     Launches a DCC based on traditional configuration settings.
     """
 
-    def __init__(self):
+    def init(self):
         """
         Initialize base class and member values
         """
-        BaseLauncher.__init__(self)
+
+        super(SingleConfigLauncher, self).init()
 
         # Store required information to launch the app as members.
-        self._app_path = self._tk_app.get_setting("%s_path" % self._platform_name, "")
-        self._app_args = self._tk_app.get_setting("%s_args" % self._platform_name, "")
-        self._app_menu_name = self._tk_app.get_setting("menu_name")
-        self._app_engine = self._tk_app.get_setting("engine")
-        self._app_group = self._tk_app.get_setting("group")
-        self._is_group_default = self._tk_app.get_setting("group_default")
+        self._app_path = self.parent.get_setting("%s_path" % self._platform_name, "")
+        self._app_args = self.parent.get_setting("%s_args" % self._platform_name, "")
+        self._app_menu_name = self.parent.get_setting("menu_name")
+        self._app_engine = self.parent.get_setting("engine")
+        self._app_group = self.parent.get_setting("group")
+        self._is_group_default = self.parent.get_setting("group_default")
+
+        return self
 
     def register_launch_commands(self):
         """
@@ -46,11 +49,11 @@ class SingleConfigLauncher(BaseLauncher):
             return
 
         # get icon value, replacing tokens if needed
-        app_icon = self._tk_app.get_setting("icon")
+        app_icon = self.parent.get_setting("icon")
         if app_icon.startswith("{target_engine}"):
             if self._app_engine:
                 engine_path = sgtk.platform.get_engine_path(
-                    self._app_engine, self._tk_app.sgtk, self._tk_app.context
+                    self._app_engine, self.parent.sgtk, self.parent.context
                 )
                 if engine_path:
                     app_icon = app_icon.replace("{target_engine}", engine_path, 1)
@@ -65,7 +68,7 @@ class SingleConfigLauncher(BaseLauncher):
                 app_icon = ""
 
         if app_icon.startswith("{config_path}"):
-            config_path = self._tk_app.sgtk.pipeline_configuration.get_config_location()
+            config_path = self.parent.sgtk.pipeline_configuration.get_config_location()
             if not config_path:
                 raise TankError(
                     "No pipeline configuration path found for '{config_path}' replacement."
@@ -76,13 +79,13 @@ class SingleConfigLauncher(BaseLauncher):
         app_icon = app_icon.replace("/", os.path.sep)
 
         # Initialize per version
-        app_versions = self._tk_app.get_setting("versions") or []
+        app_versions = self.parent.get_setting("versions") or []
         if app_versions:
             # If a list of versions has been specified, the "group_default" configuration
             # setting is invalid because it cannot be applied to each generated command.
             # Set the group default to the highest version in the list instead.
             sorted_versions = self._sort_versions(app_versions)
-            self._tk_app.log_debug(
+            self.parent.log_debug(
                 "Unable to apply group '%s' group_default value to list of DCC versions : %s. "
                 "Setting group '%s' default to highest version '%s' instead."
                 % (
@@ -131,7 +134,7 @@ class SingleConfigLauncher(BaseLauncher):
         :param path: File path DCC should open after launch.
         :param version: (Optional) Specific version of DCC to launch.
         """
-        context = self._tk_app.sgtk.context_from_path(path)
+        context = self.parent.sgtk.context_from_path(path)
         self._launch_app(
             self._app_menu_name,
             self._app_engine,
