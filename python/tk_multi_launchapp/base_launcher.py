@@ -19,8 +19,10 @@ from .util import apply_version_to_setting, get_clean_version_string
 from .util import clear_dll_directory, restore_dll_directory
 from .prepare_apps import prepare_launch_for_engine
 
+HookBaseClass = sgtk.get_hook_baseclass()
 
-class BaseLauncher(object):
+
+class BaseLauncher(HookBaseClass):
     """
     Functionality to register engine commands that launch DCC
     applications, as well as the business logic to perform the launch.
@@ -29,12 +31,10 @@ class BaseLauncher(object):
     of sources.
     """
 
-    def __init__(self):
+    def init(self):
         """
         Initialize members
         """
-        # Retrieve the TK Application from the current bundle
-        self._tk_app = sgtk.platform.current_bundle()
 
         # Store the current platform value
         self._platform_name = (
@@ -44,6 +44,8 @@ class BaseLauncher(object):
             if sgtk.util.is_macos()
             else "windows"
         )
+
+        return self
 
     def _register_launch_command(
         self,
@@ -111,7 +113,7 @@ class BaseLauncher(object):
             "shotgun_publishedfile",
             "shotgun_version",
         ]
-        if self._tk_app.engine.environment.get("name") not in skip_environments:
+        if self.parent.engine.environment.get("name") not in skip_environments:
             properties = {
                 "title": menu_name,
                 "short_name": command_name,
@@ -138,11 +140,11 @@ class BaseLauncher(object):
                     **kwargs
                 )
 
-            self._tk_app.log_debug(
+            self.parent.log_debug(
                 "Registering command %s to launch %s with args %s for engine %s"
                 % (command_name, app_path, app_args, app_engine)
             )
-            self._tk_app.engine.register_command(
+            self.parent.engine.register_command(
                 command_name, launch_version, properties
             )
 
@@ -199,8 +201,8 @@ class BaseLauncher(object):
             version_string = get_clean_version_string(version)
 
             # run before launch hook
-            self._tk_app.log_debug("Running before app launch hook...")
-            self._tk_app.execute_hook(
+            self.parent.log_debug("Running before app launch hook...")
+            self.parent.execute_hook(
                 "hook_before_app_launch",
                 app_path=app_path,
                 app_args=app_args,
@@ -217,10 +219,10 @@ class BaseLauncher(object):
             dll_directory_cache = clear_dll_directory()
             try:
                 # Launch the application
-                self._tk_app.log_debug(
+                self.parent.log_debug(
                     "Launching executable '%s' with args '%s'" % (app_path, app_args)
                 )
-                result = self._tk_app.execute_hook(
+                result = self.parent.execute_hook(
                     "hook_app_launch",
                     app_path=app_path,
                     app_args=app_args,
@@ -233,35 +235,35 @@ class BaseLauncher(object):
             finally:
                 restore_dll_directory(dll_directory_cache)
 
-            self._tk_app.log_debug("Hook tried to launch '%s'" % launch_cmd)
+            self.parent.log_debug("Hook tried to launch '%s'" % launch_cmd)
             if return_code != 0:
                 # some special logic here to decide how to display failure feedback
                 if app_engine == "tk-shotgun":
                     # for the shotgun engine, use the log info in order to
                     # get the proper html formatting
-                    self._tk_app.log_info(
+                    self.parent.log_info(
                         "<b>Failed to launch application!</b> "
                         "This is most likely because the path is not set correctly."
                         "The command that was used to attempt to launch is '%s'. "
                         "<br><br><a href='%s' target=_new>Click here</a> to learn "
                         "more about how to setup your app launch configuration."
-                        % (launch_cmd, self._tk_app.HELP_DOC_URL)
+                        % (launch_cmd, self.parent.HELP_DOC_URL)
                     )
 
-                elif self._tk_app.engine.has_ui:
+                elif self.parent.engine.has_ui:
                     # got UI support. Launch dialog with nice message
                     from ..not_found_dialog import show_path_error_dialog
 
-                    show_path_error_dialog(self._tk_app, launch_cmd)
+                    show_path_error_dialog(self.parent, launch_cmd)
 
                 else:
                     # traditional non-ui environment without any html support.
-                    self._tk_app.log_error(
+                    self.parent.log_error(
                         "Failed to launch application! This is most likely because "
                         "the path is not set correctly. The command that was used "
                         "to attempt to launch is '%s'. To learn more about how to "
                         "set up your app launch configuration, see the following "
-                        "documentation: %s" % (launch_cmd, self._tk_app.HELP_DOC_URL)
+                        "documentation: %s" % (launch_cmd, self.parent.HELP_DOC_URL)
                     )
 
             else:
@@ -299,12 +301,12 @@ class BaseLauncher(object):
                                  launch the DCC.
         """
         meta = {}
-        meta["core"] = self._tk_app.sgtk.version
+        meta["core"] = self.parent.sgtk.version
         meta["engine"] = "%s %s" % (
-            self._tk_app.engine.name,
-            self._tk_app.engine.version,
+            self.parent.engine.name,
+            self.parent.engine.version,
         )
-        meta["app"] = "%s %s" % (self._tk_app.name, self._tk_app.version)
+        meta["app"] = "%s %s" % (self.parent.name, self.parent.version)
         meta["launched_engine"] = app_engine
         meta["command"] = command_executed
         # In Python 3 and certain flavors of Python 2, the sys.platform value under Linux
@@ -320,9 +322,9 @@ class BaseLauncher(object):
         )
         if ctx.task:
             meta["task"] = ctx.task["id"]
-        desc = "%s %s: %s" % (self._tk_app.name, self._tk_app.version, menu_name)
+        desc = "%s %s: %s" % (self.parent.name, self.parent.version, menu_name)
         sgtk.util.create_event_log_entry(
-            self._tk_app.sgtk, ctx, "Toolkit_App_Startup", desc, meta
+            self.parent.sgtk, ctx, "Toolkit_App_Startup", desc, meta
         )
 
     def _launch_callback(
@@ -351,26 +353,26 @@ class BaseLauncher(object):
                                 this launch command.
         """
         # Verify a Project is defined in the context.
-        if self._tk_app.context.project is None:
+        if self.parent.context.project is None:
             raise TankError(
                 "Your context does not have a project defined. Cannot continue."
             )
 
         # Extract an entity type and id from the context.
-        entity_type = self._tk_app.context.project["type"]
-        entity_id = self._tk_app.context.project["id"]
+        entity_type = self.parent.context.project["type"]
+        entity_id = self.parent.context.project["id"]
         # if there is an entity then that takes precedence
-        if self._tk_app.context.entity:
-            entity_type = self._tk_app.context.entity["type"]
-            entity_id = self._tk_app.context.entity["id"]
+        if self.parent.context.entity:
+            entity_type = self.parent.context.entity["type"]
+            entity_id = self.parent.context.entity["id"]
         # and if there is a task that is even better
-        if self._tk_app.context.task:
-            entity_type = self._tk_app.context.task["type"]
-            entity_id = self._tk_app.context.task["id"]
+        if self.parent.context.task:
+            entity_type = self.parent.context.task["type"]
+            entity_id = self.parent.context.task["id"]
 
-        if len(self._tk_app.sgtk.roots) == 0:
+        if len(self.parent.sgtk.roots) == 0:
             # configuration doesn't have any filesystem roots defined
-            self._tk_app.log_debug(
+            self.parent.log_debug(
                 "Configuration does not have any filesystem roots defined. "
                 "Skipping folder creation."
             )
@@ -379,13 +381,13 @@ class BaseLauncher(object):
             # Do the folder creation. If there is a specific defer keyword,
             # this takes precedence. Otherwise, use the engine name for the
             # DCC application by default.
-            defer_keyword = self._tk_app.get_setting("defer_keyword") or app_engine
+            defer_keyword = self.parent.get_setting("defer_keyword") or app_engine
             try:
-                self._tk_app.log_debug(
+                self.parent.log_debug(
                     "Creating folders for %s %s. Defer keyword: '%s'"
                     % (entity_type, entity_id, defer_keyword)
                 )
-                self._tk_app.sgtk.create_filesystem_structure(
+                self.parent.sgtk.create_filesystem_structure(
                     entity_type, entity_id, engine=defer_keyword
                 )
             except sgtk.TankError as err:
@@ -399,7 +401,7 @@ class BaseLauncher(object):
             app_engine,
             app_path,
             app_args,
-            self._tk_app.context,
+            self.parent.context,
             version,
             file_to_open,
             software_entity,

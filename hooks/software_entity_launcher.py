@@ -13,10 +13,10 @@ import traceback
 
 import sgtk
 
-from .base_launcher import BaseLauncher
+HookBaseClass = sgtk.get_hook_baseclass()
 
 
-class SoftwareEntityLauncher(BaseLauncher):
+class SoftwareEntityLauncher(HookBaseClass):
     """
     Launches a DCC application based on site Software entity entries.
 
@@ -68,8 +68,8 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         for sw_entity in sw_entities:
 
-            self._tk_app.log_debug("-" * 20)
-            self._tk_app.log_debug(
+            self.parent.log_debug("-" * 20)
+            self.parent.log_debug(
                 "Parsing Software entity for launch commands:\n%s"
                 % pprint.pformat(sw_entity, indent=4)
             )
@@ -107,12 +107,12 @@ class SoftwareEntityLauncher(BaseLauncher):
             ):
 
                 # all paths are none - we are in automatic mode
-                self._tk_app.log_debug("All path fields are None. Automatic mode.")
+                self.parent.log_debug("All path fields are None. Automatic mode.")
 
                 # make sure we have an engine defined when running in automatic mode
                 # the engine implements the software discovery logic and is therefore required
                 if engine_str is None:
-                    self._tk_app.log_debug(
+                    self.parent.log_debug(
                         "No engine set. Skipping this software entity."
                     )
                     continue
@@ -135,13 +135,13 @@ class SoftwareEntityLauncher(BaseLauncher):
 
             else:
                 # one or more path fields are not none. This means manual mode.
-                self._tk_app.log_debug(
+                self.parent.log_debug(
                     "One or more path fields are not None. Manual mode."
                 )
 
                 if sw_entity[app_path_field] is None:
                     # manual mode but nothing to do for our os
-                    self._tk_app.log_debug(
+                    self.parent.log_debug(
                         "No path defined for current platform (field %s) - skipping."
                         % app_path_field
                     )
@@ -178,7 +178,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         :param version: (Optional) Specific version of DCC to launch.
         """
         # This functionality is not supported for Software entities.
-        self._tk_app.log_error(
+        self.parent.log_error(
             "launch_from_path() is not supported by SoftwareEntityLauncher. "
             "Please register individual application launch commands in your "
             "Project's configuration to use this functionality."
@@ -194,7 +194,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         :param version: (Optional) Specific version of DCC to launch.
         """
         # This functionality is not supported for Software entities.
-        self._tk_app.log_error(
+        self.parent.log_error(
             "launch_from_path_and_context() is not supported by "
             "SoftwareEntityLauncher. Please register individual application "
             "launch commands in your Project's configuration to use this "
@@ -214,12 +214,12 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         # check that software entity is supported
         if self.__get_sg_server_version() < (7, 2, 0):
-            self._tk_app.log_warning(
+            self.parent.log_warning(
                 "Your version of SG does not support Software entity based launching."
             )
             return []
 
-        scan_all_projects = self._tk_app.get_setting("scan_all_projects") or False
+        scan_all_projects = self.parent.get_setting("scan_all_projects") or False
 
         # Determine the information to retrieve from Shotgun
         # Use filters to retrieve Software entities that match specified
@@ -237,7 +237,7 @@ class SoftwareEntityLauncher(BaseLauncher):
             # Next handle Project restrictions. Always include Software entities
             # that have no Project restrictions.
             project_filters = [["projects", "is", None]]
-            current_project = self._tk_app.context.project
+            current_project = self.parent.context.project
             if current_project:
                 # If a Project is defined in the current context, retrieve
                 # Software entities that have either no Project restrictions OR
@@ -253,7 +253,7 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         # Now Group and User restrictions. Always retrieve Software entities
         # that have no Group or User restrictions.
-        current_user = self._tk_app.context.user
+        current_user = self.parent.context.user
 
         # No user restriction filter.
         user_group_filter = ["user_restrictions", "is", None]
@@ -302,19 +302,19 @@ class SoftwareEntityLauncher(BaseLauncher):
         ]
 
         # Add any user defined fields to the list of fields we should request.
-        sw_fields += self._tk_app.get_setting("software_entity_extra_fields")
+        sw_fields += self.parent.get_setting("software_entity_extra_fields")
 
         # Log the resolved filter.
-        self._tk_app.log_debug(
+        self.parent.log_debug(
             "Searching for Software entities matching filters:\n%s"
             % (pprint.pformat(sw_filters, indent=4),)
         )
-        sw_entities = self._tk_app.shotgun.find("Software", sw_filters, sw_fields)
+        sw_entities = self.parent.shotgun.find("Software", sw_filters, sw_fields)
         if not sw_entities:
             # No Entities found matching filters, nothing to do.
-            self._tk_app.log_debug("No matching SG Software entities found.")
+            self.parent.log_debug("No matching SG Software entities found.")
         else:
-            self._tk_app.log_debug(
+            self.parent.log_debug(
                 "Got software data from ShotGrid:\n%s" % pprint.pformat(sw_entities)
             )
 
@@ -356,14 +356,14 @@ class SoftwareEntityLauncher(BaseLauncher):
         """
         # No application path was specified, triggering "auto discovery" mode. Attempt to
         # find relevant application path(s) from the engine launcher.
-        self._tk_app.log_debug(
+        self.parent.log_debug(
             "Attempting to auto discover software for %s." % engine_str
         )
         software_versions = self._scan_for_software(
             engine_str, dcc_versions, dcc_products
         )
 
-        self._tk_app.log_debug(
+        self.parent.log_debug(
             "Scan detected %d software versions" % len(software_versions)
         )
 
@@ -375,15 +375,15 @@ class SoftwareEntityLauncher(BaseLauncher):
         if len(sorted_versions) > 1 and is_group_default:
             # there is more than one match and we have requested that this is the
             # group default. In this case make the highest version the group default.
-            self._tk_app.log_debug(
+            self.parent.log_debug(
                 "Multiple matches for the group default. Will use the highest version "
                 "number as the default."
             )
 
         for software_version in software_versions:
             # run before launch hook
-            self._tk_app.log_debug("Running before register command hook...")
-            launch_engine_str = self._tk_app.execute_hook_method(
+            self.parent.log_debug("Running before register command hook...")
+            launch_engine_str = self.parent.execute_hook_method(
                 "hook_before_register_command",
                 "determine_engine_instance_name",
                 software_version=software_version,
@@ -400,7 +400,7 @@ class SoftwareEntityLauncher(BaseLauncher):
             # is determined by the hook. We need to check for the same possible
             # issue here since the requested engine instance has changed.
             if launch_engine_str != engine_str:
-                self._tk_app.logger.debug(
+                self.parent.logger.debug(
                     "The before_register_command hook changed the engine instance "
                     "to be %s.",
                     launch_engine_str,
@@ -410,10 +410,10 @@ class SoftwareEntityLauncher(BaseLauncher):
                     # We don't need the returned env and descriptor. We only
                     # care whether it raises or not.
                     sgtk.platform.engine.get_env_and_descriptor_for_engine(
-                        launch_engine_str, self._tk_app.sgtk, self._tk_app.context
+                        launch_engine_str, self.parent.sgtk, self.parent.context
                     )
                 except sgtk.platform.TankMissingEngineError:
-                    self._tk_app.logger.debug(
+                    self.parent.logger.debug(
                         "The engine instance requested by before_register_command (%s) "
                         "does not exist in the current environment. The launcher will "
                         "not be registered as a result.",
@@ -423,8 +423,8 @@ class SoftwareEntityLauncher(BaseLauncher):
 
             # We need to check to see if the engine instance associated with
             # the launch command is something we've been configured to skip.
-            if launch_engine_str in self._tk_app.get_setting("skip_engine_instances"):
-                self._tk_app.logger.debug(
+            if launch_engine_str in self.parent.get_setting("skip_engine_instances"):
+                self.parent.logger.debug(
                     "The %s engine instance has been configured to be skipped by way "
                     "of the skip_engine_instances app setting. The launcher command "
                     "for %r will not be registered.",
@@ -506,7 +506,7 @@ class SoftwareEntityLauncher(BaseLauncher):
             if len(sorted_versions) > 1 and is_group_default:
                 # there is more than one match and we have requested that this is the
                 # group default. In this case make the highest version the group default.
-                self._tk_app.log_debug(
+                self.parent.log_debug(
                     "Multiple matches for the group default. Will use the highest version "
                     "number as the default."
                 )
@@ -558,24 +558,24 @@ class SoftwareEntityLauncher(BaseLauncher):
         :param sg_thumb_url: The thumbnail url for the given record
         :returns: path to local image
         """
-        self._tk_app.log_debug(
+        self.parent.log_debug(
             "Attempting to extract high res thumbnail from %s %s"
             % (entity_type, entity_id)
         )
 
         default_thumbnail_location = os.path.join(
-            self._tk_app.disk_location, "icon_256.png"
+            self.parent.disk_location, "icon_256.png"
         )
 
         if sg_thumb_url is None:
-            self._tk_app.log_debug(
+            self.parent.log_debug(
                 "No thumbnail is set in ShotGrid. Falling back on default."
             )
             # use the launch app icon
             return default_thumbnail_location
 
-        if not self._tk_app.engine.has_ui:
-            self._tk_app.log_debug(
+        if not self.parent.engine.has_ui:
+            self.parent.log_debug(
                 "Runtime environment does not have Qt. Skipping extraction."
             )
             # use the launch app icon
@@ -584,26 +584,25 @@ class SoftwareEntityLauncher(BaseLauncher):
         # all good to go - download the target icon
 
         # Import sgutils after ui has been confirmed because it has dependencies on Qt.
-        shotgun_data = sgtk.platform.import_framework(
-            "tk-framework-shotgunutils", "shotgun_data"
-        )
+        fw = self.load_framework("tk-framework-shotgunutils_v5.x.x")
+        shotgun_data = fw.import_module("shotgun_data")
 
         # Download the Software thumbnail source from Shotgun and cache for reuse.
-        self._tk_app.log_debug(
+        self.parent.log_debug(
             "Downloading app icon from %s %s ..." % (entity_type, entity_id)
         )
 
         try:
             icon_path = shotgun_data.ShotgunDataRetriever.download_thumbnail_source(
-                entity_type, entity_id, self._tk_app
+                entity_type, entity_id, self.parent
             )
         except Exception:
-            self._tk_app.logger.exception(
+            self.parent.logger.exception(
                 "There was a problem downloading the thumbnail:"
             )
             return default_thumbnail_location
         else:
-            self._tk_app.log_debug("...download complete: %s" % icon_path)
+            self.parent.log_debug("...download complete: %s" % icon_path)
 
         return icon_path
 
@@ -629,18 +628,18 @@ class SoftwareEntityLauncher(BaseLauncher):
         """
         # First try to construct the engine launcher for the specified engine.
         try:
-            self._tk_app.log_debug("Initializing engine launcher for %s." % engine)
+            self.parent.log_debug("Initializing engine launcher for %s." % engine)
             engine_launcher = sgtk.platform.create_engine_launcher(
-                self._tk_app.sgtk, self._tk_app.context, engine, versions, products
+                self.parent.sgtk, self.parent.context, engine, versions, products
             )
             if not engine_launcher:
-                self._tk_app.log_debug(
+                self.parent.log_debug(
                     "Toolkit engine %s does not support scanning for local DCC "
                     "applications." % engine
                 )
                 return []
         except Exception as e:
-            self._tk_app.log_debug(
+            self.parent.log_debug(
                 "Unable to construct engine launcher for %s. Cannot determine "
                 "corresponding DCC application information:\n%s" % (engine, e)
             )
@@ -648,12 +647,12 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         # Next try to scan for available applications for this engine.
         try:
-            self._tk_app.log_debug(
+            self.parent.log_debug(
                 "Scanning for Toolkit engine %s local applications." % engine
             )
             software_versions = engine_launcher.scan_software()
         except Exception as e:
-            self._tk_app.log_warning(
+            self.parent.log_warning(
                 "Caught unexpected error scanning for DCC applications corresponding "
                 "to Toolkit engine %s:\n%s\n%s" % (engine, e, traceback.format_exc())
             )
@@ -668,7 +667,7 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         :returns: Tuple of (major, minor, patch) versions.
         """
-        sg_major_ver = self._tk_app.shotgun.server_info["version"][0]
-        sg_minor_ver = self._tk_app.shotgun.server_info["version"][1]
-        sg_patch_ver = self._tk_app.shotgun.server_info["version"][2]
+        sg_major_ver = self.parent.shotgun.server_info["version"][0]
+        sg_minor_ver = self.parent.shotgun.server_info["version"][1]
+        sg_patch_ver = self.parent.shotgun.server_info["version"][2]
         return sg_major_ver, sg_minor_ver, sg_patch_ver
