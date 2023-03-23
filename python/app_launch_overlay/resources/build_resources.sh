@@ -11,7 +11,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 # The path to output all built .py files to:
-UI_PYTHON_PATH=../python/app_launch_overlay/ui
+UI_PYTHON_PATH=../ui
 PYTHON_BASE="/Applications/Shotgun.app/Contents/Resources/Python"
 
 function build_qt {
