@@ -14,6 +14,7 @@ from distutils.version import LooseVersion
 
 import sgtk
 from sgtk import TankError
+from sgtk.platform.qt import QtCore, QtGui
 
 from .util import apply_version_to_setting, get_clean_version_string
 from .util import clear_dll_directory, restore_dll_directory
@@ -215,6 +216,19 @@ class BaseLauncher(object):
             # sure that apps depending on not having a DLL path are set
             # to work properly
             dll_directory_cache = clear_dll_directory()
+
+            if self._tk_app.engine.has_ui:
+                # got UI support. Launch dialog with nice message
+                from ..app_launch_overlay import populate_launch_widget
+                wid, dial = populate_launch_widget(self._tk_app)
+                # Start spinner
+                wid.start_progress()
+                splash_message = (
+                     "Launching executable '%s'" % (app_path)
+                )
+                # Report progress
+                wid.report_progress(0.00, splash_message)
+
             try:
                 # Launch the application
                 self._tk_app.log_debug(
@@ -286,6 +300,20 @@ class BaseLauncher(object):
             os.environ.update(environ_clone)
             del sys.path[:]
             sys.path.extend(sys_path_clone)
+            self._tk_app.log_debug(
+                "App launched !!!"
+            )
+
+            splash_msg = (
+                "Launched successfully"
+            )
+            # Report Progress
+            QtCore.QTimer.singleShot(
+                7000, lambda: wid.report_progress(0.97, splash_msg)
+            )
+            QtCore.QTimer.singleShot(
+                10000, lambda: dial.hide()
+            )
 
     def _register_event_log(self, menu_name, app_engine, ctx, command_executed):
         """
