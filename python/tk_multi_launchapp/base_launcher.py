@@ -217,17 +217,17 @@ class BaseLauncher(object):
             # to work properly
             dll_directory_cache = clear_dll_directory()
 
-            if self._tk_app.engine.has_ui:
-                # got UI support. Launch dialog with nice message
-                from ..app_launch_overlay import populate_launch_widget
-                wid, dial = populate_launch_widget(self._tk_app)
-                # Start spinner
-                wid.start_progress()
-                splash_message = (
-                     "Launching executable '%s'" % (app_path)
-                )
-                # Report progress
-                wid.report_progress(0.00, splash_message)
+
+            # got UI support. Launch dialog with nice message
+            from ..app_launch_overlay import populate_launch_widget
+            wid, dial = populate_launch_widget(self._tk_app)
+            # Start spinner
+            wid.start_progress()
+            splash_message = (
+                 "Launching executable '%s'" % (app_path)
+            )
+            # Report progress
+            wid.report_progress(0.00, splash_message)
 
             try:
                 # Launch the application
