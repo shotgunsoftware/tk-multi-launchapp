@@ -22,3 +22,5 @@ engines:
 frameworks:
   tk-framework-shotgunutils_v5.x.x:
     location: {type: path, path: '$SHOTGUN_REPOS_ROOT/tk-framework-shotgunutils'}
+  tk-framework-qtwidgets_v2.x.x:
+    location: { type: path, path: '$SHOTGUN_REPOS_ROOT/tk-framework-qtwidgets' }
