@@ -1,18 +1,18 @@
 import sys
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
-#from .ui.launch_spinner import Ui_Dialog
+
+# from .ui.launch_spinner import Ui_Dialog
 from .ui.splash_new import Ui_Dialog
-#from .qtwidgets import overlay_widget
+
+# from .qtwidgets import overlay_widget
 from ..tk_multi_launchapp import base_launcher
+
 overlay_widget = base_launcher.overlay
-
-
 
 
 class TestSignals(QtCore.QObject):
     on_finished_timer = QtCore.Signal(str)
-
 
 
 def populate_launch_widget(app_instance):
@@ -33,8 +33,6 @@ def populate_launch_widget(app_instance):
     dialog.setWindowFlags(QtCore.Qt.FramelessWindowHint)
     dialog.show()
     return widget, dialog
-
-
 
 
 class LaunchDialog(QtGui.QDialog):
@@ -58,8 +56,6 @@ class LaunchDialog(QtGui.QDialog):
 
         self._overlay = overlay_widget.ShotgunOverlayWidget(self)
         self._overlay.setMargin(20)
-
-
 
     def start_progress(self):
         """
@@ -88,7 +84,6 @@ class LaunchDialog(QtGui.QDialog):
         if msg:
             self._ui.message.setText(msg)
 
-
     @property
     def hide_tk_title_bar(self):
         """
@@ -102,5 +97,3 @@ class LaunchDialog(QtGui.QDialog):
         Splash screen look and feel.
         """
         return False
-
-

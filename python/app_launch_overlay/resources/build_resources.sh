@@ -35,5 +35,3 @@ function build_res {
 # build UI's:
 echo "building user interfaces..."
 build_ui splash_new
-
-

@@ -15,6 +15,7 @@ from distutils.version import LooseVersion
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
+
 # import the overlay module from the qtwidgets framework
 overlay = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
 ShotgunSpinningWidget = overlay.ShotgunSpinningWidget
@@ -220,7 +221,6 @@ class BaseLauncher(object):
             # to work properly
             dll_directory_cache = clear_dll_directory()
 
-
             # got UI support. Launch dialog with nice message
             # from ..app_launch_overlay import populate_launch_widget
             # wid, dial = populate_launch_widget(self._tk_app)
@@ -303,13 +303,9 @@ class BaseLauncher(object):
             os.environ.update(environ_clone)
             del sys.path[:]
             sys.path.extend(sys_path_clone)
-            self._tk_app.log_debug(
-                "App launched !!!"
-            )
+            self._tk_app.log_debug("App launched !!!")
 
-            splash_msg = (
-                "Launched successfully"
-            )
+            splash_msg = "Launched successfully"
             if self._tk_app.engine.has_ui:
                 self.launch_indicator(app_path)
             # # Report Progress
@@ -324,26 +320,26 @@ class BaseLauncher(object):
         if self._tk_app.engine.has_ui:
             # got UI support. Launch dialog with nice message
             from ..app_launch_overlay import populate_launch_widget
+
             wid, dial = populate_launch_widget(self._tk_app)
             # Start spinner
             wid.start_progress()
-            splash_message = (
-                    "Launching executable '%s'" % (app_path)
-            )
+            splash_message = "Launching executable '%s'" % (app_path)
             # Report progress
             wid.report_progress(0.00, splash_message)
             splash_msg = (
-                #"<b style='color: rgb(252, 98, 70)'>Launched executabe '%s'</b>"
+                # "<b style='color: rgb(252, 98, 70)'>Launched executabe '%s'</b>"
                 "Launched successfully"
-                #"with context %s" % (context)
-                #"" % (app_path)
+                # "with context %s" % (context)
+                # "" % (app_path)
             )
             QtCore.QTimer.singleShot(
-                7000, lambda: wid.report_progress(0.97, splash_msg)  #wid.set_engine_message(app_engine, msg=widget_message)
+                7000,
+                lambda: wid.report_progress(
+                    0.97, splash_msg
+                ),  # wid.set_engine_message(app_engine, msg=widget_message)
             )
-            QtCore.QTimer.singleShot(
-                10000, lambda: dial.hide()
-            )
+            QtCore.QTimer.singleShot(10000, lambda: dial.hide())
 
     def _register_event_log(self, menu_name, app_engine, ctx, command_executed):
         """
