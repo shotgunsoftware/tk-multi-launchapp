@@ -15,6 +15,9 @@ from distutils.version import LooseVersion
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
+# import the overlay module from the qtwidgets framework
+overlay = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
+ShotgunSpinningWidget = overlay.ShotgunSpinningWidget
 
 from .util import apply_version_to_setting, get_clean_version_string
 from .util import clear_dll_directory, restore_dll_directory
@@ -219,15 +222,15 @@ class BaseLauncher(object):
 
 
             # got UI support. Launch dialog with nice message
-            from ..app_launch_overlay import populate_launch_widget
-            wid, dial = populate_launch_widget(self._tk_app)
-            # Start spinner
-            wid.start_progress()
-            splash_message = (
-                 "Launching executable '%s'" % (app_path)
-            )
-            # Report progress
-            wid.report_progress(0.00, splash_message)
+            # from ..app_launch_overlay import populate_launch_widget
+            # wid, dial = populate_launch_widget(self._tk_app)
+            # # Start spinner
+            # wid.start_progress()
+            # splash_message = (
+            #      "Launching executable '%s'" % (app_path)
+            # )
+            # # Report progress
+            # wid.report_progress(0.00, splash_message)
 
             try:
                 # Launch the application
@@ -307,9 +310,36 @@ class BaseLauncher(object):
             splash_msg = (
                 "Launched successfully"
             )
-            # Report Progress
+            if self._tk_app.engine.has_ui:
+                self.launch_indicator(app_path)
+            # # Report Progress
+            # QtCore.QTimer.singleShot(
+            #     7000, lambda: wid.report_progress(0.97, splash_msg)
+            # )
+            # QtCore.QTimer.singleShot(
+            #     10000, lambda: dial.hide()
+            # )
+
+    def launch_indicator(self, app_path):
+        if self._tk_app.engine.has_ui:
+            # got UI support. Launch dialog with nice message
+            from ..app_launch_overlay import populate_launch_widget
+            wid, dial = populate_launch_widget(self._tk_app)
+            # Start spinner
+            wid.start_progress()
+            splash_message = (
+                    "Launching executable '%s'" % (app_path)
+            )
+            # Report progress
+            wid.report_progress(0.00, splash_message)
+            splash_msg = (
+                #"<b style='color: rgb(252, 98, 70)'>Launched executabe '%s'</b>"
+                "Launched successfully"
+                #"with context %s" % (context)
+                #"" % (app_path)
+            )
             QtCore.QTimer.singleShot(
-                7000, lambda: wid.report_progress(0.97, splash_msg)
+                7000, lambda: wid.report_progress(0.97, splash_msg)  #wid.set_engine_message(app_engine, msg=widget_message)
             )
             QtCore.QTimer.singleShot(
                 10000, lambda: dial.hide()

@@ -56,5 +56,6 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         pass
 
-from ..qtwidgets import ShotgunSpinningWidget
-from . import resources_rc
+#from ..qtwidgets import ShotgunSpinningWidget
+from ...tk_multi_launchapp.base_launcher import ShotgunSpinningWidget
+#from . import resources_rc
