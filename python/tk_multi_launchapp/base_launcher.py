@@ -303,7 +303,7 @@ class BaseLauncher(object):
                  {v1}, ... variables
         """
         if self._tk_app.engine.has_ui:
-            from ..app_launch_overlay import populate_launch_dialog
+            from ..launch_indicator_dialog import populate_launch_dialog
 
             wid, dial = populate_launch_dialog(self._tk_app)
             # Start spinner
