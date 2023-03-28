@@ -292,7 +292,6 @@ class BaseLauncher(object):
             del sys.path[:]
             sys.path.extend(sys_path_clone)
 
-
     def launch_indicator(self, app_path):
         """
         This displays a temporary frameless QDialog with an overlay
@@ -305,6 +304,7 @@ class BaseLauncher(object):
         """
         if self._tk_app.engine.has_ui:
             from ..app_launch_overlay import populate_launch_dialog
+
             wid, dial = populate_launch_dialog(self._tk_app)
             # Start spinner
             wid.start_progress()
@@ -314,9 +314,7 @@ class BaseLauncher(object):
             splash_msg = "Launched successfully"
             QtCore.QTimer.singleShot(
                 7000,
-                lambda: wid.report_progress(
-                    0.97, splash_msg
-                ),
+                lambda: wid.report_progress(0.97, splash_msg),
             )
             # Hide the QDialog
             QtCore.QTimer.singleShot(10000, lambda: dial.hide())

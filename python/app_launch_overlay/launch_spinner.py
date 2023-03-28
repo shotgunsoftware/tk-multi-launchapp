@@ -5,8 +5,6 @@ from .ui.splash_new import Ui_Dialog
 from .qtwidgets import overlay_widget
 
 
-
-
 def populate_launch_dialog(app_instance):
     """
     Shows a modal dialog inheriting from QTankDialog.
@@ -20,8 +18,9 @@ def populate_launch_dialog(app_instance):
         LaunchDialog,
         app_instance=app_instance,
     )
-
     dialog.ui.top_group.setVisible(False)
+    # Add a frameless look and force the dialog to
+    # be on top of other dialogs
     dialog.setWindowFlags(
         QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint
     )
@@ -84,4 +83,3 @@ class LaunchDialog(QtGui.QDialog):
         Tell the system to not show the std toolbar
         """
         return False
-
