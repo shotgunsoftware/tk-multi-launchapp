@@ -16,9 +16,9 @@ import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
 
-# import the overlay module from the qtwidgets framework
-overlay = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
-ShotgunSpinningWidget = overlay.ShotgunSpinningWidget
+# # import the overlay module from the qtwidgets framework
+# overlay = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
+# ShotgunSpinningWidget = overlay.ShotgunSpinningWidget
 
 from .util import apply_version_to_setting, get_clean_version_string
 from .util import clear_dll_directory, restore_dll_directory
@@ -295,6 +295,10 @@ class BaseLauncher(object):
                 # Write an event log entry
                 self._register_event_log(menu_name, app_engine, context, launch_cmd)
 
+                splash_msg = "Launched successfully"
+                if self._tk_app.engine.has_ui:
+                    self.launch_indicator(app_path)
+
         finally:
             # Clear the original structures and add into them so
             # that users who did from os import environ and from
@@ -303,11 +307,11 @@ class BaseLauncher(object):
             os.environ.update(environ_clone)
             del sys.path[:]
             sys.path.extend(sys_path_clone)
-            self._tk_app.log_debug("App launched !!!")
+            self._tk_app.log_debug("App launched Sandler!!!")
 
-            splash_msg = "Launched successfully"
-            if self._tk_app.engine.has_ui:
-                self.launch_indicator(app_path)
+            # splash_msg = "Launched successfully"
+            # if self._tk_app.engine.has_ui:
+            #     self.launch_indicator(app_path)
             # # Report Progress
             # QtCore.QTimer.singleShot(
             #     7000, lambda: wid.report_progress(0.97, splash_msg)

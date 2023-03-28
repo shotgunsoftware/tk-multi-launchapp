@@ -5,10 +5,12 @@ from sgtk.platform.qt import QtCore, QtGui
 # from .ui.launch_spinner import Ui_Dialog
 from .ui.splash_new import Ui_Dialog
 
-# from .qtwidgets import overlay_widget
-from ..tk_multi_launchapp import base_launcher
+from .qtwidgets import overlay_widget
+#from ..tk_multi_launchapp import overlay_widget
+#from ..tk_multi_launchapp import base_launcher
+#from ..tk_multi_launchapp import base_launcher
 
-overlay_widget = base_launcher.overlay
+#overlay_widget = base_launcher.overlay
 
 
 class TestSignals(QtCore.QObject):
@@ -30,7 +32,7 @@ def populate_launch_widget(app_instance):
     )
 
     dialog.ui.top_group.setVisible(False)
-    dialog.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+    dialog.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
     dialog.show()
     return widget, dialog
 
