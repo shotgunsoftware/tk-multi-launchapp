@@ -1,45 +1,37 @@
 import sys
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
-
-# from .ui.launch_spinner import Ui_Dialog
 from .ui.splash_new import Ui_Dialog
-
 from .qtwidgets import overlay_widget
-#from ..tk_multi_launchapp import overlay_widget
-#from ..tk_multi_launchapp import base_launcher
-#from ..tk_multi_launchapp import base_launcher
-
-#overlay_widget = base_launcher.overlay
 
 
-class TestSignals(QtCore.QObject):
-    on_finished_timer = QtCore.Signal(str)
 
 
-def populate_launch_widget(app_instance):
+def populate_launch_dialog(app_instance):
     """
-    Shows a modal dialog with information about an invalid path
+    Shows a modal dialog inheriting from QTankDialog.
 
     :param app_instance: App instance to associate dialog with
     """
 
     dialog, widget = app_instance.engine._create_dialog_with_widget(
-        "App Launcher widget",
+        "App Launcher dialog",
         app_instance,
         LaunchDialog,
         app_instance=app_instance,
     )
 
     dialog.ui.top_group.setVisible(False)
-    dialog.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
+    dialog.setWindowFlags(
+        QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint
+    )
     dialog.show()
     return widget, dialog
 
 
 class LaunchDialog(QtGui.QDialog):
     """
-    Not found UI dialog.
+    Launcher indicator UI dialog.
     """
 
     def __init__(self, app_instance=None):
@@ -93,9 +85,3 @@ class LaunchDialog(QtGui.QDialog):
         """
         return False
 
-    @property
-    def splash_look(self):
-        """
-        Splash screen look and feel.
-        """
-        return False

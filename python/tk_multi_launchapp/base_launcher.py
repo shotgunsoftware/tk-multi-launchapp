@@ -16,10 +16,6 @@ import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
 
-# # import the overlay module from the qtwidgets framework
-# overlay = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
-# ShotgunSpinningWidget = overlay.ShotgunSpinningWidget
-
 from .util import apply_version_to_setting, get_clean_version_string
 from .util import clear_dll_directory, restore_dll_directory
 from .prepare_apps import prepare_launch_for_engine
@@ -221,17 +217,6 @@ class BaseLauncher(object):
             # to work properly
             dll_directory_cache = clear_dll_directory()
 
-            # got UI support. Launch dialog with nice message
-            # from ..app_launch_overlay import populate_launch_widget
-            # wid, dial = populate_launch_widget(self._tk_app)
-            # # Start spinner
-            # wid.start_progress()
-            # splash_message = (
-            #      "Launching executable '%s'" % (app_path)
-            # )
-            # # Report progress
-            # wid.report_progress(0.00, splash_message)
-
             try:
                 # Launch the application
                 self._tk_app.log_debug(
@@ -294,8 +279,7 @@ class BaseLauncher(object):
 
                 # Write an event log entry
                 self._register_event_log(menu_name, app_engine, context, launch_cmd)
-
-                splash_msg = "Launched successfully"
+                # got UI support. Launch dialog with nice message
                 if self._tk_app.engine.has_ui:
                     self.launch_indicator(app_path)
 
@@ -307,42 +291,34 @@ class BaseLauncher(object):
             os.environ.update(environ_clone)
             del sys.path[:]
             sys.path.extend(sys_path_clone)
-            self._tk_app.log_debug("App launched Sandler!!!")
 
-            # splash_msg = "Launched successfully"
-            # if self._tk_app.engine.has_ui:
-            #     self.launch_indicator(app_path)
-            # # Report Progress
-            # QtCore.QTimer.singleShot(
-            #     7000, lambda: wid.report_progress(0.97, splash_msg)
-            # )
-            # QtCore.QTimer.singleShot(
-            #     10000, lambda: dial.hide()
-            # )
 
     def launch_indicator(self, app_path):
-        if self._tk_app.engine.has_ui:
-            # got UI support. Launch dialog with nice message
-            from ..app_launch_overlay import populate_launch_widget
+        """
+        This displays a temporary frameless QDialog with an overlay
+        widget embedded indicating that the command used to
+        start the DCC was successfully executed.
 
-            wid, dial = populate_launch_widget(self._tk_app)
+        :param app_path: Full path name to the DCC. This may contain environment
+                 variables and/or the locally supported {version}, {v0},
+                 {v1}, ... variables
+        """
+        if self._tk_app.engine.has_ui:
+            from ..app_launch_overlay import populate_launch_dialog
+            wid, dial = populate_launch_dialog(self._tk_app)
             # Start spinner
             wid.start_progress()
-            splash_message = "Launching executable '%s'" % (app_path)
             # Report progress
+            splash_message = "Launching executable '%s'" % (app_path)
             wid.report_progress(0.00, splash_message)
-            splash_msg = (
-                # "<b style='color: rgb(252, 98, 70)'>Launched executabe '%s'</b>"
-                "Launched successfully"
-                # "with context %s" % (context)
-                # "" % (app_path)
-            )
+            splash_msg = "Launched successfully"
             QtCore.QTimer.singleShot(
                 7000,
                 lambda: wid.report_progress(
                     0.97, splash_msg
-                ),  # wid.set_engine_message(app_engine, msg=widget_message)
+                ),
             )
+            # Hide the QDialog
             QtCore.QTimer.singleShot(10000, lambda: dial.hide())
 
     def _register_event_log(self, menu_name, app_engine, ctx, command_executed):
