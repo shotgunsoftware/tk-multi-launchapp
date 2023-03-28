@@ -11,4 +11,3 @@
 from .single_config_launcher import SingleConfigLauncher
 from .software_entity_launcher import SoftwareEntityLauncher
 from ..launch_indicator_dialog import qtwidgets
-
