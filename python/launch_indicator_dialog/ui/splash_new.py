@@ -57,5 +57,3 @@ class Ui_Dialog(object):
         pass
 
 from ..qtwidgets import ShotgunSpinningWidget
-#from  ...tk_multi_launchapp import ShotgunSpinningWidget
-#from . import resources_rc
