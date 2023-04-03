@@ -9,4 +9,3 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 from .launch_spinner import LaunchDialog, populate_launch_dialog
-

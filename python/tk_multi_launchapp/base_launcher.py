@@ -317,7 +317,7 @@ class BaseLauncher(object):
                 lambda: wid.report_progress(0.97, splash_msg),
             )
             # Hide the QDialog
-            QtCore.QTimer.singleShot(10000, lambda: dial.hide())
+            QtCore.QTimer.singleShot(10000, lambda: dial.reject())
 
     def _register_event_log(self, menu_name, app_engine, ctx, command_executed):
         """
