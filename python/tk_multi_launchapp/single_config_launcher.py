@@ -93,7 +93,7 @@ class SingleConfigLauncher(BaseLauncher):
                 )
             )
 
-            for version in app_versions:
+            for i, version in enumerate(app_versions):
                 self._register_launch_command(
                     self._app_menu_name,
                     app_icon,
@@ -102,7 +102,7 @@ class SingleConfigLauncher(BaseLauncher):
                     self._app_args,
                     version,
                     self._app_group,
-                    (version == sorted_versions[0])  # group_default
+                    (i == 0)  # First version is group_default
                     # We don't pass in a software entity id, since app is coming from
                     # the configuration.
                 )
