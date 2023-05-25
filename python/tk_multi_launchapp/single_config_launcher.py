@@ -80,16 +80,15 @@ class SingleConfigLauncher(BaseLauncher):
         if app_versions:
             # If a list of versions has been specified, the "group_default" configuration
             # setting is invalid because it cannot be applied to each generated command.
-            # Set the group default to the highest version in the list instead.
-            sorted_versions = self._sort_versions(app_versions)
+            # Set the group default to the first version in the list instead.
             self._tk_app.log_debug(
                 "Unable to apply group '%s' group_default value to list of DCC versions : %s. "
-                "Setting group '%s' default to highest version '%s' instead."
+                "Setting group '%s' default to first version '%s' instead."
                 % (
                     self._app_group,
-                    sorted_versions,
+                    app_versions,
                     self._app_group,
-                    sorted_versions[0],
+                    app_versions[0],
                 )
             )
 
