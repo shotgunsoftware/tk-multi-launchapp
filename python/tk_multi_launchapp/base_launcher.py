@@ -9,8 +9,8 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import os
+import re
 import sys
-from distutils.version import LooseVersion
 
 import sgtk
 from sgtk import TankError
@@ -435,7 +435,7 @@ class BaseLauncher(object):
 
     def _sort_versions(self, versions):
         """
-        Uses standard python modules to determine how to sort arbitrary version numbers.
+        Sort arbitrary version numbers.
         A version number consists of a series of numbers, separated by either periods or
         strings of letters. When comparing version numbers, the numeric components will
         be compared numerically, and the alphabetic components lexically. For example:
@@ -449,10 +449,18 @@ class BaseLauncher(object):
         :returns: List of sorted versions in descending order. The highest version is
                   at index 0.
         """
-        # Cast the incoming version strings as LooseVersion instances to sort using
-        # the LooseVersion.__cmp__ method.
-        sort_versions = [LooseVersion(version) for version in versions]
-        sort_versions.sort(reverse=True)
 
-        # Convert the LooseVersions back to strings on return.
-        return [str(version) for version in sort_versions]
+        def _iter_parts(string):
+            for part in re.findall("[a-zA-Z_]+|[0-9]+", string):
+                try:
+                    v = int(part)
+                    yield 0
+                    yield v
+                except ValueError:
+                    yield 1
+                    yield part
+                    
+        return sorted(versions,
+            key=lambda v:tuple(_iter_parts(str(v))),
+            reverse=True
+            )
