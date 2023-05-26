@@ -44,49 +44,47 @@ class AppLaunch(tank.Hook):
         """
 
         if engine_name == "tk-alias":
-            # Special handling for Alias - Windows only
-            # Launch Alias with the python.exe set by tk-framework-alias. This is necessary to
-            # ensure a compatibile Qt version is available with the Alias plugin.
+            # Special handling for Alias (Windows only) when it needs to be launch with a
+            # specific python version. This is necessary to ensure a compatibile Qt version
+            # is available with the Alias plugin.
             python_exe = os.environ.get("ALIAS_PLUGIN_SERVER_PYTHON")
-            if not python_exe:
-                python_exe = sys.executable
-            cmd = f"import os;os.system(r'start /B \"App\" \"{app_path}\" {app_args}')"
-            try:
-                result = subprocess.run([python_exe, "-c", cmd], check=True)
-                exit_code = result.returncode
-            except Exception as e:
-                exit_code = -1
-            return {"command": f"{python_exe} -c {cmd}", "return_code": exit_code}
+            if python_exe:
+                cmd = f"import os;os.system(r'start /B \"App\" \"{app_path}\" {app_args}')"
+                try:
+                    result = subprocess.run([python_exe, "-c", cmd], check=True)
+                    exit_code = result.returncode
+                except Exception as e:
+                    exit_code = -1
+                return {"command": f"{python_exe} -c {cmd}", "return_code": exit_code}
 
-        else: 
-            if tank.util.is_linux():
-                # on linux, we just run the executable directly
+        if tank.util.is_linux():
+            # on linux, we just run the executable directly
+            cmd = "%s %s &" % (app_path, app_args)
+
+        elif tank.util.is_macos():
+            # If we're on OS X, then we have two possibilities: we can be asked
+            # to launch an application bundle using the "open" command, or we
+            # might have been given an executable that we need to treat like
+            # any other Unix-style command. The best way we have to know whether
+            # we're in one situation or the other is to check the app path we're
+            # being asked to launch; if it's a .app, we use the "open" command,
+            # and if it's not then we treat it like a typical, Unix executable.
+            if app_path.endswith(".app"):
+                # The -n flag tells the OS to launch a new instance even if one is
+                # already running. The -a flag specifies that the path is an
+                # application and supports both the app bundle form or the full
+                # executable form.
+                cmd = 'open -n -a "%s"' % (app_path)
+                if app_args:
+                    cmd += " --args %s" % app_args
+            else:
                 cmd = "%s %s &" % (app_path, app_args)
 
-            elif tank.util.is_macos():
-                # If we're on OS X, then we have two possibilities: we can be asked
-                # to launch an application bundle using the "open" command, or we
-                # might have been given an executable that we need to treat like
-                # any other Unix-style command. The best way we have to know whether
-                # we're in one situation or the other is to check the app path we're
-                # being asked to launch; if it's a .app, we use the "open" command,
-                # and if it's not then we treat it like a typical, Unix executable.
-                if app_path.endswith(".app"):
-                    # The -n flag tells the OS to launch a new instance even if one is
-                    # already running. The -a flag specifies that the path is an
-                    # application and supports both the app bundle form or the full
-                    # executable form.
-                    cmd = 'open -n -a "%s"' % (app_path)
-                    if app_args:
-                        cmd += " --args %s" % app_args
-                else:
-                    cmd = "%s %s &" % (app_path, app_args)
+        else:
+            # on windows, we run the start command in order to avoid
+            # any command shells popping up as part of the application launch.
+            cmd = 'start /B "App" "%s" %s' % (app_path, app_args)
 
-            else:
-                # on windows, we run the start command in order to avoid
-                # any command shells popping up as part of the application launch.
-                cmd = 'start /B "App" "%s" %s' % (app_path, app_args)
-
-            # run the command to launch the app
-            exit_code = os.system(cmd)
-            return {"command": cmd, "return_code": exit_code}
+        # run the command to launch the app
+        exit_code = os.system(cmd)
+        return {"command": cmd, "return_code": exit_code}
