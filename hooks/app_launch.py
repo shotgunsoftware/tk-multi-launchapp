@@ -49,7 +49,7 @@ class AppLaunch(tank.Hook):
             # is available with the Alias plugin.
             python_exe = os.environ.get("ALIAS_PLUGIN_SERVER_PYTHON")
             if python_exe:
-                cmd = f"import os;os.system(r'start /B \"App\" \"{app_path}\" {app_args}')"
+                cmd = f"import os;print(os.environ);os.system(r'start /B \"App\" \"{app_path}\" {app_args}')"
                 try:
                     result = subprocess.run([python_exe, "-c", cmd], check=True)
                     exit_code = result.returncode
