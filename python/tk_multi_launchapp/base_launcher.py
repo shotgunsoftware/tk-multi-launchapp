@@ -282,6 +282,7 @@ class BaseLauncher(object):
             msg = str(launch_app_error)
             if self._tk_app.engine.has_ui:
                 from ..not_found_dialog import show_generic_error_dialog
+
                 show_generic_error_dialog(self._tk_app, error_message=msg)
             else:
                 self._tk_app.log_error(msg)
