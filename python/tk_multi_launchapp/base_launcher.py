@@ -14,6 +14,7 @@ from distutils.version import LooseVersion
 
 import sgtk
 from sgtk import TankError
+from sgtk.platform.qt import QtCore, QtGui
 
 from .util import apply_version_to_setting, get_clean_version_string
 from .util import clear_dll_directory, restore_dll_directory
@@ -215,6 +216,7 @@ class BaseLauncher(object):
             # sure that apps depending on not having a DLL path are set
             # to work properly
             dll_directory_cache = clear_dll_directory()
+
             try:
                 # Launch the application
                 self._tk_app.log_debug(
@@ -277,6 +279,9 @@ class BaseLauncher(object):
 
                 # Write an event log entry
                 self._register_event_log(menu_name, app_engine, context, launch_cmd)
+                # got UI support. Launch dialog with nice message
+                if self._tk_app.engine.has_ui:
+                    self.launch_indicator(app_path)
 
         except Exception as launch_app_error:
             msg = str(launch_app_error)
@@ -295,6 +300,33 @@ class BaseLauncher(object):
             os.environ.update(environ_clone)
             del sys.path[:]
             sys.path.extend(sys_path_clone)
+
+    def launch_indicator(self, app_path):
+        """
+        This displays a temporary frameless QDialog with an overlay
+        widget embedded indicating that the command used to
+        start the DCC was successfully executed.
+
+        :param app_path: Full path name to the DCC. This may contain environment
+                 variables and/or the locally supported {version}, {v0},
+                 {v1}, ... variables
+        """
+        if self._tk_app.engine.has_ui:
+            from ..launch_indicator_dialog import populate_launch_dialog
+
+            wid, dial = populate_launch_dialog(self._tk_app)
+            # Start spinner
+            wid.start_progress()
+            # Report progress
+            splash_message = "Launching executable '%s'" % (app_path)
+            wid.report_progress(0.00, splash_message)
+            splash_msg = "Launched successfully"
+            QtCore.QTimer.singleShot(
+                7000,
+                lambda: wid.report_progress(0.97, splash_msg),
+            )
+            # Hide the QDialog
+            QtCore.QTimer.singleShot(10000, lambda: dial.reject())
 
     def _register_event_log(self, menu_name, app_engine, ctx, command_executed):
         """

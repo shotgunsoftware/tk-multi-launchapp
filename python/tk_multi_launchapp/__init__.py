@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Shotgun Software Inc.
+# Copyright (c) 2023 Shotgun Software Inc.
 #
 # CONFIDENTIAL AND PROPRIETARY
 #
@@ -10,3 +10,4 @@
 
 from .single_config_launcher import SingleConfigLauncher
 from .software_entity_launcher import SoftwareEntityLauncher
+from ..launch_indicator_dialog import qtwidgets
