@@ -22,7 +22,7 @@ class LaunchApplication(sgtk.platform.Application):
     """
 
     # documentation explaining how to reconfigure app paths
-    HELP_DOC_URL = "https://developer.shotgridsoftware.com/1b9c259a/?title=Launch+App#Setting%20up%20Application%20Paths"
+    HELP_DOC_URL = "https://help.autodesk.com/view/SGDEV/ENU/?contextId=PC_APP_LAUNCH"
 
     def init_app(self):
         """
