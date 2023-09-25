@@ -10,10 +10,14 @@
 
 import os
 import sys
-from distutils.version import LooseVersion
+if sys.version_info[0:2] >= (3, 10):
+    from setuptools._distutils.version import LooseVersion
+else:
+    from distutils.version import LooseVersion
 
 import sgtk
 from sgtk import TankError
+from sgtk.util import suppress_known_deprecation
 
 from .util import apply_version_to_setting, get_clean_version_string
 from .util import clear_dll_directory, restore_dll_directory
@@ -460,8 +464,9 @@ class BaseLauncher(object):
         """
         # Cast the incoming version strings as LooseVersion instances to sort using
         # the LooseVersion.__cmp__ method.
-        sort_versions = [LooseVersion(version) for version in versions]
-        sort_versions.sort(reverse=True)
+        with suppress_known_deprecation():
+            sort_versions = [LooseVersion(version) for version in versions]
+            sort_versions.sort(reverse=True)
 
         # Convert the LooseVersions back to strings on return.
         return [str(version) for version in sort_versions]
