@@ -10,6 +10,7 @@
 
 import os
 import sys
+
 if sys.version_info[0:2] >= (3, 10):
     from setuptools._distutils.version import LooseVersion
 else:
