@@ -10,6 +10,7 @@
 
 import os
 import sys
+import contextlib
 
 if sys.version_info[0:2] >= (3, 10):
     from setuptools._distutils.version import LooseVersion
@@ -17,8 +18,8 @@ else:
     from distutils.version import LooseVersion
 
 import sgtk
+import sgtk.util
 from sgtk import TankError
-from sgtk.util import suppress_known_deprecation
 from sgtk.platform.qt import QtCore, QtGui
 
 from .util import apply_version_to_setting, get_clean_version_string
@@ -495,9 +496,14 @@ class BaseLauncher(object):
         :returns: List of sorted versions in descending order. The highest version is
                   at index 0.
         """
-        # Cast the incoming version strings as LooseVersion instances to sort using
-        # the LooseVersion.__cmp__ method.
-        with suppress_known_deprecation():
+        # For Python 3.10: Try suppress_known_deprecation context manager on tk-core.
+        try:
+            ctx_mgr = sgtk.util.suppress_known_deprecation
+        except AttributeError:
+            ctx_mgr = contextlib.nullcontext
+        with ctx_mgr():
+            # Cast the incoming version strings as LooseVersion instances to sort using
+            # the LooseVersion.__cmp__ method.
             sort_versions = [LooseVersion(version) for version in versions]
             sort_versions.sort(reverse=True)
 
