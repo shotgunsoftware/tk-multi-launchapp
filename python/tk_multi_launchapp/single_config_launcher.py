@@ -80,20 +80,19 @@ class SingleConfigLauncher(BaseLauncher):
         if app_versions:
             # If a list of versions has been specified, the "group_default" configuration
             # setting is invalid because it cannot be applied to each generated command.
-            # Set the group default to the highest version in the list instead.
-            sorted_versions = self._sort_versions(app_versions)
+            # Set the group default to the first version in the list instead.
             self._tk_app.log_debug(
                 "Unable to apply group '%s' group_default value to list of DCC versions : %s. "
-                "Setting group '%s' default to highest version '%s' instead."
+                "Setting group '%s' default to first version '%s' instead."
                 % (
                     self._app_group,
-                    sorted_versions,
+                    app_versions,
                     self._app_group,
-                    sorted_versions[0],
+                    app_versions[0],
                 )
             )
 
-            for version in app_versions:
+            for i, version in enumerate(app_versions):
                 self._register_launch_command(
                     self._app_menu_name,
                     app_icon,
@@ -102,7 +101,7 @@ class SingleConfigLauncher(BaseLauncher):
                     self._app_args,
                     version,
                     self._app_group,
-                    (version == sorted_versions[0])  # group_default
+                    (i == 0)  # First version is group_default
                     # We don't pass in a software entity id, since app is coming from
                     # the configuration.
                 )
