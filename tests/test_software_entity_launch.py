@@ -149,7 +149,7 @@ class TestSoftwareEntity(LaunchAppTestBase):
 
     def test_action_description(self):
         """
-        Make sure that the description on the SG entity matches that in the registered command properties.
+        Make sure that the description on the PTR entity matches that in the registered command properties.
         """
         # Test the manual path register (when a hard coded path is provided in the Software entity)
         self.assertEqual(

@@ -16,7 +16,7 @@ configuration:
 
     use_software_entity:
         type: bool
-        description: Whether to use ShotGrid Software Entities to register
+        description: Whether to use Flow Production Tracking Software Entities to register
                      launch commands for available DCCs.
         default_value: false
 
@@ -30,7 +30,7 @@ configuration:
                      and passed to the hooks as part of the Software entity dictionary.
                      The main fields are already fetched and provided by default, but this
                      allows custom fields to be specified without needing to perform a second
-                     look up in ShotGrid."
+                     look up in Flow Production Tracking."
 
     scan_all_projects:
         type: bool
@@ -41,7 +41,7 @@ configuration:
 
     menu_name:
         type: str
-        description: Name to appear on the ShotGrid menu.
+        description: Name to appear on the Flow Production Tracking menu.
         default_value: ""
 
     icon:
@@ -88,10 +88,11 @@ configuration:
 
     engine:
         type: str
-        description: "The name of the ShotGrid engine to start. This is typically the application
-                      name prefixed with tk, e.g. tk-maya, tk-nuke, tk-photoshop etc. If you set
-                      this to an empty string, no toolkit engine will be started, meaning that
-                      you can launch applications that do not have toolkit engines set up."
+        description: "The name of the Flow Production Tracking engine to start. This is typically
+                      the application name prefixed with tk, e.g. tk-maya, tk-nuke, tk-photoshop
+                      etc. If you set this to an empty string, no toolkit engine will be started,
+                      meaning that you can launch applications that do not have toolkit engines
+                      set up."
         default_value: ""
 
     group:
@@ -165,8 +166,9 @@ configuration:
 
     extra:
         type: dict
-        description: "ShotGrid engine specific extra values. These are defined per ShotGrid engine.
-                     Please look in the app documentation for more details."
+        description: "Flow Production Tracking engine specific extra values. These are defined per
+                      Flow Production Tracking engine. Please look in the app documentation for more
+                      details."
         default_value: {}
 
     hook_app_launch:
@@ -200,7 +202,7 @@ requires_shotgun_fields:
 
 # More verbose description of this item
 display_name: "Launch Application"
-description: "Launch Applications and initialize the ShotGrid Pipeline Toolkit."
+description: "Launch Applications and initialize the Flow Production Tracking Toolkit."
 
 # Required minimum versions for this item to run
 requires_shotgun_version:
