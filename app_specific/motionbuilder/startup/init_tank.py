@@ -39,7 +39,7 @@ def bootstrap_tank():
     except Exception as e:
         FBMessageBox(
             "Flow Production Tracking: Error",
-            "Could not create context! Flow Production Tracking Toolkit will be disabled. Details: %s"
+            "Could not create context! Flow Production Tracking will be disabled. Details: %s"
             % e,
             "Ok",
         )

@@ -36,7 +36,7 @@ def bootstrap_tank():
         context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception as e:
         hiero.core.log.error(
-            "PTR: Could not create context! Flow Production Tracking Toolkit will be disabled. Details: %s"
+            "PTR: Could not create context! Flow Production Tracking will be disabled. Details: %s"
             % e
         )
         return

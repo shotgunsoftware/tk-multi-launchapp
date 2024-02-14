@@ -202,7 +202,7 @@ requires_shotgun_fields:
 
 # More verbose description of this item
 display_name: "Launch Application"
-description: "Launch Applications and initialize the Flow Production Tracking Toolkit."
+description: "Launch Applications and initialize the Flow Production Tracking."
 
 # Required minimum versions for this item to run
 requires_shotgun_version:

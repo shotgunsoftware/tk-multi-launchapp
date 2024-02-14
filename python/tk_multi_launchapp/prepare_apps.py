@@ -313,7 +313,7 @@ def _prepare_3dsmaxplus_launch(context, app_args, app_path):
     # This is a fix for PySide problems in 2017+ versions of Max. Now that
     # Max ships with a full install of PySide, we need to ensure that dlls
     # for the native Max install are sourced. If we don't do this, we end
-    # up with dlls loaded from Flow Production Tracking Toolkit's bin and we have a mismatch that
+    # up with dlls loaded from Flow Production Tracking's bin and we have a mismatch that
     # results in complete breakage.
     max_root = os.path.dirname(app_path)
     sgtk.util.prepend_path_to_env_var("PATH", max_root)
@@ -494,7 +494,7 @@ def _prepare_photoshop_launch(context):
     except Exception as e:
         raise TankError(
             "Could not run the Adobe Extension Manager. Please double check your "
-            "Flow Production Tracking Toolkit Photoshop Settings. Error Reported: %s"
+            "Flow Production Tracking Photoshop Settings. Error Reported: %s"
             % e
         )
 

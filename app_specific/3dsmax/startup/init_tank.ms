@@ -24,7 +24,7 @@ if ( python != undefined ) then
             error = getCurrentException()
             is_wrong_engine = (findString error "Unknown property: \"run\" in <Interface:python>")
             if ( is_wrong_engine != undefined ) then
-                messageBox "Flow Production Tracking Toolkit:\n\nYou are running a version of 3dsMax that is not supported by the tk-3dsmax engine.  If you intend to use 3dsMax's built-in Python support, please update your Launcher settings to use the tk-3dsmaxplus engine.\n\nIf you don't know how to update those settings, don't hesitate to contact us!. You can find us on https://knowledge.autodesk.com/contact-support"
+                messageBox "Flow Production Tracking:\n\nYou are running a version of 3dsMax that is not supported by the tk-3dsmax engine.  If you intend to use 3dsMax's built-in Python support, please update your Launcher settings to use the tk-3dsmaxplus engine.\n\nIf you don't know how to update those settings, don't hesitate to contact us!. You can find us on https://knowledge.autodesk.com/contact-support"
             else
                 throw
         )
