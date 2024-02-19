@@ -494,8 +494,7 @@ def _prepare_photoshop_launch(context):
     except Exception as e:
         raise TankError(
             "Could not run the Adobe Extension Manager. Please double check your "
-            "Flow Production Tracking Photoshop Settings. Error Reported: %s"
-            % e
+            "Flow Production Tracking Photoshop Settings. Error Reported: %s" % e
         )
 
     # Store data needed for bootstrapping Tank in env vars. Used in startup/menu.py
