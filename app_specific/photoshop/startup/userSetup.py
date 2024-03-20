@@ -22,7 +22,7 @@ def msgbox(msg):
         import ctypes
 
         MessageBox = ctypes.windll.user32.MessageBoxA
-        MessageBox(None, msg, "ShotGrid", 0)
+        MessageBox(None, msg, "Flow Production Tracking", 0)
     elif sys.platform == "darwin":
         os.system("""osascript -e 'tell app "System Events" to activate""")
         os.system(
@@ -34,11 +34,15 @@ def bootstrap_tank():
     try:
         import tank
     except Exception as e:
-        msgbox("ShotGrid: Could not import sgtk! Disabling for now: %s" % e)
+        msgbox(
+            "Flow Production Tracking: Could not import sgtk! Disabling for now: %s" % e
+        )
         return
 
     if not "TANK_ENGINE" in os.environ:
-        msgbox("ShotGrid: Missing required environment variable TANK_ENGINE.")
+        msgbox(
+            "Flow Production Tracking: Missing required environment variable TANK_ENGINE."
+        )
         return
 
     engine_name = os.environ.get("TANK_ENGINE")
@@ -46,7 +50,7 @@ def bootstrap_tank():
         context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception as e:
         msgbox(
-            "SG: Could not create context! SG Pipeline Toolkit will be disabled. Details: %s"
+            "PTR: Could not create context! Flow Production Tracking will be disabled. Details: %s"
             % e
         )
         return
@@ -54,7 +58,7 @@ def bootstrap_tank():
     try:
         engine = tank.platform.start_engine(engine_name, context.tank, context)
     except Exception as e:
-        msgbox("ShotGrid: Could not start Photoshop engine: %s" % e)
+        msgbox("Flow Production Tracking: Could not start Photoshop engine: %s" % e)
         return
 
     file_to_open = os.environ.get("TANK_FILE_TO_OPEN")

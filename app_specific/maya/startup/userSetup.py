@@ -25,13 +25,13 @@ def bootstrap_tank():
         import tank
     except Exception as e:
         OpenMaya.MGlobal.displayError(
-            "ShotGrid: Could not import sgtk! Disabling for now: %s" % e
+            "Flow Production Tracking: Could not import sgtk! Disabling for now: %s" % e
         )
         return
 
     if not "TANK_ENGINE" in os.environ:
         OpenMaya.MGlobal.displayError(
-            "ShotGrid: Missing required environment variable TANK_ENGINE."
+            "Flow Production Tracking: Missing required environment variable TANK_ENGINE."
         )
         return
 
@@ -40,7 +40,7 @@ def bootstrap_tank():
         context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception as e:
         OpenMaya.MGlobal.displayError(
-            "SG: Could not create context! SG Pipeline Toolkit will be disabled. Details: %s"
+            "PTR: Could not create context! Flow Production Tracking will be disabled. Details: %s"
             % e
         )
         return
@@ -48,7 +48,9 @@ def bootstrap_tank():
     try:
         engine = tank.platform.start_engine(engine_name, context.tank, context)
     except Exception as e:
-        OpenMaya.MGlobal.displayError("ShotGrid: Could not start engine: %s" % e)
+        OpenMaya.MGlobal.displayError(
+            "Flow Production Tracking: Could not start engine: %s" % e
+        )
         return
 
     file_to_open = os.environ.get("TANK_FILE_TO_OPEN")

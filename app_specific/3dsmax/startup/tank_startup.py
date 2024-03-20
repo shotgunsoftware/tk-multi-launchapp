@@ -19,11 +19,15 @@ def bootstrap_tank():
     try:
         import tank
     except Exception as e:
-        mxs.messageBox("ShotGrid: Could not import sgtk! Disabling for now: %s" % e)
+        mxs.messageBox(
+            "Flow Production Tracking: Could not import sgtk! Disabling for now: %s" % e
+        )
         return
 
     if not "TANK_ENGINE" in os.environ:
-        mxs.messageBox("ShotGrid: Missing required environment variable TANK_ENGINE.")
+        mxs.messageBox(
+            "Flow Production Tracking: Missing required environment variable TANK_ENGINE."
+        )
         return
 
     engine_name = os.environ.get("TANK_ENGINE")
@@ -31,7 +35,7 @@ def bootstrap_tank():
         context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception as e:
         mxs.messageBox(
-            "SG: Could not create context! SG Pipeline Toolkit will be disabled. Details: %s"
+            "PTR: Could not create context! Flow Production Tracking will be disabled. Details: %s"
             % e
         )
         return
@@ -39,7 +43,7 @@ def bootstrap_tank():
     try:
         engine = tank.platform.start_engine(engine_name, context.tank, context)
     except Exception as e:
-        mxs.messageBox("ShotGrid: Could not start engine: %s" % e)
+        mxs.messageBox("Flow Production Tracking: Could not start engine: %s" % e)
         return
 
     # clean up temp env vars

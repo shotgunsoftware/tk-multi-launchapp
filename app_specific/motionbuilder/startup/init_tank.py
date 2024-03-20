@@ -19,13 +19,15 @@ def bootstrap_tank():
         import tank
     except Exception as e:
         FBMessageBox(
-            "ShotGrid: Error", "Could not import sgtk! Disabling for now: %s" % e, "Ok"
+            "Flow Production Tracking: Error",
+            "Could not import sgtk! Disabling for now: %s" % e,
+            "Ok",
         )
         return
 
     if not "TANK_ENGINE" in os.environ:
         FBMessageBox(
-            "ShotGrid: Error",
+            "Flow Production Tracking: Error",
             "Missing required environment variable TANK_ENGINE.",
             "Ok",
         )
@@ -36,8 +38,8 @@ def bootstrap_tank():
         context = tank.context.deserialize(os.environ.get("TANK_CONTEXT"))
     except Exception as e:
         FBMessageBox(
-            "ShotGrid: Error",
-            "Could not create context! SG Pipeline Toolkit will be disabled. Details: %s"
+            "Flow Production Tracking: Error",
+            "Could not create context! Flow Production Tracking will be disabled. Details: %s"
             % e,
             "Ok",
         )
@@ -46,7 +48,9 @@ def bootstrap_tank():
     try:
         engine = tank.platform.start_engine(engine_name, context.tank, context)
     except Exception as e:
-        FBMessageBox("ShotGrid: Error", "Could not start engine: %s" % e, "Ok")
+        FBMessageBox(
+            "Flow Production Tracking: Error", "Could not start engine: %s" % e, "Ok"
+        )
         return
 
     # if a file was specified, load it now

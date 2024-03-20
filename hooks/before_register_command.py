@@ -32,7 +32,7 @@ class BeforeRegisterCommand(HookBaseClass):
             the scan software routine was run.
         :type: :class:`sgtk.platform.SoftwareVersion`
         :param str engine_instance_name: The name of the engine instance that will
-            be used when SGTK is bootstrapped during launch.
+            be used when PTR is bootstrapped during launch.
 
         :returns: The desired engine instance name.
         :rtype: str

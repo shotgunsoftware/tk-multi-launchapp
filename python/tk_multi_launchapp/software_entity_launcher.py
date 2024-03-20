@@ -63,7 +63,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         Multiple commands may be registered based on the number of retrieved
         Software entities and their corresponding 'versions' field.
         """
-        # Retrieve the Software entities from SG and record how many were found.
+        # Retrieve the Software entities from PTR and record how many were found.
         sw_entities = self._get_sg_software_entities()
 
         for sw_entity in sw_entities:
@@ -215,7 +215,7 @@ class SoftwareEntityLauncher(BaseLauncher):
         # check that software entity is supported
         if self.__get_sg_server_version() < (7, 2, 0):
             self._tk_app.log_warning(
-                "Your version of SG does not support Software entity based launching."
+                "Your version of PTR does not support Software entity based launching."
             )
             return []
 
@@ -312,10 +312,11 @@ class SoftwareEntityLauncher(BaseLauncher):
         sw_entities = self._tk_app.shotgun.find("Software", sw_filters, sw_fields)
         if not sw_entities:
             # No Entities found matching filters, nothing to do.
-            self._tk_app.log_debug("No matching SG Software entities found.")
+            self._tk_app.log_debug("No matching PTR Software entities found.")
         else:
             self._tk_app.log_debug(
-                "Got software data from ShotGrid:\n%s" % pprint.pformat(sw_entities)
+                "Got software data from Flow Production Tracking:\n%s"
+                % pprint.pformat(sw_entities)
             )
 
         return sw_entities
@@ -569,7 +570,7 @@ class SoftwareEntityLauncher(BaseLauncher):
 
         if sg_thumb_url is None:
             self._tk_app.log_debug(
-                "No thumbnail is set in ShotGrid. Falling back on default."
+                "No thumbnail is set in Flow Production Tracking. Falling back on default."
             )
             # use the launch app icon
             return default_thumbnail_location
