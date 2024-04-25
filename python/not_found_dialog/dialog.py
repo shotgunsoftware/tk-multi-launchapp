@@ -30,6 +30,7 @@ def show_path_error_dialog(app_instance, cmd_line):
     )
     widget.show_path_error_message(cmd_line)
 
+
 @escape_html(field_name="error_message")
 def show_generic_error_dialog(app_instance, error_message):
     """
