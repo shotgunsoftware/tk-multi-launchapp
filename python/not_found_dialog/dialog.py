@@ -9,9 +9,9 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
+import html
 from sgtk.platform.qt import QtCore, QtGui
 from .ui.dialog import Ui_Dialog
-from ..helpers.decorators import escape_html
 
 
 def show_path_error_dialog(app_instance, cmd_line):
@@ -31,7 +31,6 @@ def show_path_error_dialog(app_instance, cmd_line):
     widget.show_path_error_message(cmd_line)
 
 
-@escape_html(field_name="error_message")
 def show_generic_error_dialog(app_instance, error_message):
     """
     Shows a modal dialog with information about a generic
@@ -46,7 +45,7 @@ def show_generic_error_dialog(app_instance, error_message):
         AppDialog,
         app_instance=app_instance,
     )
-    widget.show_generic_error_message(error_message)
+    widget.show_generic_error_message(html.escape(error_message))
 
 
 class AppDialog(QtGui.QWidget):
