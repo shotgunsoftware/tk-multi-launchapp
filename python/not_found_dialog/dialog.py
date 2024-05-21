@@ -9,6 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
+import html
 from sgtk.platform.qt import QtCore, QtGui
 from .ui.dialog import Ui_Dialog
 
@@ -44,7 +45,7 @@ def show_generic_error_dialog(app_instance, error_message):
         AppDialog,
         app_instance=app_instance,
     )
-    widget.show_generic_error_message(error_message)
+    widget.show_generic_error_message(html.escape(error_message))
 
 
 class AppDialog(QtGui.QWidget):

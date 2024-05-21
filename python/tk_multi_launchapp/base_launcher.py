@@ -282,7 +282,6 @@ class BaseLauncher(object):
 
                 except Exception:
                     pass
-
                 # Write an event log entry
                 self._register_event_log(menu_name, app_engine, context, launch_cmd)
                 # got UI support. Launch dialog with nice message
@@ -291,12 +290,11 @@ class BaseLauncher(object):
 
         except Exception as launch_app_error:
             msg = str(launch_app_error)
+            self._tk_app.log_error(msg)
             if self._tk_app.engine.has_ui:
                 from ..not_found_dialog import show_generic_error_dialog
 
                 show_generic_error_dialog(self._tk_app, error_message=msg)
-            else:
-                self._tk_app.log_error(msg)
 
         finally:
             # Clear the original structures and add into them so
