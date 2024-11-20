@@ -12,9 +12,9 @@ import os
 import sys
 import contextlib
 
-try:
+if sys.version_info[0:2] >= (3, 10):
     from setuptools._distutils.version import LooseVersion
-except ImportError:
+else:
     from distutils.version import LooseVersion
 
 import sgtk
