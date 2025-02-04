@@ -27,7 +27,7 @@ class LaunchAppTestBase(TankTestBase):
         """
         _merge_into_environment_variables(get_test_hook_environment())
 
-        super(LaunchAppTestBase, self).setUp()
+        super().setUp()
 
         self.setup_fixtures()
 
