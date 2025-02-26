@@ -284,8 +284,8 @@ class BaseLauncher(object):
                     pass
                 # Write an event log entry
                 self._register_event_log(menu_name, app_engine, context, launch_cmd)
-                # got UI support. Launch dialog with nice message
-                if self._tk_app.engine.has_ui:
+                # got UI support. Launch dialog with nice message unless disabled in configuration.
+                if self._tk_app.engine.has_ui and self._tk_app.get_setting("show_launch_indicator"):
                     self.launch_indicator(app_path)
 
         except Exception as launch_app_error:
