@@ -197,6 +197,13 @@ configuration:
                       launcher should that be required. This hook's methods are only called
                       when Software entity launchers are being used."
 
+    show_launch_indicator:
+        type: bool
+        default_value: True
+        description: "Option to show the launch indicator spinner, which is a nice feature for apps that
+                      take a while to launch. For apps that open quickly, however, it can interfere
+                      because it lingers modally in the center of the screen for a set amount of time."
+
 # the Shotgun fields that this app needs in order to operate correctly
 requires_shotgun_fields:
 
