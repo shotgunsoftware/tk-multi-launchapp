@@ -101,7 +101,7 @@ class SingleConfigLauncher(BaseLauncher):
                     self._app_args,
                     version,
                     self._app_group,
-                    (i == 0)  # First version is group_default
+                    (i == 0),  # First version is group_default
                     # We don't pass in a software entity id, since app is coming from
                     # the configuration.
                 )
