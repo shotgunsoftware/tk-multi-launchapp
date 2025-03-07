@@ -47,9 +47,7 @@ class BaseLauncher(object):
         self._platform_name = (
             "linux"
             if sgtk.util.is_linux()
-            else "mac"
-            if sgtk.util.is_macos()
-            else "windows"
+            else "mac" if sgtk.util.is_macos() else "windows"
         )
 
     def _register_launch_command(
@@ -359,9 +357,7 @@ class BaseLauncher(object):
         meta["platform"] = (
             "win32"
             if sgtk.util.is_windows()
-            else "darwin"
-            if sgtk.util.is_macos()
-            else "linux2"
+            else "darwin" if sgtk.util.is_macos() else "linux2"
         )
         if ctx.task:
             meta["task"] = ctx.task["id"]
