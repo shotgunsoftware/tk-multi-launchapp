@@ -279,8 +279,7 @@ class BaseLauncher(object):
                     # Dedicated try/except block: we wouldn't want a metric-related
                     # exception to prevent execution of the remaining code.
                     engine = sgtk.platform.current_engine()
-                    dcc_name = group if group else menu_name
-                    engine._host_info["name"] = dcc_name
+                    engine._host_info["name"] = group or menu_name
                     engine._host_info["version"] = version_string
                     engine.log_metric("Launched Software")
 
