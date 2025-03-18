@@ -138,6 +138,7 @@ class BaseLauncher(object):
                     app_path,
                     app_args,
                     version,
+                    group,
                     *args,
                     software_entity=software_entity,
                     **kwargs
@@ -161,6 +162,7 @@ class BaseLauncher(object):
         version=None,
         file_to_open=None,
         software_entity=None,
+        group=None,
     ):
         """
         Launches an application. No environment variable change is
@@ -180,6 +182,7 @@ class BaseLauncher(object):
         :param software_entity: (Optional) If set, this is the entity representing
                                 the software entity that is associated with
                                 this launch command.
+        :param group: (Optional) Group name this command belongs to.
         """
         try:
             # Clone the environment variables
@@ -276,7 +279,8 @@ class BaseLauncher(object):
                     # Dedicated try/except block: we wouldn't want a metric-related
                     # exception to prevent execution of the remaining code.
                     engine = sgtk.platform.current_engine()
-                    engine._host_info["name"] = menu_name
+                    dcc_name = group if group else menu_name
+                    engine._host_info["name"] = dcc_name
                     engine._host_info["version"] = version_string
                     engine.log_metric("Launched Software")
 
@@ -375,6 +379,7 @@ class BaseLauncher(object):
         app_path,
         app_args,
         version=None,
+        group=None,
         file_to_open=None,
         software_entity=None,
     ):
@@ -389,6 +394,7 @@ class BaseLauncher(object):
         :param app_args: Args string to pass to the DCC at launch time.
         :param version: (Optional) Specific version of DCC to launch. Used to
                         parse {version}, {v0}, {v1}, ... information from.
+        :param group: (Optional) Group name in the UI this command belongs to.
         :param software_entity: (Optional) If set, this is the entity representing
                                 the software entity that is associated with
                                 this launch command.
@@ -446,6 +452,7 @@ class BaseLauncher(object):
             version,
             file_to_open,
             software_entity,
+            group,
         )
 
     def register_launch_commands(self):
