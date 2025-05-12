@@ -48,9 +48,13 @@ def bootstrap_tank():
     try:
         engine = tank.platform.start_engine(engine_name, context.tank, context)
     except Exception as e:
-        if not isinstance(e, tank.TankError) or not hasattr(e, "_tank_error_raised_already"):
+        if not isinstance(e, tank.TankError) or not hasattr(
+            e, "_tank_error_raised_already"
+        ):
             FBMessageBox(
-                "Flow Production Tracking: Error", "Could not start engine: %s" % e, "Ok"
+                "Flow Production Tracking: Error",
+                "Could not start engine: %s" % e,
+                "Ok",
             )
 
         return
