@@ -8,23 +8,23 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
+import contextlib
 import os
 import sys
-import contextlib
-
-if sys.version_info[0:2] >= (3, 10):
-    from setuptools._distutils.version import LooseVersion
-else:
-    from distutils.version import LooseVersion
 
 import sgtk
 import sgtk.util
+from packaging import version
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
 
-from .util import apply_version_to_setting, get_clean_version_string
-from .util import clear_dll_directory, restore_dll_directory
 from .prepare_apps import prepare_launch_for_engine
+from .util import (
+    apply_version_to_setting,
+    clear_dll_directory,
+    get_clean_version_string,
+    restore_dll_directory,
+)
 
 
 class BaseLauncher(object):
@@ -504,10 +504,9 @@ class BaseLauncher(object):
         except AttributeError:
             ctx_mgr = contextlib.nullcontext
         with ctx_mgr():
-            # Cast the incoming version strings as LooseVersion instances to sort using
-            # the LooseVersion.__cmp__ method.
-            sort_versions = [LooseVersion(version) for version in versions]
+            # Cast the incoming version strings to sort them
+            sort_versions = [version.parse(v) for v in versions]
             sort_versions.sort(reverse=True)
 
-        # Convert the LooseVersions back to strings on return.
-        return [str(version) for version in sort_versions]
+        # Convert the parsed versions back to strings on return.
+        return [str(v) for v in sort_versions]
