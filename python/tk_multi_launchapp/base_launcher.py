@@ -490,7 +490,6 @@ class BaseLauncher(object):
         version.parse function from the packaging module. If the packaging module
         is not available, it falls back to the get_clean_version_string function.
         """
-        self._tk_app.log_debug(f"@@@@@ Sorting version string: {version_string}")
         if sys.version_info[0:2] < (3, 12):
             from distutils.version import LooseVersion
 
