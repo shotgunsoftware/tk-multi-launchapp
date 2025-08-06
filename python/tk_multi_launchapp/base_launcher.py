@@ -14,7 +14,6 @@ import sys
 
 import sgtk
 import sgtk.util
-from packaging import version
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
 
@@ -481,6 +480,32 @@ class BaseLauncher(object):
         :param version: (Optional) Specific version of DCC to launch.
         """
         raise NotImplementedError
+    
+    def _sort_func(self, version_string):
+        """
+        Returns a version object that can be used to sort arbitrary version numbers.
+
+        For environment running Python 3.11 or prior it uses the LooseVersion class
+        from distutils.version. For Python 3.12 and later, it uses the
+        version.parse function from the packaging module. If the packaging module
+        is not available, it falls back to the get_clean_version_string function.
+        """
+        self._tk_app.log_debug(f"@@@@@ Sorting version string: {version_string}")
+        if sys.version_info[0:2] < (3, 12):
+            from distutils.version import LooseVersion
+
+            return LooseVersion(version_string)
+        
+        try:
+            from packaging import version
+
+            return version.parse(version_string)
+        except ImportError:
+            self._tk_app.log_debug(
+                "The packaging module is not available. "
+                "Falling back to get_clean_version_string for version sorting."
+            )
+            return get_clean_version_string(version_string)
 
     def _sort_versions(self, versions):
         """
@@ -505,7 +530,7 @@ class BaseLauncher(object):
             ctx_mgr = contextlib.nullcontext
         with ctx_mgr():
             # Cast the incoming version strings to sort them
-            sort_versions = [version.parse(v) for v in versions]
+            sort_versions = [self._sort_func(v) for v in versions]
             sort_versions.sort(reverse=True)
 
         # Convert the parsed versions back to strings on return.
