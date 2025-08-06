@@ -12,13 +12,18 @@ import contextlib
 import os
 import sys
 
-if sys.version_info[0:2] < (3, 12):
-    from distutils.version import LooseVersion
-else:
+LooseVersion = None
+try:
+    from packaging import version
+except ModuleNotFoundError:
     try:
-        from packaging import version
-    except ImportError:
-        pass
+        from setuptools._distutils.version import LooseVersion
+    except ModuleNotFoundError:
+        try:
+            from distutils.version import LooseVersion
+        except ModuleNotFoundError:
+            # Fall back to string comparison
+            pass
 
 import sgtk
 import sgtk.util
@@ -498,7 +503,7 @@ class BaseLauncher(object):
         version.parse function from the packaging module. If the packaging module
         is not available, it falls back to the get_clean_version_string function.
         """
-        if sys.version_info[0:2] < (3, 12):
+        if LooseVersion:
             return LooseVersion(version_string)
 
         try:
