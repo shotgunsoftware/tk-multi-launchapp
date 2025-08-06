@@ -12,6 +12,14 @@ import contextlib
 import os
 import sys
 
+if sys.version_info[0:2] < (3, 12):
+    from distutils.version import LooseVersion
+else:
+    try:
+        from packaging import version
+    except ImportError:
+        pass
+
 import sgtk
 import sgtk.util
 from sgtk import TankError
@@ -491,19 +499,14 @@ class BaseLauncher(object):
         is not available, it falls back to the get_clean_version_string function.
         """
         if sys.version_info[0:2] < (3, 12):
-            from distutils.version import LooseVersion
-
             return LooseVersion(version_string)
 
         try:
-            from packaging import version
-
             return version.parse(version_string)
-        except ImportError:
-            self._tk_app.log_debug(
-                "The packaging module is not available. "
-                "Falling back to get_clean_version_string for version sorting."
-            )
+        except:
+            # This should catch version.InvalidVersion when parsing failed
+            # or NameError when packaging module is not available.
+            # We can't specify version.InvalidVersion here for the later case.
             return get_clean_version_string(version_string)
 
     def _sort_versions(self, versions):
