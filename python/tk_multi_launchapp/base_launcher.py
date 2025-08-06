@@ -480,7 +480,7 @@ class BaseLauncher(object):
         :param version: (Optional) Specific version of DCC to launch.
         """
         raise NotImplementedError
-    
+
     def _sort_func(self, version_string):
         """
         Returns a version object that can be used to sort arbitrary version numbers.
@@ -494,7 +494,7 @@ class BaseLauncher(object):
             from distutils.version import LooseVersion
 
             return LooseVersion(version_string)
-        
+
         try:
             from packaging import version
 
