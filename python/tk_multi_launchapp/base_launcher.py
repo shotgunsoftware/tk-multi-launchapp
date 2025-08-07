@@ -494,25 +494,18 @@ class BaseLauncher(object):
         """
         raise NotImplementedError
 
-    def _sort_func(self, version_string):
+    def _version_parse(self, version_string):
         """
         Returns a version object that can be used to sort arbitrary version numbers.
 
         For environment running Python 3.11 or prior it uses the LooseVersion class
         from distutils.version. For Python 3.12 and later, it uses the
-        version.parse function from the packaging module. If the packaging module
-        is not available, it falls back to the get_clean_version_string function.
+        version.parse function from the packaging module.
         """
         if LooseVersion:
             return LooseVersion(version_string)
 
-        try:
-            return version.parse(version_string)
-        except:
-            # This should catch version.InvalidVersion when parsing failed
-            # or NameError when packaging module is not available.
-            # We can't specify version.InvalidVersion here for the later case.
-            return get_clean_version_string(version_string)
+        return version.parse(version_string)
 
     def _sort_versions(self, versions):
         """
@@ -537,7 +530,11 @@ class BaseLauncher(object):
             ctx_mgr = contextlib.nullcontext
         with ctx_mgr():
             # Cast the incoming version strings to sort them
-            sort_versions = [self._sort_func(v) for v in versions]
+            try:
+                sort_versions = [self._version_parse(v) for v in versions]
+            except Exception as e:
+                sort_versions = [get_clean_version_string(v) for v in versions]
+
             sort_versions.sort(reverse=True)
 
         # Convert the parsed versions back to strings on return.
