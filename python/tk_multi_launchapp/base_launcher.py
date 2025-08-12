@@ -15,14 +15,17 @@ import sys
 LooseVersion = None
 try:
     from packaging import version
+
     version_parse = version.parse
 except ModuleNotFoundError:
     try:
         from setuptools._distutils.version import LooseVersion
+
         version_parse = LooseVersion
     except ModuleNotFoundError:
         try:
             from distutils.version import LooseVersion
+
             version_parse = LooseVersion
         except ModuleNotFoundError:
             # Fall back to string comparison
