@@ -12,25 +12,6 @@ import contextlib
 import os
 import sys
 
-LooseVersion = None
-try:
-    from packaging import version
-
-    version_parse = version.parse
-except ModuleNotFoundError:
-    try:
-        from setuptools._distutils.version import LooseVersion
-
-        version_parse = LooseVersion
-    except ModuleNotFoundError:
-        try:
-            from distutils.version import LooseVersion
-
-            version_parse = LooseVersion
-        except ModuleNotFoundError:
-            # Fall back to string comparison
-            version_parse = str
-
 import sgtk
 import sgtk.util
 from sgtk import TankError
@@ -67,6 +48,28 @@ class BaseLauncher(object):
             if sgtk.util.is_linux()
             else "mac" if sgtk.util.is_macos() else "windows"
         )
+
+        try:
+            from packaging import version
+
+            self.version_parse = version.parse
+        except ModuleNotFoundError:
+            try:
+                from distutils.version import LooseVersion
+
+                self.version_parse = LooseVersion
+            except ModuleNotFoundError:
+                try:
+                    from setuptools._distutils.version import LooseVersion
+
+                    self.version_parse = LooseVersion
+                except ModuleNotFoundError:
+                    # Fall back to string comparison
+                    self.version_parse = str
+                    self._tk_app.log_debug(
+                        "Modules packaging or distutils not found in the Python environment, "
+                        "falling back to string comparison."
+                    )
 
     def _register_launch_command(
         self,
@@ -524,7 +527,7 @@ class BaseLauncher(object):
         with ctx_mgr():
             # Cast the incoming version strings to sort them
             try:
-                sort_versions = [version_parse(v) for v in versions]
+                sort_versions = [self.version_parse(v) for v in versions]
             except Exception as e:
                 sort_versions = [get_clean_version_string(v) for v in versions]
 
