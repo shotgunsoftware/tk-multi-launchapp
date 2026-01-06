@@ -14,4 +14,3 @@
   ui_files:
     - splash_new
   py_dest: python/launch_indicator_dialog/ui
-
