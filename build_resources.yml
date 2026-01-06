@@ -9,3 +9,9 @@
   res_files:
     - resources
   py_dest: python/not_found_dialog/ui
+
+- ui_src: python/launch_indicator_dialog/resources
+  ui_files:
+    - splash_new
+  py_dest: python/launch_indicator_dialog/ui
+
