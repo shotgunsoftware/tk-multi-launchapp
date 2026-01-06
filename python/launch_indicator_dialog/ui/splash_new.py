@@ -19,7 +19,6 @@ for name, cls in QtGui.__dict__.items():
 
 from ..qtwidgets import ShotgunSpinningWidget
 
-from  . import resources_rc
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
