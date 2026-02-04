@@ -12,9 +12,9 @@
 Wrapper for the various widgets used from frameworks so that they can be used
 easily from with Qt Designer
 """
+
 #
 import sgtk
-
 
 overlay_widget = sgtk.platform.import_framework(
     "tk-framework-qtwidgets", "overlay_widget"

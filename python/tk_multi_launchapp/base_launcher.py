@@ -215,7 +215,7 @@ class BaseLauncher(object):
             app_path = apply_version_to_setting(app_path, version)
             app_args = apply_version_to_setting(app_args, version)
             if app_engine:
-                (prepped_path, prepped_args) = prepare_launch_for_engine(
+                prepped_path, prepped_args = prepare_launch_for_engine(
                     app_engine, app_path, app_args, context, file_to_open
                 )
                 # QUESTION: Since *some* of the "prep" methods may modify

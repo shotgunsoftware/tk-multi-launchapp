@@ -12,6 +12,7 @@
 This file is loaded automatically by Photoshop at startup
 It sets up the tank context and prepares the Tank Photoshop engine.
 """
+
 import os
 import sys
 

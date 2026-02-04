@@ -13,7 +13,6 @@ This file is loaded automatically by Maya at startup
 It sets up the tank context and prepares the Tank Maya engine.
 """
 
-
 import os
 import maya.OpenMaya as OpenMaya
 import maya.cmds as cmds

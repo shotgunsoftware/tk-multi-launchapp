@@ -103,7 +103,7 @@ def prepare_launch_for_engine(
     elif engine_name == "tk-mari":
         _prepare_mari_launch(engine_name, context)
     elif engine_name in ["tk-flame", "tk-flare"]:
-        (app_path, app_args) = _prepare_flame_flare_launch(
+        app_path, app_args = _prepare_flame_flare_launch(
             engine_name, context, app_path, app_args
         )
     else:
@@ -115,7 +115,7 @@ def prepare_launch_for_engine(
         # pulled out from above and moved into the except block below in
         # the way that tk-nuke and tk-hiero have.
         try:
-            (app_path, app_args) = _prepare_generic_launch(
+            app_path, app_args = _prepare_generic_launch(
                 tk_app, engine_name, context, app_path, app_args
             )
         except TankBootstrapNotFoundError:
@@ -183,7 +183,7 @@ def _prepare_generic_launch(tk_app, engine_name, context, app_path, app_args):
         # bootstrap should take kwargs in order to protect from changes in
         # this signature in the future.  For example:
         # def bootstrap(engine, context, app_path, app_args, **kwargs)
-        (app_path, new_args) = bootstrap.bootstrap(
+        app_path, new_args = bootstrap.bootstrap(
             engine_name=engine_name,
             context=context,
             app_path=app_path,
@@ -387,7 +387,7 @@ def _prepare_flame_flare_launch(engine_name, context, app_path, app_args):
     try:
         import bootstrap
 
-        (app_path, new_args) = bootstrap.bootstrap(
+        app_path, new_args = bootstrap.bootstrap(
             engine_name, context, app_path, app_args
         )
 
