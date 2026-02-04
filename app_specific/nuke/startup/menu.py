@@ -25,7 +25,6 @@ once the engine has been created.
 
 """
 
-
 import os
 import nuke
 
