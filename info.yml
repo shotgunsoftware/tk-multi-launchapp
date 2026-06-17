@@ -215,6 +215,7 @@ description: "Launch Applications and initialize the Flow Production Tracking."
 requires_shotgun_version:
 requires_core_version: "v0.19.1"
 requires_engine_version:
+minimum_python_version: "3.9"
 
 # the engines that this app can operate in:
 supported_engines:

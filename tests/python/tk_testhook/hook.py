@@ -32,6 +32,6 @@ class TestHook(HookBaseClass):
                 return hook_method_override(self, *args, **kwargs)
 
         except (AttributeError, KeyError):
-            _callback = getattr(super(TestHook, self), item)
+            _callback = getattr(super(), item)
 
         return _callback
